@@ -166,7 +166,7 @@ assert.match(app, /cc_bookmarks/);
 assert.match(app, /cc_notes_v1/);
 assert.match(app, /lesson-personal-tools/);
 assert.match(app, /bookmarks:safeStoredArray/);
-assert.match(app, /notes:\(\(\)=>/);
+assert.match(app, /notes:normalizeNotes\(readStoredValue\("cc_notes_v1",\{\}\)\)/);
 assert.match(app, /function startExam/);
 assert.match(html, /id="examCourse"/);
 assert.match(html, /id="examLevel"/);
