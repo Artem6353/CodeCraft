@@ -55,7 +55,7 @@ self.addEventListener("fetch", event => {
         const response = await fetch(request);
         if (response.ok) {
           const cache = await caches.open(SHELL_CACHE);
-          await cache.put("./index.html", response.clone());
+          try { await cache.put("./index.html", response.clone()); } catch (_) { /* Cache quota must not block a network response. */ }
         }
         return response;
       } catch (_) {
@@ -73,7 +73,7 @@ self.addEventListener("fetch", event => {
     if (cached) return cached;
     try {
       const response = await fetch(request);
-      if (response.ok) await cacheResponse(request, response);
+      if (response.ok) { try { await cacheResponse(request, response); } catch (_) { /* Cache quota must not block a resource. */ } }
       return response;
     } catch (error) {
       return new Response("Ресурс недоступен офлайн.", {
