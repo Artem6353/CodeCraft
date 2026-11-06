@@ -137,18 +137,18 @@ $("#nav").addEventListener("click", event => { if (event.target.closest("a")) { 
 
 /* Полноценная HTML/CSS/JS лаборатория */
 const webDefaults = {
- html: \`<main class="card">
+ html: `<main class="card">
   <h1>Привет, CodeCraft!</h1>
   <p>Это моя первая веб-страница.</p>
   <button id="helloButton">Нажми меня</button>
   <p id="message"></p>
-</main>\`,
- css: \`body { font-family: system-ui, sans-serif; padding: 24px; background: #eef2ff; }
+</main>`,
+ css: `body { font-family: system-ui, sans-serif; padding: 24px; background: #eef2ff; }
 .card { max-width: 440px; margin: 20px auto; padding: 24px; border-radius: 18px; background: white; box-shadow: 0 8px 30px #22335522; }
-button { padding: 10px 14px; border: 0; border-radius: 9px; background: #146c57; color: white; }\`,
- js: \`document.querySelector("#helloButton").addEventListener("click", () => {
+button { padding: 10px 14px; border: 0; border-radius: 9px; background: #146c57; color: white; }`,
+ js: `document.querySelector("#helloButton").addEventListener("click", () => {
   document.querySelector("#message").textContent = "Отличная работа! JavaScript работает.";
-});\`
+});`
 };
 const webHtml=$("#webHtml"),webCss=$("#webCss"),webJs=$("#webJs"),webPreview=$("#webLabPreview");
 function resetWebLab(){webHtml.value=webDefaults.html;webCss.value=webDefaults.css;webJs.value=webDefaults.js;runWebLab();}
