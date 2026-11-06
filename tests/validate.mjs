@@ -25,12 +25,18 @@ assert.ok(Array.isArray(lessons), "lesson catalog must be an array");
 assert.equal(lessons.length, 44, "expected 44 lessons");
 const lessonIds = lessons.map(item => item.id);
 assert.equal(new Set(lessonIds).size, lessonIds.length, "lesson IDs must be unique");
+const allowedExamTopics = new Set(["html-structure","html-document","css-foundation","css-layout","js-foundation","js-browser","py-foundation","py-data"]);
+const examTopicCounts = new Map();
 for (const lesson of lessons) {
   assert.ok(lesson.id && lesson.title && lesson.course && lesson.text && lesson.code, "lesson content is incomplete");
   assert.ok(Array.isArray(lesson.options) && lesson.options.length >= 2, "lesson needs answer options");
   assert.ok(Number.isInteger(lesson.correct) && lesson.correct >= 0 && lesson.correct < lesson.options.length, "lesson answer index is invalid");
   assert.ok(lesson.question && lesson.explanation, "lesson question or explanation is missing");
+  assert.ok(allowedExamTopics.has(lesson.topicKey), "lesson has no valid explicit exam topic: " + lesson.id);
+  examTopicCounts.set(lesson.topicKey, (examTopicCounts.get(lesson.topicKey) || 0) + 1);
 }
+assert.deepEqual([...examTopicCounts.keys()].sort(), [...allowedExamTopics].sort(), "all exam topics must be represented");
+for (const [topic, count] of examTopicCounts) assert.ok(count >= 4, "exam topic needs at least four questions: " + topic);
 for (const [course, count] of [["HTML и CSS", 20], ["JavaScript", 12], ["Python", 12]]) {
   assert.equal(lessons.filter(item => item.course === course).length, count, "unexpected lesson count: " + course);
 }
@@ -81,6 +87,10 @@ assert.match(app, /function parseHTMLForChecks/);
 assert.match(app, /function parseCSSForChecks/);
 assert.match(app, /function isJavaScriptSyntaxValid/);
 assert.match(app, /function parseProjectStructuralChecks/);
+assert.match(app, /const EXAM_TOPICS=Object\\.freeze/);
+assert.match(app, /function isKnownExamTopic/);
+assert.match(app, /function formatQuestionCount/);
+assert.match(app, /startExam\\(examMissed\\.slice\\(\\),examConfigKey\\)/);
 
 const examples = {
   "html-heading": "<h1>Hello</h1><p>Welcome</p>",

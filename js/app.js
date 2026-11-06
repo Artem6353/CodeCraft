@@ -323,21 +323,47 @@ $("#clearOutput").addEventListener("click", () => { output.textContent = "Выв
 let examQuestions=[],examIndex=0,examScore=0,examAnswered=false,examConfigKey="",examMissed=[];
 const examHistoryKey="cc_exam_history_v1";
 const examTopicStatsKey="cc_exam_topic_stats_v1";
-function topicForQuestion(question){
+const EXAM_TOPICS=Object.freeze({
+ "html-structure":{label:"HTML: структура и элементы",course:"HTML и CSS"},
+ "html-document":{label:"HTML: документы и доступность",course:"HTML и CSS"},
+ "css-foundation":{label:"CSS: стили и адаптивность",course:"HTML и CSS"},
+ "css-layout":{label:"CSS: сетки и эффекты",course:"HTML и CSS"},
+ "js-foundation":{label:"JavaScript: основы и логика",course:"JavaScript"},
+ "js-browser":{label:"JavaScript: данные и браузер",course:"JavaScript"},
+ "py-foundation":{label:"Python: основы и функции",course:"Python"},
+ "py-data":{label:"Python: коллекции и циклы",course:"Python"},
+ "other":{label:"Общие основы",course:"Другое"}
+});
+function isKnownExamTopic(key){
+ return typeof key==="string"&&Object.prototype.hasOwnProperty.call(EXAM_TOPICS,key);
+}
+function legacyTopicKey(question){
  const match=String(question&&question.id||"").match(/^(html|css|js|py)(\d+)$/);
- if(!match)return{key:"other",label:"Общие основы",course:question&&question.course||"Другое"};
+ if(!match)return "other";
  const prefix=match[1],number=Number(match[2]);
- const topics={
-  html:number<=4?["html-structure","HTML: структура и элементы"]:["html-document","HTML: документы и доступность"],
-  css:number<=4?["css-foundation","CSS: стили и адаптивность"]:["css-layout","CSS: сетки и эффекты"],
-  js:number<=4?["js-foundation","JavaScript: основы и логика"]:["js-browser","JavaScript: данные и браузер"],
-  py:number<=4?["py-foundation","Python: основы и функции"]:["py-data","Python: коллекции и циклы"]
- };
- const [key,label]=topics[prefix];return{key,label,course:question.course};
+ if(prefix==="html")return number<=4?"html-structure":"html-document";
+ if(prefix==="css")return number<=4?"css-foundation":"css-layout";
+ if(prefix==="js")return number<=4?"js-foundation":"js-browser";
+ return number<=4?"py-foundation":"py-data";
+}
+function topicForQuestion(question){
+ const explicit=question&&question.topicKey;
+ const key=isKnownExamTopic(explicit)?explicit:legacyTopicKey(question);
+ const topic=EXAM_TOPICS[key]||EXAM_TOPICS.other;
+ return{key,label:topic.label,course:question&&question.course||topic.course};
 }
 function readExamTopicStats(){
- try{const value=JSON.parse(localStorage.getItem(examTopicStatsKey)||"{}");if(!value||typeof value!=="object"||Array.isArray(value))return{};const clean={};
- Object.entries(value).slice(0,20).forEach(([key,item])=>{if(!/^(html-structure|html-document|css-foundation|css-layout|js-foundation|js-browser|py-foundation|py-data|other)$/.test(key)||!item||typeof item!=="object")return;const correct=Number.isInteger(item.correct)?Math.max(0,Math.min(100000,item.correct)):0;const total=Number.isInteger(item.total)?Math.max(0,Math.min(100000,item.total)):0;if(total)clean[key]={correct:Math.min(correct,total),total};});return clean;
+ try{
+  const value=JSON.parse(localStorage.getItem(examTopicStatsKey)||"{}");
+  if(!value||typeof value!=="object"||Array.isArray(value))return{};
+  const clean={};
+  Object.entries(value).slice(0,20).forEach(([key,item])=>{
+   if(!isKnownExamTopic(key)||!item||typeof item!=="object")return;
+   const correct=Number.isInteger(item.correct)?Math.max(0,Math.min(100000,item.correct)):0;
+   const total=Number.isInteger(item.total)?Math.max(0,Math.min(100000,item.total)):0;
+   if(total)clean[key]={correct:Math.min(correct,total),total};
+  });
+  return clean;
  }catch(_){return{};}
 }
 
@@ -348,7 +374,7 @@ function readStoredValue(key,fallback){try{const raw=localStorage.getItem(key);r
 function normalizeNotes(value){const clean={};if(!value||typeof value!=="object"||Array.isArray(value))return clean;Object.entries(value).slice(0,100).forEach(([key,note])=>{if(validIds.has(key)&&typeof note==="string"&&note.length<=5000)clean[key]=note;});return clean;}
 function normalizeDrafts(value){const clean={};if(!value||typeof value!=="object"||Array.isArray(value))return clean;Object.entries(value).slice(0,100).forEach(([key,draft])=>{if(key!=="__proto__"&&key!=="constructor"&&key!=="prototype"&&/^[a-zA-Z0-9:_-]{1,120}$/.test(key)&&typeof draft==="string"&&draft.length<=150000)clean[key]=draft;});return clean;}
 function normalizeHistory(value){const clean={};if(!value||typeof value!=="object"||Array.isArray(value))return clean;Object.entries(value).slice(0,30).forEach(([key,item])=>{if(!/^[a-zA-Zа-яА-Я0-9 +:-]{1,100}$/.test(key)||!item||typeof item!=="object")return;const attempts=Number.isInteger(item.attempts)?Math.max(0,Math.min(100000,item.attempts)):0,best=Number.isInteger(item.best)?Math.max(0,Math.min(100,item.best)):0,last=Number.isInteger(item.last)?Math.max(0,Math.min(100,item.last)):0;if(attempts)clean[key]={attempts,best,last};});return clean;}
-function normalizeTopicStats(value){const clean={},allowed=/^(html-structure|html-document|css-foundation|css-layout|js-foundation|js-browser|py-foundation|py-data|other)$/;if(!value||typeof value!=="object"||Array.isArray(value))return clean;Object.entries(value).slice(0,20).forEach(([key,item])=>{if(!allowed.test(key)||!item||typeof item!=="object")return;const total=Number.isInteger(item.total)?Math.max(0,Math.min(100000,item.total)):0,correct=Number.isInteger(item.correct)?Math.max(0,Math.min(total,item.correct)):0;if(total)clean[key]={correct,total};});return clean;}
+function normalizeTopicStats(value){const clean={};if(!value||typeof value!=="object"||Array.isArray(value))return clean;Object.entries(value).slice(0,20).forEach(([key,item])=>{if(!isKnownExamTopic(key)||!item||typeof item!=="object")return;const total=Number.isInteger(item.total)?Math.max(0,Math.min(100000,item.total)):0,correct=Number.isInteger(item.correct)?Math.max(0,Math.min(total,item.correct)):0;if(total)clean[key]={correct,total};});return clean;}
 function writeStorageBatch(entries){const previous=new Map();try{entries.forEach(([key])=>previous.set(key,localStorage.getItem(key)));entries.forEach(([key,value])=>localStorage.setItem(key,value));return true;}catch(error){for(const [key,value] of previous){try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}catch(_){}}throw error;}}
 function migrateLearningStorage(){
  let version=Number(readStoredValue(STORAGE_SCHEMA_KEY,0));if(!Number.isInteger(version)||version<0)version=0;
@@ -376,15 +402,20 @@ function migrateLearningStorage(){
 }
 
 
+function formatQuestionCount(count){
+ const lastTwo=count%100,last=count%10;
+ const word=lastTwo>=11&&lastTwo<=14?"вопросов":last===1?"вопрос":last>=2&&last<=4?"вопроса":"вопросов";
+ return count+" "+word;
+}
 function recordExamAnswer(question,correct){
  const topic=topicForQuestion(question),stats=readExamTopicStats(),item=stats[topic.key]||{correct:0,total:0};item.total=Math.min(100000,item.total+1);if(correct)item.correct=Math.min(item.total,item.correct+1);stats[topic.key]=item;
  try{localStorage.setItem(examTopicStatsKey,JSON.stringify(stats));}catch(_){}
 }
 function renderExamTopicStats(){
  const container=$("#examTopicStats");if(!container)return;const stats=readExamTopicStats();
- const rows=Object.entries(stats).filter(([,item])=>item.total>=1).map(([key,item])=>{const sample=lessons.find(question=>topicForQuestion(question).key===key),topic=topicForQuestion(sample||{});return{key,label:topic.label,correct:item.correct,total:item.total,pct:Math.round(item.correct/item.total*100)};}).sort((a,b)=>a.pct-b.pct||b.total-a.total);
+ const rows=Object.entries(stats).filter(([,item])=>item.total>=1).map(([key,item])=>{const sample=lessons.find(question=>topicForQuestion(question).key===key),topic=topicForQuestion(sample||{});return{key,label:topic.label,correct:item.correct,total:item.total,pct:Math.round(item.correct/item.total*100),questionCount:lessons.filter(question=>topicForQuestion(question).key===key).length};}).sort((a,b)=>a.pct-b.pct||b.total-a.total);
  container.replaceChildren();if(!rows.length){const empty=document.createElement("p");empty.className="student-empty";empty.textContent="После первых ответов здесь появятся темы, которые уже освоены и те, которые стоит повторить.";container.append(empty);return;}
- rows.forEach(row=>{const card=document.createElement("article");card.className="topic-stat-card";const heading=document.createElement("div");heading.className="topic-stat-heading";const name=document.createElement("strong");name.textContent=row.label;const score=document.createElement("span");score.textContent=row.pct+"% · "+row.correct+"/"+row.total;heading.append(name,score);const track=document.createElement("div");track.className="topic-stat-track";const fill=document.createElement("span");fill.style.width=row.pct+"%";track.append(fill);const action=document.createElement("button");action.type="button";action.className="small-btn";action.dataset.topic=row.key;action.textContent=row.pct<70?"Тренировать тему":"Повторить тему";card.append(heading,track,action);container.append(card);});
+ rows.forEach(row=>{const card=document.createElement("article");card.className="topic-stat-card";const heading=document.createElement("div");heading.className="topic-stat-heading";const name=document.createElement("strong");name.textContent=row.label;const score=document.createElement("span");score.textContent=row.pct+"% · "+row.correct+"/"+row.total;heading.append(name,score);const track=document.createElement("div");track.className="topic-stat-track";const fill=document.createElement("span");fill.style.width=row.pct+"%";track.append(fill);const count=document.createElement("small");count.className="topic-stat-count";count.textContent=formatQuestionCount(row.questionCount)+" в теме";const action=document.createElement("button");action.type="button";action.className="small-btn";action.dataset.topic=row.key;action.textContent=row.pct<70?"Тренировать тему":"Повторить тему";card.append(heading,track,count,action);container.append(card);});
 }
 
 function readExamHistory(){
@@ -419,12 +450,12 @@ function shuffleExamItems(items){
  for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]];}
  return result;
 }
-function startExam(questionSet){
+function startExam(questionSet,historyKey){
  const course=$("#examCourse").value,level=$("#examLevel").value;
  const pool=lessons.filter(item=>Array.isArray(item.options)&&item.options.length>=2&&Number.isInteger(item.correct)&&item.correct>=0&&item.correct<item.options.length&&(course==="all"||item.course===course)&&(level==="all"||item.level===level));
  examQuestions=shuffleExamItems(Array.isArray(questionSet)?questionSet:pool).slice(0,Math.min(10,Array.isArray(questionSet)?questionSet.length:pool.length));
- examIndex=0;examScore=0;examAnswered=false;examMissed=[];examConfigKey=(course==="all"?"Смешанный экзамен":course)+"::"+(level==="all"?"Все уровни":level);
- $("#examResult").replaceChildren();$("#examResult").hidden=true;$("#examSettingsHint").textContent=pool.length+" доступных вопросов · в этой попытке: "+examQuestions.length;
+ examIndex=0;examScore=0;examAnswered=false;examMissed=[];const customHistoryKey=typeof historyKey==="string"&&historyKey.length<=100?historyKey:"";examConfigKey=customHistoryKey||((course==="all"?"Смешанный экзамен":course)+"::"+(level==="all"?"Все уровни":level));
+ $("#examResult").replaceChildren();$("#examResult").hidden=true;$("#examSettingsHint").textContent=customHistoryKey?customHistoryKey+" · "+formatQuestionCount(examQuestions.length)+".":pool.length+" доступных вопросов · в этой попытке: "+examQuestions.length;
  if(!examQuestions.length){$("#quizQuestion").textContent="Для выбранных параметров пока нет вопросов.";$("#quizOptions").replaceChildren();$("#quizFeedback").textContent="Выбери другое направление или сложность.";$("#examProgress").textContent="Нет вопросов";$("#examScore").textContent="Баллы: 0";$("#examTrackFill").style.width="0%";$("#nextExamQuestion").disabled=true;return;}
  renderExamQuestion();
 }
@@ -461,7 +492,7 @@ function finishExam(){
    item.append(title,answer,explanation);result.append(item);
   });
   const retry=document.createElement("button");retry.type="button";retry.className="small-btn";retry.textContent="Повторить только ошибки";
-  retry.addEventListener("click",()=>startExam(examMissed.slice()));result.append(retry);
+  retry.addEventListener("click",()=>startExam(examMissed.slice(),examConfigKey));result.append(retry);
  }else{
   const perfect=document.createElement("p");perfect.textContent="Ошибок нет — отличный результат!";result.append(perfect);
  }
@@ -483,7 +514,16 @@ $("#nextExamQuestion").addEventListener("click",()=>{
  finishExam();
 });
 $("#retryQuiz").addEventListener("click",startExam);
-$("#examTopicStats").addEventListener("click",event=>{const button=event.target.closest("button[data-topic]");if(!button)return;const topic=button.dataset.topic;const questions=lessons.filter(question=>topicForQuestion(question).key===topic);if(questions.length){$("#examCourse").value="all";$("#examLevel").value="all";startExam(questions);$("#examSettingsHint").textContent="Тренировка темы: "+topicForQuestion(questions[0]).label+" · "+questions.length+" вопросов.";}});
+$("#examTopicStats").addEventListener("click",event=>{
+ const button=event.target.closest("button[data-topic]");
+ if(!button)return;
+ const topic=button.dataset.topic,questions=lessons.filter(question=>topicForQuestion(question).key===topic);
+ if(questions.length){
+  $("#examCourse").value="all";$("#examLevel").value="all";
+  const label=topicForQuestion(questions[0]).label;
+  startExam(questions,"Тренировка темы: "+label);
+ }
+});
 $("#examCourse").addEventListener("change",startExam);
 $("#examLevel").addEventListener("change",startExam);
 renderExamHistory();renderExamTopicStats();startExam();

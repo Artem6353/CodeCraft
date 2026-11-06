@@ -155,6 +155,51 @@ test("finishes an exam and stores its attempt and topic statistics", async ({ pa
   expect(Object.values(state.topics).reduce((sum, item) => sum + item.total, 0)).toBe(10);
 });
 
+
+test("routes weak-topic practice by explicit tags and keeps retry history separate", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("cc_exam_topic_stats_v1", JSON.stringify({
+      "js-browser": { correct: 1, total: 4 }
+    }));
+  });
+  await page.reload();
+
+  const practiceButton = page.locator('#examTopicStats [data-topic="js-browser"]');
+  await expect(practiceButton).toBeVisible();
+  await expect(practiceButton).toHaveText("Тренировать тему");
+  await expect(page.locator("#examTopicStats .topic-stat-count")).toContainText("8 вопросов в теме");
+
+  await practiceButton.click();
+  await expect(page.locator("#examSettingsHint")).toContainText("Тренировка темы: JavaScript: данные и браузер · 8 вопросов.");
+
+  for (let index = 0; index < 8; index += 1) {
+    const questionText = await page.locator("#quizQuestion").textContent();
+    const correctIndex = await page.evaluate(question => {
+      const item = window.CODECRAFT_LESSONS.find(lesson => lesson.question === question);
+      return item ? item.correct : -1;
+    }, questionText);
+    const optionCount = await page.locator("#quizOptions button").count();
+    const answerIndex = index === 0 ? (correctIndex + 1) % optionCount : correctIndex;
+    await page.locator("#quizOptions button").nth(answerIndex).click();
+    await page.locator("#nextExamQuestion").click();
+  }
+  await expect(page.locator("#examResult")).toBeVisible();
+  await page.locator("#examResult button").filter({ hasText: "Повторить только ошибки" }).click();
+  await expect(page.locator("#examProgress")).toHaveText("Вопрос 1 из 1");
+
+  const retryQuestion = await page.locator("#quizQuestion").textContent();
+  const retryCorrect = await page.evaluate(question => {
+    const item = window.CODECRAFT_LESSONS.find(lesson => lesson.question === question);
+    return item ? item.correct : -1;
+  }, retryQuestion);
+  await page.locator("#quizOptions button").nth(retryCorrect).click();
+  await page.locator("#nextExamQuestion").click();
+
+  const history = await page.evaluate(() => JSON.parse(localStorage.getItem("cc_exam_history_v1") || "{}"));
+  expect(history["Тренировка темы: JavaScript: данные и браузер"].attempts).toBe(2);
+  expect(history["Смешанный экзамен::Все уровни"]).toBeUndefined();
+});
+
 test("exports and imports a versioned learning backup", async ({ page }) => {
   const lessonId = await page.evaluate(() => window.CODECRAFT_LESSONS[0].id);
   const backup = {
