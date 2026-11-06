@@ -40,7 +40,7 @@ function renderAchievements(){
 function safeStoredArray(key,allowed){try{const value=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(value)?[...new Set(value.filter(id=>typeof id==="string"&&allowed.has(id)))]:[];}catch(_){return[];}}
 const knownProjectIds=new Set(["profile","portfolio","landing"]);
 function exportLearningData(){
- const payload={app:"CodeCraft",version:1,exportedAt:new Date().toISOString(),progress:done,projects:safeStoredArray("cc_projects",knownProjectIds),challenges:safeStoredArray("cc_challenges",new Set(["html-heading","html-link","css-flex","js-function","js-condition","html-semantic","css-grid","js-array","py-loop","py-dict"])),bookmarks:safeStoredArray("cc_bookmarks",validIds),notes:(()=>{try{const value=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");if(!value||typeof value!=="object"||Array.isArray(value))return{};const clean={};Object.entries(value).slice(0,100).forEach(([key,note])=>{if(validIds.has(key)&&typeof note==="string"&&note.length<=5000)clean[key]=note;});return clean;}catch(_){return{};}})(),drafts:(()=>{try{return JSON.parse(localStorage.getItem("cc_drafts_v1")||"{}");}catch(_){return{};}})(),exams:readExamHistory()};
+ const payload={app:"CodeCraft",version:1,exportedAt:new Date().toISOString(),progress:done,projects:safeStoredArray("cc_projects",knownProjectIds),challenges:safeStoredArray("cc_challenges",new Set(["html-heading","html-link","css-flex","js-function","js-condition","html-semantic","css-grid","js-array","py-loop","py-dict"])),bookmarks:safeStoredArray("cc_bookmarks",validIds),notes:(()=>{try{const value=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");if(!value||typeof value!=="object"||Array.isArray(value))return{};const clean={};Object.entries(value).slice(0,100).forEach(([key,note])=>{if(validIds.has(key)&&typeof note==="string"&&note.length<=5000)clean[key]=note;});return clean;}catch(_){return{};}})(),drafts:(()=>{try{return JSON.parse(localStorage.getItem("cc_drafts_v1")||"{}");}catch(_){return{};}})(),exams:readExamHistory(),topicStats:readExamTopicStats()};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
  const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="codecraft-progress.json";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
  $("#learningToolsStatus").textContent="Резервная копия подготовлена. Сохрани файл в удобное место.";
@@ -60,6 +60,7 @@ $("#importProgressFile").addEventListener("change",event=>{
    const allowedChallenges=new Set(["html-heading","html-link","css-flex","js-function","js-condition","html-semantic","css-grid","js-array","py-loop","py-dict"]);
    const importedChallenges=Array.isArray(data.challenges)?data.challenges.filter(id=>allowedChallenges.has(id)):[];
    done=[...new Set([...done,...importedLessons])];const importedBookmarks=Array.isArray(data.bookmarks)?[...new Set(data.bookmarks.filter(id=>validIds.has(id)))]:[];try{localStorage.setItem("cc_bookmarks",JSON.stringify([...new Set([...safeStoredArray("cc_bookmarks",validIds),...importedBookmarks])]));}catch(_){}if(data.notes&&typeof data.notes==="object"&&!Array.isArray(data.notes)){const cleanNotes={};Object.entries(data.notes).slice(0,100).forEach(([key,note])=>{if(validIds.has(key)&&typeof note==="string"&&note.length<=5000)cleanNotes[key]=note;});try{const existing=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");localStorage.setItem("cc_notes_v1",JSON.stringify({...existing,...cleanNotes}));}catch(_){localStorage.setItem("cc_notes_v1",JSON.stringify(cleanNotes));}}completedProjects=[...new Set([...completedProjects,...importedProjects])];completedChallenges=[...new Set([...completedChallenges,...importedChallenges])];if(data.exams&&typeof data.exams==="object"&&!Array.isArray(data.exams)){const merged=readExamHistory();Object.entries(data.exams).slice(0,30).forEach(([key,item])=>{if(!/^[a-zA-Zа-яА-Я0-9 +:-]{1,100}$/.test(key)||!item||typeof item!=="object")return;const attempts=Number.isInteger(item.attempts)?Math.max(0,Math.min(100000,item.attempts)):0,best=Number.isInteger(item.best)?Math.max(0,Math.min(100,item.best)):0,last=Number.isInteger(item.last)?Math.max(0,Math.min(100,item.last)):0;if(attempts){const old=merged[key]||{attempts:0,best:0,last:0};merged[key]={attempts:Math.min(100000,old.attempts+attempts),best:Math.max(old.best,best),last};}});try{localStorage.setItem(examHistoryKey,JSON.stringify(merged));}catch(_){}}
+   if(data.topicStats&&typeof data.topicStats==="object"&&!Array.isArray(data.topicStats)){const merged=readExamTopicStats();Object.entries(data.topicStats).slice(0,20).forEach(([key,item])=>{if(!/^(html-structure|html-document|css-foundation|css-layout|js-foundation|js-browser|py-foundation|py-data|other)$/.test(key)||!item||typeof item!=="object")return;const total=Number.isInteger(item.total)?Math.max(0,Math.min(100000,item.total)):0,correct=Number.isInteger(item.correct)?Math.max(0,Math.min(total,item.correct)):0;if(total){const old=merged[key]||{correct:0,total:0};merged[key]={total:Math.min(100000,old.total+total),correct:Math.min(100000,old.correct+correct)};}});try{localStorage.setItem(examTopicStatsKey,JSON.stringify(merged));}catch(_){}}
    saveProgress();localStorage.setItem("cc_projects",JSON.stringify(completedProjects));localStorage.setItem("cc_challenges",JSON.stringify(completedChallenges));
    if(data.drafts&&typeof data.drafts==="object"&&!Array.isArray(data.drafts)){
     const cleanDrafts={};
@@ -73,7 +74,7 @@ $("#importProgressFile").addEventListener("change",event=>{
    pythonEditor.value=restoreDraft("python:"+activePythonExample,pythonExamples[activePythonExample]||"");
    $("#challengeCode").value=restoreDraft("challenge:"+activeChallenge.id,activeChallenge.starter);
    $("#projectCode").value=restoreDraft("project:"+activeProject.id,activeProject.code);renderProjectPreview();
-   renderMenu();progress();renderProjectCards();renderChallengeMenu();updateProjectStatus();renderExamHistory();
+   renderMenu();progress();renderProjectCards();renderChallengeMenu();updateProjectStatus();renderExamHistory();renderExamTopicStats();
    $("#learningToolsStatus").textContent="Данные импортированы. Существующий прогресс сохранён и объединён с копией.";
   }catch(error){$("#learningToolsStatus").textContent="Не удалось импортировать файл: "+error.message;}
   event.target.value="";
@@ -221,6 +222,35 @@ $("#resetEditor").addEventListener("click", () => { editor.value = starter; save
 $("#clearOutput").addEventListener("click", () => { output.textContent = "Вывод очищен."; });
 let examQuestions=[],examIndex=0,examScore=0,examAnswered=false,examConfigKey="",examMissed=[];
 const examHistoryKey="cc_exam_history_v1";
+const examTopicStatsKey="cc_exam_topic_stats_v1";
+function topicForQuestion(question){
+ const match=String(question&&question.id||"").match(/^(html|css|js|py)(\d+)$/);
+ if(!match)return{key:"other",label:"Общие основы",course:question&&question.course||"Другое"};
+ const prefix=match[1],number=Number(match[2]);
+ const topics={
+  html:number<=4?["html-structure","HTML: структура и элементы"]:["html-document","HTML: документы и доступность"],
+  css:number<=4?["css-foundation","CSS: стили и адаптивность"]:["css-layout","CSS: сетки и эффекты"],
+  js:number<=4?["js-foundation","JavaScript: основы и логика"]:["js-browser","JavaScript: данные и браузер"],
+  py:number<=4?["py-foundation","Python: основы и функции"]:["py-data","Python: коллекции и циклы"]
+ };
+ const [key,label]=topics[prefix];return{key,label,course:question.course};
+}
+function readExamTopicStats(){
+ try{const value=JSON.parse(localStorage.getItem(examTopicStatsKey)||"{}");if(!value||typeof value!=="object"||Array.isArray(value))return{};const clean={};
+ Object.entries(value).slice(0,20).forEach(([key,item])=>{if(!/^(html-structure|html-document|css-foundation|css-layout|js-foundation|js-browser|py-foundation|py-data|other)$/.test(key)||!item||typeof item!=="object")return;const correct=Number.isInteger(item.correct)?Math.max(0,Math.min(100000,item.correct)):0;const total=Number.isInteger(item.total)?Math.max(0,Math.min(100000,item.total)):0;if(total)clean[key]={correct:Math.min(correct,total),total};});return clean;
+ }catch(_){return{};}
+}
+function recordExamAnswer(question,correct){
+ const topic=topicForQuestion(question),stats=readExamTopicStats(),item=stats[topic.key]||{correct:0,total:0};item.total=Math.min(100000,item.total+1);if(correct)item.correct=Math.min(item.total,item.correct+1);stats[topic.key]=item;
+ try{localStorage.setItem(examTopicStatsKey,JSON.stringify(stats));}catch(_){}
+}
+function renderExamTopicStats(){
+ const container=$("#examTopicStats");if(!container)return;const stats=readExamTopicStats();
+ const rows=Object.entries(stats).filter(([,item])=>item.total>=1).map(([key,item])=>{const sample=lessons.find(question=>topicForQuestion(question).key===key),topic=topicForQuestion(sample||{});return{key,label:topic.label,correct:item.correct,total:item.total,pct:Math.round(item.correct/item.total*100)};}).sort((a,b)=>a.pct-b.pct||b.total-a.total);
+ container.replaceChildren();if(!rows.length){const empty=document.createElement("p");empty.className="student-empty";empty.textContent="После первых ответов здесь появятся темы, которые уже освоены и те, которые стоит повторить.";container.append(empty);return;}
+ rows.forEach(row=>{const card=document.createElement("article");card.className="topic-stat-card";const heading=document.createElement("div");heading.className="topic-stat-heading";const name=document.createElement("strong");name.textContent=row.label;const score=document.createElement("span");score.textContent=row.pct+"% · "+row.correct+"/"+row.total;heading.append(name,score);const track=document.createElement("div");track.className="topic-stat-track";const fill=document.createElement("span");fill.style.width=row.pct+"%";track.append(fill);const action=document.createElement("button");action.type="button";action.className="small-btn";action.dataset.topic=row.key;action.textContent=row.pct<70?"Тренировать тему":"Повторить тему";card.append(heading,track,action);container.append(card);});
+}
+
 function readExamHistory(){
  try{
   const value=JSON.parse(localStorage.getItem(examHistoryKey)||"{}");
@@ -306,6 +336,7 @@ $("#quizOptions").addEventListener("click",event=>{
  const question=examQuestions[examIndex];if(!question)return;
  examAnswered=true;const chosen=Number(button.dataset.answer);
  [...$("#quizOptions").children].forEach((item,index)=>{item.disabled=true;if(index===question.correct)item.classList.add("correct");if(index===chosen&&chosen!==question.correct)item.classList.add("wrong");});
+ recordExamAnswer(question,chosen===question.correct);
  if(chosen===question.correct){examScore++;$("#quizFeedback").textContent="Верно! "+question.explanation;}
  else {examMissed.push(question);$("#quizFeedback").textContent="Не совсем. Правильный ответ: "+question.options[question.correct]+". "+question.explanation;}
  $("#examScore").textContent="Баллы: "+examScore;$("#nextExamQuestion").disabled=false;
@@ -316,9 +347,10 @@ $("#nextExamQuestion").addEventListener("click",()=>{
  finishExam();
 });
 $("#retryQuiz").addEventListener("click",startExam);
+$("#examTopicStats").addEventListener("click",event=>{const button=event.target.closest("button[data-topic]");if(!button)return;const topic=button.dataset.topic;const questions=lessons.filter(question=>topicForQuestion(question).key===topic);if(questions.length){$("#examCourse").value="all";$("#examLevel").value="all";startExam(questions);$("#examSettingsHint").textContent="Тренировка темы: "+topicForQuestion(questions[0]).label+" · "+questions.length+" вопросов.";}});
 $("#examCourse").addEventListener("change",startExam);
 $("#examLevel").addEventListener("change",startExam);
-renderExamHistory();startExam();
+renderExamHistory();renderExamTopicStats();startExam();
 $("#menuBtn").addEventListener("click", () => { const isOpen = $("#nav").classList.toggle("open"); $("#menuBtn").setAttribute("aria-expanded", String(isOpen)); });
 $("#nav").addEventListener("click", event => { if (event.target.closest("a")) { $("#nav").classList.remove("open"); $("#menuBtn").setAttribute("aria-expanded", "false"); } });
 
