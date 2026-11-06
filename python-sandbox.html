@@ -12,7 +12,7 @@
 <script>
 "use strict";
 const send = payload => parent.postMessage(payload, "*");
-if (typeof Sk === "undefined") {
+if (typeof Sk === "undefined" || !Sk.builtinFiles || !Sk.builtinFiles.files) {
   const message="Не удалось загрузить Skulpt. Проверь подключение к интернету и обнови страницу.";
   send({type:"CODECRAFT_PYTHON_ERROR",message});
   window.addEventListener("message",event=>{if(event.source===parent&&event.data&&event.data.type==="CODECRAFT_PYTHON_PING")send({type:"CODECRAFT_PYTHON_ERROR",message});});
