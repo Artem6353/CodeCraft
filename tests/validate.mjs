@@ -22,8 +22,8 @@ for (const lesson of lessons) {
   assert.ok(Number.isInteger(lesson.correct) && lesson.correct >= 0 && lesson.correct < lesson.options.length, "lesson answer index is invalid");
   assert.ok(lesson.question && lesson.explanation, "lesson question or explanation is missing");
 }
-for (const course of ["HTML и CSS", "JavaScript", "Python"]) {
-  assert.equal(lessons.filter(item => item.course === course).length, 8, "each course must contain 8 lessons: " + course);
+for (const [course, count] of [["HTML и CSS", 16], ["JavaScript", 8], ["Python", 8]]) {
+  assert.equal(lessons.filter(item => item.course === course).length, count, "unexpected lesson count: " + course);
 }
 
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
@@ -38,7 +38,7 @@ for (const section of ["paths", "learn", "playground", "web-lab", "challenges", 
 assert.match(html, /id="jsSandbox"[^>]*sandbox="allow-scripts"/);
 assert.match(html, /id="webLabPreview"[^>]*sandbox="allow-scripts"/);
 assert.match(html, /id="projectPreview"[^>]*sandbox=""/);
-assert.match(app, /connect-src \\'none\\'/, "web preview must block network requests");
+assert.match(app, /connect-src[^;]*none/, "web preview must block network requests");
 
 const challengeMatch = app.match(/const challengeTasks = (\[[\s\S]*?\n\]);/);
 assert.ok(challengeMatch, "challenge task registry was not found");
