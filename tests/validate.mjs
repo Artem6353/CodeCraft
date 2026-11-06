@@ -227,7 +227,7 @@ assert.match(pythonSandbox, /Перезапустить среду/);
 assert.match(pythonSandbox, /execLimit: 3000/);
 
 assert.equal(packageData.devDependencies["@playwright/test"], "1.56.1", "Playwright version must be pinned");
-assert.equal(packageData.devDependencies["@axe-core/playwright"], "4.10.3", "axe-core integration must be pinned");
+assert.equal(packageData.devDependencies["@axe-core/playwright"], "4.14.0", "axe-core integration must be pinned");
 assert.equal(packageData.scripts["test:e2e"], "playwright test", "browser test script is missing");
 assert.match(playwrightConfig, /testDir: "\.\/tests\/e2e"/);
 assert.match(playwrightConfig, /webServer:/);
@@ -248,7 +248,7 @@ for (const scenario of [
 ]) assert.ok(e2eSpec.includes(scenario), "missing browser scenario: " + scenario);
 
 console.log("CodeCraft quality checks passed:");
-console.log("- 32 lessons, 3 tracks, valid answer data");
+console.log("- 44 lessons, 3 tracks, valid answer data");
 console.log("- unique HTML IDs and complete app selectors");
 console.log("- 20 practical tasks (10 creation + 10 debugging) with passing sample checks");
 console.log("- isolated sandboxes, responsive styles, track/difficulty exams, score history, backups and drafts");
