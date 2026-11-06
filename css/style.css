@@ -337,3 +337,26 @@ button,a,input,select,textarea{scroll-margin-block:calc(76px + var(--safe-top))}
 
 
 .topic-stat-count{color:var(--muted);font-size:10px;line-height:1.4}
+
+/* Персональный маршрут обучения — A11 */
+.student-stats{grid-template-columns:repeat(5,minmax(0,1fr))}
+.student-guidance{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0 0 14px}
+.next-step-panel,.course-progress-panel,.practice-progress-panel{min-width:0;align-content:start}
+.next-step-panel{display:grid;gap:8px}
+.next-step-panel h4{margin:0;font-size:clamp(17px,2.2vw,21px);line-height:1.35}
+.next-step-copy{margin:0;color:var(--text);font-size:13px;line-height:1.6}
+.next-step-meta{margin:0;color:var(--muted);font-size:11px;line-height:1.5}
+.next-step-panel .btn{justify-self:start;min-height:44px;margin-top:3px}
+.course-progress-list,.practice-progress-list{display:grid;gap:12px}
+.course-progress-item,.practice-progress-item{display:grid;gap:7px;min-width:0}
+.course-progress-heading{display:flex;justify-content:space-between;align-items:baseline;gap:9px}
+.course-progress-heading strong{min-width:0;font-size:12px;overflow-wrap:anywhere}
+.course-progress-heading span{flex:0 0 auto;color:var(--mint);font-size:11px;font-variant-numeric:tabular-nums}
+.course-progress-track{height:9px;overflow:hidden;border-radius:99px;background:#293956}
+.course-progress-track span{display:block;height:100%;border-radius:inherit;background:var(--mint);transition:width .2s ease}
+.course-progress-item small{color:var(--muted);font-size:10px}
+.practice-progress-panel{grid-column:1/-1}
+.practice-progress-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media(max-width:1020px){.student-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.student-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.student-guidance{grid-template-columns:minmax(0,1fr)}.practice-progress-panel{grid-column:auto}}
+@media(max-width:420px){.student-guidance{gap:10px}.next-step-panel,.course-progress-panel,.practice-progress-panel{padding:12px}.practice-progress-list{grid-template-columns:minmax(0,1fr)}}
