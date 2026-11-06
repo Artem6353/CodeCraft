@@ -157,3 +157,14 @@ console.log("- 32 lessons, 3 tracks, valid answer data");
 console.log("- unique HTML IDs and complete app selectors");
 console.log("- 10 practical tasks and 100% passing sample checks");
 console.log("- isolated sandboxes, responsive styles, track/difficulty exams, score history, backups and drafts");
+
+assert.match(app, /function topicForQuestion/);
+assert.match(app, /function readExamTopicStats/);
+assert.match(app, /function recordExamAnswer/);
+assert.match(app, /recordExamAnswer\\(question,chosen===question\\.correct\\)/);
+assert.match(app, /function renderExamTopicStats/);
+assert.match(app, /data-topic=row\\.key/);
+assert.match(app, /topicStats:readExamTopicStats\\(\\)/);
+assert.match(app, /data\\.topicStats/);
+assert.match(html, /id="examTopicStats"/);
+assert.match(css, /\\.topic-stat-card/);
