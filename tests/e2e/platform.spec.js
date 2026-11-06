@@ -157,6 +157,9 @@ test("exports and imports a versioned learning backup", async ({ page }) => {
   expect(exported.progress).toContain(lessonId);
   expect(exported.challenges).toContain("html-heading");
   expect(exported.projectSteps).toBeTruthy();
+  await page.locator("#importProgressFile").setInputFiles(path);
+  await expect(page.locator("#learningToolsStatus")).toContainText("Резервная копия импортирована");
+  await expect(page.locator("#progressCount")).toContainText("1 из 44");
 });
 
 test("migrates legacy local learning data to schema version 2", async ({ page }) => {
