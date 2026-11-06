@@ -9,6 +9,7 @@
     "test": "npm run test:static && npm run test:e2e"
   },
   "devDependencies": {
-    "@playwright/test": "1.56.1"
+    "@playwright/test": "1.56.1",
+    "@axe-core/playwright": "4.10.3"
   }
 }
