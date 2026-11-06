@@ -183,6 +183,20 @@ test("migrates legacy local learning data to schema version 2", async ({ page })
   expect(migrated.draft).toBe("console.log('legacy')");
 });
 
+test("does not downgrade data written by a newer application version", async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem("cc_storage_schema", "3");
+    localStorage.setItem("cc_progress", JSON.stringify(["html1", "future-lesson"]));
+  });
+  await page.reload();
+  const state = await page.evaluate(() => ({
+    schema: localStorage.getItem("cc_storage_schema"),
+    progress: JSON.parse(localStorage.getItem("cc_progress") || "[]")
+  }));
+  expect(state.schema).toBe("3");
+  expect(state.progress).toEqual(["html1", "future-lesson"]);
+});
+
 test("keeps existing progress intact when a backup import hits a storage quota error", async ({ page }) => {
   await page.evaluate(() => {
     const original = Storage.prototype.setItem;
