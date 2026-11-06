@@ -1,0 +1,146 @@
+import { test, expect } from "@playwright/test";
+import fs from "node:fs/promises";
+
+test.beforeEach(async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("#lessonPanel h3")).toBeVisible();
+});
+
+test("loads the learning dashboard and keeps the main sections reachable", async ({ page }) => {
+  await expect(page).toHaveTitle(/CodeCraft/);
+  await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(32);
+  await expect(page.locator("#progressCount")).toContainText("0 из 32");
+  for (const id of ["learn", "playground", "web-lab", "challenges", "projects", "python-lab", "quiz"]) {
+    await expect(page.locator(`#${id}`)).toHaveCount(1);
+  }
+});
+
+test("searches lessons and persists lesson completion, bookmark and note after reload", async ({ page }) => {
+  await page.locator("#lessonSearch").fill("HTML");
+  await expect(page.locator("#lessonMenu .lesson-choice")).not.toHaveCount(0);
+  await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(16);
+  await page.locator("#lessonSearch").fill("");
+  await page.locator("#lessonPanel .lesson-personal-tools button").click();
+  await page.locator("#lessonPanel .lesson-note-input").fill("Проверка сохранения заметки из Playwright.");
+  await page.getByRole("button", { name: "Отметить урок пройденным" }).click();
+  await expect(page.locator("#progressCount")).toContainText("1 из 32");
+  await page.reload();
+  await expect(page.locator("#progressCount")).toContainText("1 из 32");
+  await expect(page.locator("#bookmarkCount")).toHaveText("1");
+  await expect(page.locator("#notesCount")).toHaveText("1");
+  await expect(page.locator("#lessonPanel .lesson-note-input")).toHaveValue("Проверка сохранения заметки из Playwright.");
+});
+
+test("validates a practical task and a guided project and stores their completion", async ({ page }) => {
+  await page.locator("#challengeCode").fill("<h1>Привет, мир!</h1>\n<p>Мой первый сайт.</p>");
+  await page.locator("#checkChallenge").click();
+  await expect(page.locator("#challengeResult")).toContainText("Все проверки пройдены");
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("cc_challenges") || "[]"))).toContain("html-heading");
+
+  await page.locator("#completeProject").click();
+  await expect(page.locator("#projectStatus")).toContainText("Начислено 50 XP");
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("cc_projects") || "[]"))).toContain("profile");
+});
+
+test("runs the web lab preview and executes its button interaction", async ({ page }) => {
+  await page.locator("#webHtml").fill('<main><h1>Playwright preview</h1><button id="go">Нажми</button><p id="result"></p></main>');
+  await page.locator("#webCss").fill("h1 { color: rgb(20, 108, 87); }");
+  await page.locator("#webJs").fill('document.querySelector("#go").addEventListener("click", () => { document.querySelector("#result").textContent = "Работает"; });');
+  await page.locator("#runWebLab").click();
+  const preview = page.frameLocator("#webLabPreview");
+  await expect(preview.locator("h1")).toHaveText("Playwright preview");
+  await preview.locator("#go").click();
+  await expect(preview.locator("#result")).toHaveText("Работает");
+});
+
+test("runs JavaScript in the Worker, times out an infinite loop and recovers", async ({ page }) => {
+  await page.locator("#codeEditor").fill('console.log("worker-ok"); console.log(typeof document); console.log(typeof localStorage);');
+  await page.locator("#runCode").click();
+  await expect(page.locator("#output")).toContainText("worker-ok");
+  await expect(page.locator("#output")).toContainText("undefined");
+  await expect(page.locator("#stopCode")).toBeDisabled();
+
+  await page.locator("#codeEditor").fill("while (true) {}");
+  await page.locator("#runCode").click();
+  await expect(page.locator("#output")).toContainText("Worker остановлен", { timeout: 6000 });
+  await expect(page.locator("#runCode")).toBeEnabled();
+  await expect(page.locator("#stopCode")).toBeDisabled();
+
+  await page.locator("#codeEditor").fill('console.log("worker-recovered");');
+  await page.locator("#runCode").click();
+  await expect(page.locator("#output")).toContainText("worker-recovered");
+});
+
+test("runs Python in Skulpt when the CDN is available", async ({ page }) => {
+  const status = page.locator("#pythonStatus");
+  await expect(status).toContainText("Интерпретатор готов", { timeout: 30000 });
+  await page.locator("#pythonCode").fill('print("python-ok")');
+  await page.locator("#runPython").click();
+  await expect(page.locator("#pythonOutput")).toContainText("python-ok", { timeout: 15000 });
+  await expect(status).toContainText("Выполнение завершено");
+});
+
+test("finishes an exam and stores its attempt and topic statistics", async ({ page }) => {
+  await expect(page.locator("#quizOptions button")).toHaveCount(3, { timeout: 10000 });
+  for (let index = 0; index < 10; index += 1) {
+    await page.locator("#quizOptions button").first().click();
+    await expect(page.locator("#nextExamQuestion")).toBeEnabled();
+    await page.locator("#nextExamQuestion").click();
+  }
+  await expect(page.locator("#examProgress")).toHaveText("Экзамен завершён");
+  await expect(page.locator("#examResult")).toBeVisible();
+  const state = await page.evaluate(() => ({
+    history: JSON.parse(localStorage.getItem("cc_exam_history_v1") || "{}"),
+    topics: JSON.parse(localStorage.getItem("cc_exam_topic_stats_v1") || "{}")
+  }));
+  expect(Object.values(state.history).some(item => item.attempts === 1)).toBeTruthy();
+  expect(Object.values(state.topics).reduce((sum, item) => sum + item.total, 0)).toBe(10);
+});
+
+test("exports and imports a versioned learning backup", async ({ page }) => {
+  const lessonId = await page.evaluate(() => window.CODECRAFT_LESSONS[0].id);
+  const backup = {
+    app: "CodeCraft",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    progress: [lessonId],
+    projects: ["profile"],
+    challenges: ["html-heading"],
+    bookmarks: [lessonId],
+    notes: { [lessonId]: "Заметка из резервной копии" },
+    drafts: {},
+    exams: {},
+    topicStats: {}
+  };
+  await page.locator("#importProgressFile").setInputFiles({
+    name: "codecraft-e2e-backup.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(backup))
+  });
+  await expect(page.locator("#learningToolsStatus")).toContainText("Данные импортированы");
+  await expect(page.locator("#progressCount")).toContainText("1 из 32");
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("cc_challenges") || "[]"))).toContain("html-heading");
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("cc_projects") || "[]"))).toContain("profile");
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("#exportProgress").click();
+  const download = await downloadPromise;
+  const path = await download.path();
+  const exported = JSON.parse(await fs.readFile(path, "utf8"));
+  expect(exported.app).toBe("CodeCraft");
+  expect(exported.version).toBe(1);
+  expect(exported.progress).toContain(lessonId);
+  expect(exported.challenges).toContain("html-heading");
+});
+
+test("keeps the interface within phone and desktop viewport widths", async ({ page }) => {
+  for (const width of [360, 390, 768, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.locator("#mainContent")).toBeVisible();
+    const dimensions = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth
+    }));
+    expect(dimensions.document, `horizontal overflow at viewport ${width}px`).toBeLessThanOrEqual(dimensions.viewport + 1);
+  }
+});
