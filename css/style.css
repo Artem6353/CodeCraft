@@ -253,3 +253,10 @@ footer span{float:none}
 .topic-stat-track span{display:block;height:100%;border-radius:inherit;background:var(--mint)}
 .topic-stat-card .small-btn{justify-self:start;min-height:36px}
 @media(max-width:600px){.topic-stat-list{grid-template-columns:minmax(0,1fr)}.topic-stat-card{padding:11px}}
+
+/* Планшетное меню: не допускаем переполнения навигации */
+@media(max-width:900px){
+ .topbar nav{display:none}
+ .topbar nav.open{display:flex;position:absolute;top:65px;left:0;right:0;padding:15px 20px;background:#0b1020;flex-direction:column;border-bottom:1px solid var(--line)}
+ .menu-btn{display:block}
+}
