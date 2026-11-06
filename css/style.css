@@ -311,3 +311,26 @@ button,a,input,select,textarea{scroll-margin-block:calc(76px + var(--safe-top))}
 .lesson-choice[aria-current="step"]{outline:2px solid var(--mint);outline-offset:1px}
 @media(max-width:520px){.lesson-navigation{grid-template-columns:1fr 1fr}.lesson-navigation #lessonSequence{grid-column:1/-1;grid-row:1}.lesson-navigation .small-btn:last-child{justify-self:stretch}.lesson-navigation .small-btn:first-child{justify-self:stretch}}
 @media(min-width:1500px){.lesson-navigation{padding:14px}.lesson-navigation .small-btn{min-height:48px}}
+
+
+/* Единое поведение редакторов кода на телефонах, планшетах и ПК */
+.editor-shortcuts{margin:7px 0 0;color:var(--muted);font-size:10px;line-height:1.5;overflow-wrap:anywhere}
+#codeEditor,#webHtml,#webCss,#webJs,#challengeCode,#projectCode,#pythonCode{
+ white-space:pre;overflow:auto;tab-size:2;overscroll-behavior:contain;
+}
+#codeEditor:focus-visible,#webHtml:focus-visible,#webCss:focus-visible,#webJs:focus-visible,
+#challengeCode:focus-visible,#projectCode:focus-visible,#pythonCode:focus-visible{
+ outline:2px solid var(--mint);outline-offset:2px;
+}
+@media(max-width:760px){
+ #codeEditor,#webHtml,#webCss,#webJs,#challengeCode,#projectCode,#pythonCode{
+  min-height:clamp(220px,38svh,440px);max-height:62svh;padding:12px;font-size:13px;
+  line-height:1.65;scrollbar-width:thin;
+ }
+ .editor-shortcuts{font-size:10px;padding-inline:2px}
+}
+@media(min-width:761px){
+ #codeEditor,#webHtml,#webCss,#webJs,#challengeCode,#projectCode,#pythonCode{
+  min-height:260px;max-height:680px;
+ }
+}

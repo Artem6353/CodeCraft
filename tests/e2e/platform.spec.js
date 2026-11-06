@@ -7,6 +7,22 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator("#lessonPanel h3")).toBeVisible();
 });
 
+test("shares indentation and keyboard guidance across every code editor", async ({ page }) => {
+  const selectors = ["#codeEditor", "#webHtml", "#webCss", "#webJs", "#challengeCode", "#projectCode", "#pythonCode"];
+  for (const selector of selectors) {
+    const editor = page.locator(selector);
+    await expect(editor).toHaveCount(1);
+    await expect(page.locator(`${selector} + .editor-shortcuts`)).toContainText("Shift+Tab");
+    await expect(editor).toHaveAttribute("aria-keyshortcuts", "Tab Shift+Tab Control+Enter Meta+Enter");
+    await editor.fill("first line\nsecond line");
+    await editor.evaluate(element => element.setSelectionRange(0, element.value.length));
+    await editor.press("Tab");
+    await expect(editor).toHaveValue("  first line\n  second line");
+    await editor.press("Shift+Tab");
+    await expect(editor).toHaveValue("first line\nsecond line");
+  }
+});
+
 test("loads the learning dashboard and keeps the main sections reachable", async ({ page }) => {
   await expect(page).toHaveTitle(/CodeCraft/);
   await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(44);
@@ -32,8 +48,10 @@ test("searches lessons and persists lesson completion, bookmark and note after r
 });
 
 test("validates a practical task and a guided project and stores their completion", async ({ page }) => {
+  await page.locator("#projectCode").press("Control+Enter");
+  await expect(page.frameLocator("#projectPreview").locator("body")).toContainText("Привет");
   await page.locator("#challengeCode").fill("<h1>Привет, мир!</h1>\n<p>Мой первый сайт.</p>");
-  await page.locator("#checkChallenge").click();
+  await page.locator("#challengeCode").press("Control+Enter");
   await expect(page.locator("#challengeResult")).toContainText("Все проверки пройдены");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("cc_challenges") || "[]"))).toContain("html-heading");
 
@@ -52,7 +70,7 @@ test("runs the web lab preview and executes its button interaction", async ({ pa
   await page.locator("#webHtml").fill('<main><h1>Playwright preview</h1><button id="go">Нажми</button><p id="result"></p></main>');
   await page.locator("#webCss").fill("h1 { color: rgb(20, 108, 87); }");
   await page.locator("#webJs").fill('document.querySelector("#go").addEventListener("click", () => { document.querySelector("#result").textContent = "Работает"; });');
-  await page.locator("#runWebLab").click();
+  await page.locator("#webJs").press("Control+Enter");
   const preview = page.frameLocator("#webLabPreview");
   await expect(preview.locator("h1")).toHaveText("Playwright preview");
   await preview.locator("#go").click();
@@ -61,7 +79,7 @@ test("runs the web lab preview and executes its button interaction", async ({ pa
 
 test("runs JavaScript in the Worker, times out an infinite loop and recovers", async ({ page }) => {
   await page.locator("#codeEditor").fill('console.log("worker-ok"); console.log(typeof document); console.log(typeof localStorage);');
-  await page.locator("#runCode").click();
+  await page.locator("#codeEditor").press("Control+Enter");
   await expect(page.locator("#output")).toContainText("worker-ok");
   await expect(page.locator("#output")).toContainText("undefined");
   await expect(page.locator("#stopCode")).toBeDisabled();
@@ -96,7 +114,7 @@ test("runs Python in Skulpt when the CDN is available", async ({ page }) => {
   const status = page.locator("#pythonStatus");
   await expect(status).toContainText("Интерпретатор готов", { timeout: 30000 });
   await page.locator("#pythonCode").fill('print("python-ok")');
-  await page.locator("#runPython").click();
+  await page.locator("#pythonCode").press("Control+Enter");
   await expect(page.locator("#pythonOutput")).toContainText("python-ok", { timeout: 15000 });
   await expect(status).toContainText("Выполнение завершено");
 });

@@ -742,18 +742,68 @@ function applyEditorFontSize(){
 }
 $("#editorFontDown").addEventListener("click",()=>{editorFontSize=Math.max(11,editorFontSize-1);applyEditorFontSize();});
 $("#editorFontUp").addEventListener("click",()=>{editorFontSize=Math.min(20,editorFontSize+1);applyEditorFontSize();});
-["#webHtml","#webCss","#webJs"].forEach(selector=>{
+function changeCodeIndent(editor,removeIndent){
+ const value=editor.value,start=editor.selectionStart,end=editor.selectionEnd;
+ if(start===end){
+  if(!removeIndent){editor.setRangeText("  ",start,end,"end");return;}
+  const lineStart=value.lastIndexOf("\n",start-1)+1;
+  const prefix=value.slice(lineStart,start);
+  const removeCount=prefix.endsWith("\t")?1:prefix.endsWith("  ")?2:prefix.endsWith(" ")?1:0;
+  if(removeCount)editor.setRangeText("",start-removeCount,start,"end");
+  return;
+ }
+ const firstLineStart=value.lastIndexOf("\n",start-1)+1;
+ const lastLineStart=end>start&&value[end-1]==="\n"
+  ?value.lastIndexOf("\n",end-2)+1
+  :value.lastIndexOf("\n",end-1)+1;
+ let blockEnd=value.indexOf("\n",lastLineStart);
+ if(blockEnd<0)blockEnd=value.length;
+ const lines=value.slice(firstLineStart,blockEnd).split("\n");
+ const removed=[];
+ const updated=lines.map(line=>{
+  if(!removeIndent){removed.push(0);return "  "+line;}
+  const count=line.startsWith("\t")?1:line.startsWith("  ")?2:line.startsWith(" ")?1:0;
+  removed.push(count);
+  return line.slice(count);
+ });
+ editor.setRangeText(updated.join("\n"),firstLineStart,blockEnd,"preserve");
+ const startDelta=removeIndent?-(removed[0]||0):2;
+ const endDelta=removeIndent?-removed.reduce((sum,count)=>sum+count,0):2*lines.length;
+ const nextStart=Math.max(firstLineStart,start+startDelta);
+ editor.setSelectionRange(nextStart,Math.max(nextStart,end+endDelta));
+}
+function attachCodeEditorShortcuts(selector,actionSelector){
  const editor=$(selector);
+ if(!editor)return;
+ const help=document.createElement("p");
+ help.className="editor-shortcuts";
+ help.id=editor.id+"Shortcuts";
+ help.textContent="Tab — отступ · Shift+Tab — убрать отступ · Ctrl/⌘+Enter — выполнить действие";
+ editor.insertAdjacentElement("afterend",help);
+ const description=editor.getAttribute("aria-describedby");
+ editor.setAttribute("aria-describedby",[description,help.id].filter(Boolean).join(" "));
+ editor.setAttribute("aria-keyshortcuts","Tab Shift+Tab Control+Enter Meta+Enter");
+ editor.setAttribute("autocorrect","off");
+ editor.setAttribute("wrap","off");
  editor.addEventListener("keydown",event=>{
   if(event.key==="Tab"){
-   event.preventDefault();const start=editor.selectionStart,end=editor.selectionEnd;
-   editor.setRangeText("  ",start,end,"end");
+   event.preventDefault();
+   changeCodeIndent(editor,event.shiftKey);
    editor.dispatchEvent(new Event("input",{bubbles:true}));
   }else if((event.ctrlKey||event.metaKey)&&event.key==="Enter"){
-   event.preventDefault();$("#runWebLab").click();
+   event.preventDefault();
+   const action=$(actionSelector);
+   if(action&&!action.disabled)action.click();
   }
  });
-});
+}
+[
+ ["#codeEditor","#runCode"],
+ ["#webHtml","#runWebLab"],["#webCss","#runWebLab"],["#webJs","#runWebLab"],
+ ["#challengeCode","#checkChallenge"],
+ ["#projectCode","#previewProject"],
+ ["#pythonCode","#runPython"]
+].forEach(([editor,action])=>attachCodeEditorShortcuts(editor,action));
 selectLabPanel("html");applyEditorFontSize();
 const connectionStatus=$("#connectionStatus");
 function updateConnectionStatus(){
