@@ -264,6 +264,7 @@ for (const scenario of [
   "manually stops JavaScript execution",
   "runs Python in Skulpt",
   "finishes an exam",
+  "builds course analytics and recommends a next step from learning data",
   "exports and imports",
   "phone and desktop viewport"
 ]) assert.ok(e2eSpec.includes(scenario), "missing browser scenario: " + scenario);
@@ -273,6 +274,7 @@ console.log("- 44 lessons, 3 tracks, valid answer data");
 console.log("- unique HTML IDs and complete app selectors");
 console.log("- 20 practical tasks (10 creation + 10 debugging) with passing sample checks");
 console.log("- isolated sandboxes, responsive styles, track/difficulty exams, score history, backups and drafts");
+console.log("- personalized A11 learning route, course progress and practice/project milestones");
 
 assert.match(app, /function topicForQuestion/);
 assert.match(app, /function readExamTopicStats/);
@@ -307,3 +309,12 @@ assert.match(e2eSpec, /migrates legacy local learning data/);
 assert.match(e2eSpec, /storage quota error/);
 assert.match(e2eSpec, /goes offline/);
 
+assert.ok(app.includes("function buildCourseProgress"), "A11 course progress calculation is missing");
+assert.ok(app.includes("function getNextLearningRecommendation"), "A11 recommendation engine is missing");
+assert.ok(app.includes("action.dataset.action=recommendation.action"), "A11 recommendation action binding is missing");
+assert.ok(app.includes("renderExamTopicStats();renderStudentDashboard();"), "A11 dashboard must refresh after exam answers");
+assert.ok(html.includes('id="courseProgressList"'), "A11 course progress container is missing");
+assert.ok(html.includes('id="practiceProgressList"'), "A11 practice progress container is missing");
+assert.ok(html.includes('id="nextStepAction"'), "A11 next step action is missing");
+assert.ok(css.includes(".student-guidance"), "A11 responsive dashboard styles are missing");
+assert.ok(css.includes(".course-progress-track"), "A11 progress bar styles are missing");
