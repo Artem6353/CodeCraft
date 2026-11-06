@@ -36,7 +36,7 @@
 <section id="playground" class="section"><div class="section-heading"><div><p class="eyebrow">ПРАКТИКА</p><h2>JavaScript-песочница</h2></div><span class="pill">Изолированный запуск</span></div><div class="play-card"><p>Измени пример и запусти код. Он выполняется в отдельном изолированном окне; результат и ошибки появятся ниже.</p><div class="editor-head"><span>script.js</span><button class="small-btn" id="resetEditor">Сбросить</button></div><textarea id="codeEditor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Редактор JavaScript">const name = "CodeCraft";
 const completed = 2;
 console.log("Привет, " + name + "!");
-console.log("Мои завершённые уроки: " + completed);</textarea><div class="editor-actions"><button class="btn" id="runCode">▶ Запустить</button><button class="btn ghost" id="clearOutput">Очистить вывод</button></div><pre class="output" id="output" aria-live="polite">Вывод программы появится здесь…</pre></div><iframe id="jsSandbox" title="Изолированная среда JavaScript" src="sandbox.html" sandbox="allow-scripts" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0"></iframe></section>
+console.log("Мои завершённые уроки: " + completed);</textarea><div class="editor-actions"><button class="btn" id="runCode">▶ Запустить</button><button class="btn ghost" id="stopCode" disabled>■ Остановить</button><button class="btn ghost" id="clearOutput">Очистить вывод</button></div><pre class="output" id="output" aria-live="polite">Вывод программы появится здесь…</pre></div><iframe id="jsSandbox" title="Изолированная среда JavaScript" src="sandbox.html" sandbox="allow-scripts" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0"></iframe></section>
 
 <section id="web-lab" class="section">
  <div class="section-heading"><div><p class="eyebrow">СОЗДАЙ СВОЮ СТРАНИЦУ</p><h2>Веб-лаборатория</h2></div><span class="pill">HTML · CSS · JavaScript</span></div>
@@ -92,7 +92,7 @@ console.log("Мои завершённые уроки: " + completed);</textarea
    <textarea id="pythonCode" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Редактор Python">name = "CodeCraft"
 print("Привет,", name)
 print("Добро пожаловать в Python!")</textarea>
-   <div class="editor-actions"><button class="btn" id="runPython">▶ Запустить Python</button><button class="btn ghost" id="resetPython">Вернуть пример</button><button class="small-btn" id="clearPython">Очистить вывод</button></div>
+   <div class="editor-actions"><button class="btn" id="runPython">▶ Запустить Python</button><button class="btn ghost" id="retryPython">Перезапустить среду</button><button class="btn ghost" id="resetPython">Вернуть пример</button><button class="small-btn" id="clearPython">Очистить вывод</button></div>
    <p class="preview-note" id="pythonStatus" aria-live="polite">Подключение к интерпретатору…</p>
    <pre class="output python-output" id="pythonOutput" aria-live="polite">Результат программы появится здесь.</pre>
   </div>
