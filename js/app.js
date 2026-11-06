@@ -512,6 +512,8 @@ function selectLabPanel(panel){
  document.querySelectorAll("[data-lab-panel-content]").forEach(node=>{
   node.classList.toggle("mobile-active",node.dataset.labPanelContent===panel);
  });
+ const editorPanel=$(".web-editors");
+ ["html","css","js"].forEach(name=>editorPanel.classList.toggle("panel-"+name+"-active",panel===name));
 }
 document.querySelectorAll("[data-lab-panel]").forEach(button=>button.addEventListener("click",()=>selectLabPanel(button.dataset.labPanel)));
 function applyEditorFontSize(){
