@@ -152,10 +152,73 @@ test("exports and imports a versioned learning backup", async ({ page }) => {
   const path = await download.path();
   const exported = JSON.parse(await fs.readFile(path, "utf8"));
   expect(exported.app).toBe("CodeCraft");
-  expect(exported.version).toBe(1);
+  expect(exported.version).toBe(2);
+  expect(exported.schemaVersion).toBe(2);
   expect(exported.progress).toContain(lessonId);
   expect(exported.challenges).toContain("html-heading");
   expect(exported.projectSteps).toBeTruthy();
+});
+
+test("migrates legacy local learning data to schema version 2", async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.removeItem("cc_storage_schema");
+    localStorage.setItem("cc_progress", JSON.stringify(["html1", "unknown-lesson", "html1"]));
+    localStorage.setItem("cc_bookmarks", JSON.stringify(["html1", "missing"]));
+    localStorage.setItem("cc_project_steps_v1", JSON.stringify({ taskboard: [2, 2, 99], unknown: [1] }));
+    localStorage.setItem("cc_drafts_v1", JSON.stringify({ javascriptPlayground: "console.log('legacy')" }));
+  });
+  await page.reload();
+  await expect(page.locator("#progressCount")).toContainText("1 из 44");
+  const migrated = await page.evaluate(() => ({
+    version: localStorage.getItem("cc_storage_schema"),
+    progress: JSON.parse(localStorage.getItem("cc_progress") || "[]"),
+    bookmarks: JSON.parse(localStorage.getItem("cc_bookmarks") || "[]"),
+    steps: JSON.parse(localStorage.getItem("cc_project_steps_v1") || "{}"),
+    draft: JSON.parse(localStorage.getItem("cc_drafts_v1") || "{}").javascriptPlayground
+  }));
+  expect(migrated.version).toBe("2");
+  expect(migrated.progress).toEqual(["html1"]);
+  expect(migrated.bookmarks).toEqual(["html1"]);
+  expect(migrated.steps).toEqual({ taskboard: [2] });
+  expect(migrated.draft).toBe("console.log('legacy')");
+});
+
+test("keeps existing progress intact when a backup import hits a storage quota error", async ({ page }) => {
+  await page.evaluate(() => {
+    const original = Storage.prototype.setItem;
+    window.__failCodeCraftWrite = true;
+    Storage.prototype.setItem = function(key, value) {
+      if (key === "cc_challenges" && window.__failCodeCraftWrite) {
+        window.__failCodeCraftWrite = false;
+        throw new DOMException("Storage quota exceeded", "QuotaExceededError");
+      }
+      return original.call(this, key, value);
+    };
+  });
+  const lessonId = await page.evaluate(() => window.CODECRAFT_LESSONS[0].id);
+  const backup = { app: "CodeCraft", version: 2, schemaVersion: 2, progress: [lessonId], projects: [], challenges: [], bookmarks: [], notes: {}, drafts: {}, exams: {}, topicStats: {}, projectSteps: {} };
+  await page.locator("#importProgressFile").setInputFiles({
+    name: "quota-backup.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(backup))
+  });
+  await expect(page.locator("#learningToolsStatus")).toContainText("недостаточно места");
+  await expect(page.locator("#progressCount")).toContainText("0 из 44");
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("cc_progress") || "[]"));
+  expect(stored).toEqual([]);
+});
+
+test("serves the installed learning shell after the browser goes offline", async ({ page, context }) => {
+  await page.waitForFunction(() => Boolean(navigator.serviceWorker && navigator.serviceWorker.controller), null, { timeout: 15000 });
+  await page.evaluate(async () => {
+    const registration = await navigator.serviceWorker.ready;
+    if (registration.waiting) registration.waiting.postMessage({ type: "CODECRAFT_SKIP_WAITING" });
+  });
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page).toHaveTitle(/CodeCraft/);
+  await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(44);
+  await expect(page.locator("#connectionStatus")).toContainText("Офлайн");
 });
 
 test("keeps the interface within phone and desktop viewport widths", async ({ page }) => {
