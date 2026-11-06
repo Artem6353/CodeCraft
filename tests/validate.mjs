@@ -195,7 +195,7 @@ assert.equal(lessons.filter(item => item.level === "Средний").length, 12,
 assert.match(app, /function saveDraft/);
 assert.match(app, /CODECRAFT_PYTHON_PING/);
 assert.match(app, /file\.size>2\*1024\*1024/);
-assert.match(app, /cleanDrafts/);
+assert.match(app, /drafts:normalizeDrafts\(readStoredValue\("cc_drafts_v1",\{\}\)\)/);
 assert.match(sandbox, /CODECRAFT_RUN/);
 assert.match(sandbox, /CODECRAFT_CANCEL/);
 assert.match(sandbox, /worker-src blob:/, "JavaScript sandbox must permit only its isolated Blob Worker");
