@@ -7,7 +7,7 @@
 </head>
 <body>
 <a class="skip-link" href="#mainContent">Перейти к содержимому</a>
-<header class="topbar"><a class="brand" href="#"><span class="brand-mark">&lt;/&gt;</span> CodeCraft</a><button class="menu-btn" id="menuBtn" aria-label="Открыть меню" aria-expanded="false">☰</button><nav id="nav"><a href="#paths">Направления</a><a href="#learn">Обучение</a><a href="#web-lab">Веб-лаборатория</a><a href="#challenges">Задания</a><a href="#projects">Проекты</a><a href="#quiz">Тест</a></nav></header>
+<header class="topbar"><a class="brand" href="#"><span class="brand-mark">&lt;/&gt;</span> CodeCraft</a><button class="menu-btn" id="menuBtn" aria-label="Открыть меню" aria-expanded="false">☰</button><nav id="nav"><a href="#paths">Направления</a><a href="#learn">Обучение</a><a href="#web-lab">Веб-лаборатория</a><a href="#python-lab">Python</a><a href="#challenges">Задания</a><a href="#projects">Проекты</a><a href="#quiz">Тест</a></nav></header>
 <main class="shell" id="mainContent">
 <section class="hero"><div><p class="eyebrow">ТВОЙ ПУТЬ В IT НАЧИНАЕТСЯ ЗДЕСЬ</p><h1>Учись создавать.<br><span>Создавай будущее.</span></h1><p class="lead">Понятные уроки, практика в браузере и заметный прогресс. Начни с нуля и двигайся в собственном темпе.</p><div class="actions"><a class="btn" href="#paths">Выбрать направление <b>→</b></a><a class="btn ghost" href="#playground">Попробовать код</a></div></div><div class="code-card"><div class="window-dots"><i></i><i></i><i></i><span>hello.js</span></div><pre><span class="purple">const</span> future = <span class="green">"developer"</span>;
 
@@ -62,6 +62,23 @@ console.log("Мои завершённые уроки: " + completed);</textarea
   <div class="project-instructions"><span class="pill" id="projectLevel">Практика · Начальный</span><h3 id="projectTitle">Карточка профиля</h3><p id="projectDescription"></p><h4>Что нужно сделать</h4><ul id="projectTasks"></ul><button class="small-btn" id="completeProject">Отметить проект выполненным</button><p class="project-status" id="projectStatus" aria-live="polite"></p></div>
   <div class="project-editor"><div class="editor-head"><span>HTML + CSS</span><button class="small-btn" id="resetProject">Вернуть шаблон</button></div><textarea id="projectCode" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Редактор HTML и CSS проекта"></textarea><div class="editor-actions"><button class="btn" id="previewProject">▶ Обновить предпросмотр</button></div><iframe id="projectPreview" title="Предпросмотр учебного проекта" sandbox="" loading="lazy"></iframe><p class="preview-note">Предпросмотр изолирован: JavaScript отключён, сетевые запросы заблокированы.</p></div>
  </div>
+</section>
+<section id="python-lab" class="section">
+ <div class="section-heading"><div><p class="eyebrow">ПИШИ И ЗАПУСКАЙ КОД</p><h2>Python-тренажёр</h2></div><span class="pill">Python 3 · В браузере</span></div>
+ <p class="project-intro">Здесь работает настоящий учебный интерпретатор Python в отдельном изолированном окне. При первом открытии потребуется загрузить библиотеку с CDN (примерно 1 MB); затем можно запускать код прямо в браузере.</p>
+ <div class="python-workbench">
+  <div class="python-editor">
+   <div class="editor-head"><label for="pythonCode">main.py</label><select id="pythonExample" aria-label="Примеры Python"><option value="hello">Приветствие</option><option value="loops">Цикл и диапазон</option><option value="lists">Списки</option><option value="functions">Функции</option></select></div>
+   <textarea id="pythonCode" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Редактор Python">name = "CodeCraft"
+print("Привет,", name)
+print("Добро пожаловать в Python!")</textarea>
+   <div class="editor-actions"><button class="btn" id="runPython">▶ Запустить Python</button><button class="btn ghost" id="resetPython">Вернуть пример</button><button class="small-btn" id="clearPython">Очистить вывод</button></div>
+   <p class="preview-note" id="pythonStatus" aria-live="polite">Подключение к интерпретатору…</p>
+   <pre class="output python-output" id="pythonOutput" aria-live="polite">Результат программы появится здесь.</pre>
+  </div>
+  <div class="python-info"><h3>Что можно изучать</h3><ul><li>Переменные, числа и строки</li><li>Условия и циклы</li><li>Списки и словари</li><li>Функции и простые алгоритмы</li><li>Обработка ошибок</li></ul><p>Ограничения: это Skulpt — браузерная реализация Python для обучения, а не полный CPython. Некоторые библиотеки и возможности Python недоступны. Время выполнения ограничено.</p></div>
+ </div>
+ <iframe id="pythonSandbox" title="Изолированная среда Python" src="python-sandbox.html" sandbox="allow-scripts" loading="lazy" referrerpolicy="no-referrer" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0"></iframe>
 </section>
 <section id="quiz" class="section"><div class="section-heading"><div><p class="eyebrow">ПРОВЕРЬ СВОИ ЗНАНИЯ</p><h2>Экзамен CodeCraft</h2></div><span class="pill">10 случайных вопросов</span></div><div class="quiz-card"><div class="exam-top"><span id="examProgress">Вопрос 1 из 10</span><span id="examScore">Баллы: 0</span></div><div class="exam-track"><span id="examTrackFill"></span></div><h3 id="quizQuestion">Загрузка вопроса…</h3><div id="quizOptions" class="quiz-options"></div><p id="quizFeedback" class="feedback" aria-live="polite">Выбери один вариант ответа.</p><div class="exam-actions"><button class="small-btn" id="nextExamQuestion" disabled>Следующий вопрос</button><button class="small-btn" id="retryQuiz">Начать экзамен заново</button></div><div id="examResult" class="exam-result" aria-live="polite" hidden></div></div></section>
 </main><footer><div class="shell">© 2026 CodeCraft <span>Учись в своём темпе. Создавай каждый день.</span></div></footer>
