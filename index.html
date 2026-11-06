@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020"><meta name="description" content="CodeCraft — бесплатная интерактивная академия программирования.">
+<title>CodeCraft — академия программирования</title><link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar"><a class="brand" href="#"><span class="brand-mark">&lt;/&gt;</span> CodeCraft</a><button class="menu-btn" id="menuBtn" aria-label="Открыть меню">☰</button><nav id="nav"><a href="#paths">Направления</a><a href="#learn">Обучение</a><a href="#playground">Практика</a><a href="#quiz">Тест</a></nav></header>
+<main class="shell">
+<section class="hero"><div><p class="eyebrow">ТВОЙ ПУТЬ В IT НАЧИНАЕТСЯ ЗДЕСЬ</p><h1>Учись создавать.<br><span>Создавай будущее.</span></h1><p class="lead">Понятные уроки, практика в браузере и заметный прогресс. Начни с нуля и двигайся в собственном темпе.</p><div class="actions"><a class="btn" href="#paths">Выбрать направление <b>→</b></a><a class="btn ghost" href="#playground">Попробовать код</a></div></div><div class="code-card"><div class="window-dots"><i></i><i></i><i></i><span>hello.js</span></div><pre><span class="purple">const</span> future = <span class="green">"developer"</span>;
+
+<span class="purple">function</span> <span class="blue">buildSkills</span>() {
+  <span class="purple">return</span> practice + curiosity;
+}
+
+<span class="comment">// Маленькие шаги каждый день</span>
+<span class="blue">console</span>.log(future);</pre><div class="terminal-result">✓ Прогресс начинается с первого шага</div></div></section>
+<section id="paths" class="section"><div class="section-heading"><div><p class="eyebrow">МАРШРУТЫ ОБУЧЕНИЯ</p><h2>Выбери свой старт</h2></div><p>Три направления, одна большая цель — научиться создавать.</p></div><div class="path-grid">
+<article class="path-card"><div class="path-icon">🌐</div><span class="pill">Веб-разработка</span><h3>HTML и CSS</h3><p>Структура, стили, адаптивная вёрстка и первые собственные страницы.</p><button class="text-btn" data-course="html">Начать изучение →</button></article>
+<article class="path-card"><div class="path-icon">⚡</div><span class="pill">Программирование</span><h3>JavaScript</h3><p>Переменные, функции, условия и интерактивность веб-приложений.</p><button class="text-btn" data-course="js">Начать изучение →</button></article>
+<article class="path-card"><div class="path-icon">🐍</div><span class="pill">Первый язык</span><h3>Python</h3><p>Освой базовый синтаксис, логику, циклы и автоматизацию задач.</p><button class="text-btn" data-course="python">Начать изучение →</button></article>
+</div></section>
+<section id="learn" class="section"><div class="section-heading"><div><p class="eyebrow">УЧИСЬ ПОШАГОВО</p><h2>Твоя учебная панель</h2></div><div class="progress-summary"><div class="progress-ring" id="progressRing"><b id="progressPct">0%</b></div><div><strong>Общий прогресс</strong><small id="progressCount">0 из 6 уроков</small></div></div></div><div class="learning-layout"><aside class="lesson-menu" id="lessonMenu"></aside><article class="lesson-panel" id="lessonPanel" aria-live="polite"></article></div></section>
+<section id="playground" class="section"><div class="section-heading"><div><p class="eyebrow">ПРАКТИКА</p><h2>JavaScript-песочница</h2></div><span class="pill">Запуск в браузере</span></div><div class="play-card"><p>Измени пример и запусти код. Результат и ошибки появятся в консоли ниже.</p><div class="editor-head"><span>script.js</span><button class="small-btn" id="resetEditor">Сбросить</button></div><textarea id="codeEditor" spellcheck="false" autocapitalize="off">const name = "CodeCraft";
+const completed = 2;
+console.log("Привет, " + name + "!");
+console.log("Мои завершённые уроки: " + completed);</textarea><div class="editor-actions"><button class="btn" id="runCode">▶ Запустить</button><button class="btn ghost" id="clearOutput">Очистить вывод</button></div><pre class="output" id="output" aria-live="polite">Вывод программы появится здесь…</pre></div></section>
+<section id="quiz" class="section"><div class="section-heading"><div><p class="eyebrow">ЗАКРЕПИ ЗНАНИЯ</p><h2>Быстрая проверка</h2></div></div><div class="quiz-card"><h3>Какой тег HTML создаёт ссылку?</h3><div id="quizOptions" class="quiz-options"><button data-answer="0">&lt;link&gt;</button><button data-answer="1">&lt;a&gt;</button><button data-answer="2">&lt;href&gt;</button></div><p id="quizFeedback" class="feedback" aria-live="polite">Выбери один вариант.</p><button class="small-btn" id="retryQuiz">Повторить вопрос</button></div></section>
+</main><footer><div class="shell">© 2026 CodeCraft <span>Учись в своём темпе. Создавай каждый день.</span></div></footer>
+<script src="js/lessons.js"></script><script src="js/app.js"></script>
+</body></html>
