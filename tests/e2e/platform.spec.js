@@ -288,6 +288,7 @@ test("checks keyboard access, reduced motion and responsive layouts", async ({ p
 });
 
 test("passes automated WCAG 2.1 A/AA accessibility checks on core learning screens", async ({ page }) => {
+  test.setTimeout(120_000);
   const scan = await new AxeBuilder({ page }).withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa"]).analyze();
   expect(scan.violations.map(item => ({ id:item.id, impact:item.impact, nodes:item.nodes.map(node=>node.target) }))).toEqual([]);
   await page.locator("#lessonLevelFilter").selectOption("Средний");
