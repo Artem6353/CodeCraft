@@ -95,3 +95,25 @@ button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid va
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
+
+
+/* Практическая лаборатория */
+.challenge-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:13px}
+.challenge-menu{display:grid;align-content:start;gap:8px}
+.challenge-pick{padding:12px;text-align:left;border:1px solid var(--line);border-radius:11px;background:var(--panel);color:var(--text);min-width:0}
+.challenge-pick strong,.challenge-pick small{display:block}.challenge-pick small{color:var(--muted);font-size:10px;margin-top:3px}
+.challenge-pick.active{border-color:var(--mint);background:#142c30}
+.challenge-workbench{display:grid;grid-template-columns:minmax(210px,.72fr) minmax(0,1.28fr);gap:12px;min-width:0}
+.challenge-brief,.challenge-editor{min-width:0;padding:16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.challenge-brief h3{margin:12px 0 6px}.challenge-brief p{font-size:13px;color:var(--muted)}
+.challenge-hint{padding:10px;border-radius:9px;background:#1b2a40;color:#c5d5ef;font-size:12px}
+.challenge-result{margin-top:12px;padding:11px;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.challenge-result.success{border-color:#397b68;background:#15352f;color:#aaf0d8}
+.challenge-result.failure{border-color:#81515a;background:#39202b;color:#ffd0d5}
+#challengeCode{display:block;width:100%;min-height:250px;resize:vertical;padding:13px;border:1px solid var(--line);border-top:0;background:#080f1c;color:#dce7ff;font:12px/1.7 ui-monospace,Consolas,monospace;tab-size:2}
+.challenge-checks{display:grid;gap:6px;margin-top:10px}
+.challenge-check{padding:8px 10px;border-radius:8px;background:#0d1728;color:var(--muted);font-size:11px}
+.challenge-check.pass{color:#aaf0d8}.challenge-check.fail{color:#ffd0d5}
+@media(max-width:900px){.challenge-workbench{grid-template-columns:1fr}.challenge-layout{grid-template-columns:180px minmax(0,1fr)}}
+@media(max-width:760px){.challenge-layout{grid-template-columns:1fr}.challenge-menu{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.challenge-menu{grid-template-columns:1fr}.challenge-brief,.challenge-editor{padding:12px}#challengeCode{min-height:210px;font-size:13px}}
