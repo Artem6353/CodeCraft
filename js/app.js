@@ -230,7 +230,11 @@ button { padding: 10px 14px; border: 0; border-radius: 9px; background: #146c57;
   document.querySelector("#message").textContent = "Отличная работа! JavaScript работает.";
 });`
 };
-draftBlock+`\nconst webHtml=$("#webHtml"),webCss=$("#webCss"),webJs=$("#webJs"),webPreview=$("#webLabPreview");`
+let savedDrafts={};
+try{const value=JSON.parse(localStorage.getItem("cc_drafts_v1")||"{}");if(value&&typeof value==="object"&&!Array.isArray(value))savedDrafts=value;}catch(_){}
+function saveDraft(key,value){savedDrafts[key]=value;try{localStorage.setItem("cc_drafts_v1",JSON.stringify(savedDrafts));}catch(_){}}
+function restoreDraft(key,fallback){return typeof savedDrafts[key]==="string"?savedDrafts[key]:fallback;}
+const webHtml=$("#webHtml"),webCss=$("#webCss"),webJs=$("#webJs"),webPreview=$("#webLabPreview");
 function resetWebLab(){webHtml.value=webDefaults.html;webCss.value=webDefaults.css;webJs.value=webDefaults.js;saveDraft("webHtml",webHtml.value);saveDraft("webCss",webCss.value);saveDraft("webJs",webJs.value);runWebLab();}
 function runWebLab(){
  const policy='<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data:; font-src data:; connect-src \'none\'; form-action \'none\'; base-uri \'none\';">';
@@ -242,7 +246,8 @@ function runWebLab(){
 }
 $("#runWebLab").addEventListener("click",runWebLab);
 $("#resetWebLab").addEventListener("click",resetWebLab);
-resetWebLab();
+[["webHtml",webHtml,"html"],["webCss",webCss,"css"],["webJs",webJs,"js"]].forEach(([key,field,defaultKey])=>{field.value=restoreDraft(key,webDefaults[defaultKey]);field.addEventListener("input",()=>saveDraft(key,field.value));});
+runWebLab();
 const challengeTasks = [
  {id:"html-heading",language:"HTML",file:"index.html",title:"Создай заголовок",description:"Добавь на страницу главный заголовок первого уровня и абзац с приветствием. Используй реальные HTML-теги.",hint:"Нужны открывающий и закрывающий теги <h1> и <p>. Текст помести между ними.",starter:"<!-- Напиши здесь HTML -->\n",checks:[["Заголовок h1",code=>/<h1\b[^>]*>[\s\S]*?<\/h1\s*>/i.test(code)],["Абзац p",code=>/<p\b[^>]*>[\s\S]*?<\/p\s*>/i.test(code)],["Заголовок содержит текст",code=>/<h1\b[^>]*>\s*[^<\s][\s\S]*?<\/h1\s*>/i.test(code)]]},
  {id:"html-link",language:"HTML",file:"index.html",title:"Добавь ссылку",description:"Создай ссылку на https://example.com с понятным текстом. Ссылка должна содержать href.",hint:"Используй <a href=\"https://example.com\">Текст ссылки</a>.",starter:"<!-- Создай ссылку -->\n",checks:[["Тег a",code=>/<a\b[^>]*>[\s\S]*?<\/a\s*>/i.test(code)],["Атрибут href",code=>/<a\b[^>]*\bhref\s*=\s*(['\"])https:\/\/example\.com\1/i.test(code)],["Непустой текст ссылки",code=>/<a\b[^>]*>\s*[^<\s][\s\S]*?<\/a\s*>/i.test(code)]]},
