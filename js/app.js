@@ -88,7 +88,7 @@ window.addEventListener("message", event => {
   if (event.data.type !== "CODECRAFT_RESULT" || !pending || event.data.id !== pending.id) return;
   clearTimeout(pending.timer);
   const result = event.data.output || "";
-  output.textContent = event.data.error ? (result ? result + "\\n" : "") + "Ошибка: " + event.data.error : result;
+  output.textContent = event.data.error ? (result ? result + "\n" : "") + "Ошибка: " + event.data.error : result;
   pending = null; $("#runCode").disabled = false;
 });
 $("#runCode").addEventListener("click", () => {
