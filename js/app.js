@@ -162,6 +162,7 @@ function runWebLab(){
 }
 $("#runWebLab").addEventListener("click",runWebLab);
 $("#resetWebLab").addEventListener("click",resetWebLab);
+resetWebLab();
 const challengeTasks = [
  {id:"html-heading",language:"HTML",file:"index.html",title:"Создай заголовок",description:"Добавь на страницу главный заголовок первого уровня и абзац с приветствием. Используй реальные HTML-теги.",hint:"Нужны открывающий и закрывающий теги <h1> и <p>. Текст помести между ними.",starter:"<!-- Напиши здесь HTML -->\n",checks:[["Заголовок h1",code=>/<h1\b[^>]*>[\s\S]*?<\/h1\s*>/i.test(code)],["Абзац p",code=>/<p\b[^>]*>[\s\S]*?<\/p\s*>/i.test(code)],["Заголовок содержит текст",code=>/<h1\b[^>]*>\s*[^<\s][\s\S]*?<\/h1\s*>/i.test(code)]]},
  {id:"html-link",language:"HTML",file:"index.html",title:"Добавь ссылку",description:"Создай ссылку на https://example.com с понятным текстом. Ссылка должна содержать href.",hint:"Используй <a href=\"https://example.com\">Текст ссылки</a>.",starter:"<!-- Создай ссылку -->\n",checks:[["Тег a",code=>/<a\b[^>]*>[\s\S]*?<\/a\s*>/i.test(code)],["Атрибут href",code=>/<a\b[^>]*\bhref\s*=\s*(['\"])https:\/\/example\.com\1/i.test(code)],["Непустой текст ссылки",code=>/<a\b[^>]*>\s*[^<\s][\s\S]*?<\/a\s*>/i.test(code)]]},
