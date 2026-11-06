@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; connect-src 'none'; img-src data:; style-src 'unsafe-inline';">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CodeCraft JavaScript sandbox</title>
+</head>
+<body>
+<script>
+"use strict";
+const safeString = value => {
+  if (typeof value === "string") return value;
+  if (typeof value === "undefined") return "undefined";
+  try { return JSON.stringify(value); } catch (_) { return String(value); }
+};
+window.addEventListener("message", event => {
+  if (event.source !== parent || !event.data || event.data.type !== "CODECRAFT_RUN") return;
+  const lines = [];
+  const output = (kind, args) => lines.push((kind === "log" ? "" : kind + ": ") + args.map(safeString).join(" "));
+  const sandboxConsole = {
+    log: (...args) => output("log", args),
+    info: (...args) => output("info", args),
+    warn: (...args) => output("warn", args),
+    error: (...args) => output("error", args)
+  };
+  try {
+    new Function("console", '"use strict";\n' + String(event.data.code || ""))(sandboxConsole);
+    parent.postMessage({ type: "CODECRAFT_RESULT", id: event.data.id, output: lines.join("\n") || "Код выполнен без вывода." }, "*");
+  } catch (error) {
+    parent.postMessage({ type: "CODECRAFT_RESULT", id: event.data.id, error: error && error.message ? error.message : "Неизвестная ошибка", output: lines.join("\n") }, "*");
+  }
+});
+parent.postMessage({ type: "CODECRAFT_READY" }, "*");
+</script>
+</body>
+</html>
