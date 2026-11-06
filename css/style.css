@@ -131,7 +131,7 @@ button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid va
 @media(max-width:480px){.web-editor textarea{font-size:13px;min-height:145px}.web-editors,.web-preview-wrap{padding:9px}}
 
 /* Панель управления обучением и экзамен */
-.learning-tools{display:grid;grid-template-columns:minmax(180px,1fr) minmax(160px,.55fr) auto;gap:10px;align-items:end;margin:0 0 8px;padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
+.learning-tools{display:grid;grid-template-columns:minmax(180px,1fr) minmax(150px,.55fr) minmax(130px,.45fr) auto;gap:10px;align-items:end;margin:0 0 8px;padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
 .learning-tools label{display:grid;gap:5px;min-width:0}
 .learning-tools label span{font-size:11px;color:var(--muted);font-weight:700}
 .learning-tools input,.learning-tools select{width:100%;min-width:0;min-height:42px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#080f1c;color:var(--text);font:inherit;font-size:13px}
