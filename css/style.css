@@ -161,3 +161,9 @@ button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid va
 .python-output{min-height:110px;max-height:280px;overflow:auto}
 @media(max-width:760px){.python-workbench{grid-template-columns:1fr}.python-info{order:2}}
 @media(max-width:480px){.python-editor,.python-info{padding:10px}#pythonCode{min-height:220px;font-size:13px}.python-editor .editor-head{align-items:flex-start;flex-direction:column}#pythonExample{max-width:none;width:100%}}
+
+/* Сетевой статус и футер PWA */
+footer .shell{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer span{float:none}
+.connection-status{padding:4px 9px;border:1px solid var(--line);border-radius:20px;color:var(--mint);font-size:10px}
+.connection-status.offline{border-color:#81515a;background:#39202b;color:#ffd0d5}
