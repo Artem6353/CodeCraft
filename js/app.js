@@ -150,7 +150,8 @@ document.querySelectorAll("[data-course]").forEach(button => button.addEventList
   showLesson(firstByCourse < 0 ? 0 : firstByCourse);
   $("#learn").scrollIntoView({ behavior: "smooth" });
 }));
-const editor = $("#codeEditor"); const output = $("#output"); const starter = editor.value; const sandboxFrame = $("#jsSandbox");\neditor.value=restoreDraft("javascriptPlayground",starter);editor.addEventListener("input",()=>saveDraft("javascriptPlayground",editor.value));
+const editor = $("#codeEditor"); const output = $("#output"); const starter = editor.value; const sandboxFrame = $("#jsSandbox");
+editor.value=restoreDraft("javascriptPlayground",starter);editor.addEventListener("input",()=>saveDraft("javascriptPlayground",editor.value));
 let requestId = 0; let sandboxReady = false; let pending = null;
 function resetSandbox() { sandboxReady = false; sandboxFrame.src = "sandbox.html"; }
 sandboxFrame.addEventListener("load", () => { sandboxReady = true; });
