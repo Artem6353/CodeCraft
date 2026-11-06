@@ -45,13 +45,23 @@ const knownProjectIds=new Set(["profile","portfolio","landing","taskboard","quiz
 function normalizeProjectSteps(value){const clean={};if(!value||typeof value!=="object"||Array.isArray(value))return clean;Object.entries(value).slice(0,20).forEach(([id,steps])=>{if(!knownProjectIds.has(id)||!Array.isArray(steps))return;clean[id]=[...new Set(steps.filter(n=>Number.isInteger(n)&&n>=0&&n<20))].slice(0,20);});return clean;}
 let projectSteps={};try{projectSteps=normalizeProjectSteps(JSON.parse(localStorage.getItem("cc_project_steps_v1")||"{}"));}catch(_){}
 function exportLearningData(){
- const payload={app:"CodeCraft",version:1,exportedAt:new Date().toISOString(),progress:done,projects:safeStoredArray("cc_projects",knownProjectIds),challenges:safeStoredArray("cc_challenges",getKnownChallengeIds(challengeTasks)),bookmarks:safeStoredArray("cc_bookmarks",validIds),notes:(()=>{try{const value=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");if(!value||typeof value!=="object"||Array.isArray(value))return{};const clean={};Object.entries(value).slice(0,100).forEach(([key,note])=>{if(validIds.has(key)&&typeof note==="string"&&note.length<=5000)clean[key]=note;});return clean;}catch(_){return{};}})(),drafts:(()=>{try{return JSON.parse(localStorage.getItem("cc_drafts_v1")||"{}");}catch(_){return{};}})(),exams:readExamHistory(),topicStats:readExamTopicStats(),projectSteps};
+ const payload={app:"CodeCraft",version:2,schemaVersion:STORAGE_SCHEMA_VERSION,exportedAt:new Date().toISOString(),progress:done,projects:safeStoredArray("cc_projects",knownProjectIds),challenges:safeStoredArray("cc_challenges",getKnownChallengeIds(challengeTasks)),bookmarks:safeStoredArray("cc_bookmarks",validIds),notes:normalizeNotes(readStoredValue("cc_notes_v1",{})),drafts:normalizeDrafts(readStoredValue("cc_drafts_v1",{})),exams:readExamHistory(),topicStats:readExamTopicStats(),projectSteps:normalizeProjectSteps(projectSteps)};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
  const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="codecraft-progress.json";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
- $("#learningToolsStatus").textContent="Резервная копия подготовлена. Сохрани файл в удобное место.";
+ $("#learningToolsStatus").textContent="Резервная копия версии 2 подготовлена. Сохрани файл в удобное место.";
 }
 $("#exportProgress").addEventListener("click",exportLearningData);
 $("#importProgressButton").addEventListener("click",()=>$("#importProgressFile").click());
+function mergeHistory(current,incoming){
+ const merged={...normalizeHistory(current)};
+ Object.entries(normalizeHistory(incoming)).forEach(([key,item])=>{const old=merged[key]||{attempts:0,best:0,last:0};merged[key]={attempts:Math.min(100000,old.attempts+item.attempts),best:Math.max(old.best,item.best),last:item.last};});
+ return merged;
+}
+function mergeTopicStats(current,incoming){
+ const merged=normalizeTopicStats(current);
+ Object.entries(normalizeTopicStats(incoming)).forEach(([key,item])=>{const old=merged[key]||{correct:0,total:0};const total=Math.min(100000,old.total+item.total);merged[key]={total,correct:Math.min(total,old.correct+item.correct)};});
+ return merged;
+}
 $("#importProgressFile").addEventListener("change",event=>{
  const file=event.target.files&&event.target.files[0];if(!file)return;
  if(file.size>2*1024*1024){$("#learningToolsStatus").textContent="Файл слишком большой. Максимальный размер резервной копии — 2 МБ.";event.target.value="";return;}
@@ -59,33 +69,45 @@ $("#importProgressFile").addEventListener("change",event=>{
  reader.onload=()=>{
   try{
    const data=JSON.parse(String(reader.result||""));
-   if(!data||data.app!=="CodeCraft"||data.version!==1)throw new Error("Это не файл резервной копии CodeCraft версии 1.");
-   const importedLessons=Array.isArray(data.progress)?data.progress.filter(id=>validIds.has(id)):[];
-   const importedProjects=Array.isArray(data.projects)?data.projects.filter(id=>knownProjectIds.has(id)):[];
+   if(!data||data.app!=="CodeCraft"||![1,2].includes(data.version))throw new Error("Нужна резервная копия CodeCraft версии 1 или 2.");
+   const importedLessons=sanitizeKnownIds(data.progress,validIds);
+   const importedProjects=sanitizeKnownIds(data.projects,knownProjectIds);
    const importedChallenges=sanitizeKnownIds(data.challenges,getKnownChallengeIds(challengeTasks));
-   done=[...new Set([...done,...importedLessons])];const importedBookmarks=Array.isArray(data.bookmarks)?[...new Set(data.bookmarks.filter(id=>validIds.has(id)))]:[];try{localStorage.setItem("cc_bookmarks",JSON.stringify([...new Set([...safeStoredArray("cc_bookmarks",validIds),...importedBookmarks])]));}catch(_){}if(data.notes&&typeof data.notes==="object"&&!Array.isArray(data.notes)){const cleanNotes={};Object.entries(data.notes).slice(0,100).forEach(([key,note])=>{if(validIds.has(key)&&typeof note==="string"&&note.length<=5000)cleanNotes[key]=note;});try{const existing=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");localStorage.setItem("cc_notes_v1",JSON.stringify({...existing,...cleanNotes}));}catch(_){localStorage.setItem("cc_notes_v1",JSON.stringify(cleanNotes));}}completedProjects=[...new Set([...completedProjects,...importedProjects])];const importedSteps=normalizeProjectSteps(data.projectSteps);Object.entries(importedSteps).forEach(([id,steps])=>{projectSteps[id]=[...new Set([...(projectSteps[id]||[]),...steps])].sort((a,b)=>a-b);});try{localStorage.setItem("cc_project_steps_v1",JSON.stringify(projectSteps));}catch(_){}completedChallenges=[...new Set([...completedChallenges,...importedChallenges])];if(data.exams&&typeof data.exams==="object"&&!Array.isArray(data.exams)){const merged=readExamHistory();Object.entries(data.exams).slice(0,30).forEach(([key,item])=>{if(!/^[a-zA-Zа-яА-Я0-9 +:-]{1,100}$/.test(key)||!item||typeof item!=="object")return;const attempts=Number.isInteger(item.attempts)?Math.max(0,Math.min(100000,item.attempts)):0,best=Number.isInteger(item.best)?Math.max(0,Math.min(100,item.best)):0,last=Number.isInteger(item.last)?Math.max(0,Math.min(100,item.last)):0;if(attempts){const old=merged[key]||{attempts:0,best:0,last:0};merged[key]={attempts:Math.min(100000,old.attempts+attempts),best:Math.max(old.best,best),last};}});try{localStorage.setItem(examHistoryKey,JSON.stringify(merged));}catch(_){}}
-   if(data.topicStats&&typeof data.topicStats==="object"&&!Array.isArray(data.topicStats)){const merged=readExamTopicStats();Object.entries(data.topicStats).slice(0,20).forEach(([key,item])=>{if(!/^(html-structure|html-document|css-foundation|css-layout|js-foundation|js-browser|py-foundation|py-data|other)$/.test(key)||!item||typeof item!=="object")return;const total=Number.isInteger(item.total)?Math.max(0,Math.min(100000,item.total)):0,correct=Number.isInteger(item.correct)?Math.max(0,Math.min(total,item.correct)):0;if(total){const old=merged[key]||{correct:0,total:0};merged[key]={total:Math.min(100000,old.total+total),correct:Math.min(100000,old.correct+correct)};}});try{localStorage.setItem(examTopicStatsKey,JSON.stringify(merged));}catch(_){}}
-   saveProgress();localStorage.setItem("cc_projects",JSON.stringify(completedProjects));localStorage.setItem("cc_challenges",JSON.stringify(completedChallenges));
-   if(data.drafts&&typeof data.drafts==="object"&&!Array.isArray(data.drafts)){
-    const cleanDrafts={};
-    Object.entries(data.drafts).slice(0,100).forEach(([key,value])=>{
-     if(key!=="__proto__"&&key!=="constructor"&&key!=="prototype"&&/^[a-zA-Z0-9:_-]{1,120}$/.test(key)&&typeof value==="string"&&value.length<=150000)cleanDrafts[key]=value;
-    });
-    savedDrafts=cleanDrafts;localStorage.setItem("cc_drafts_v1",JSON.stringify(cleanDrafts));
-   }
+   const importedBookmarks=sanitizeKnownIds(data.bookmarks,validIds);
+   const currentNotes=normalizeNotes(readStoredValue("cc_notes_v1",{})),incomingNotes=normalizeNotes(data.notes);
+   const currentDrafts=normalizeDrafts(readStoredValue("cc_drafts_v1",{})),incomingDrafts=normalizeDrafts(data.drafts);
+   const mergedNotes={...currentNotes,...incomingNotes},mergedDrafts={...currentDrafts,...incomingDrafts};
+   const mergedProjects=[...new Set([...completedProjects,...importedProjects])];
+   const mergedChallenges=[...new Set([...completedChallenges,...importedChallenges])];
+   const mergedProgress=[...new Set([...done,...importedLessons])];
+   const mergedBookmarks=[...new Set([...safeStoredArray("cc_bookmarks",validIds),...importedBookmarks])];
+   const mergedSteps=normalizeProjectSteps(projectSteps),incomingSteps=normalizeProjectSteps(data.projectSteps);
+   Object.entries(incomingSteps).forEach(([id,steps])=>{mergedSteps[id]=[...new Set([...(mergedSteps[id]||[]),...steps])].sort((a,b)=>a-b);});
+   const mergedExams=mergeHistory(readExamHistory(),data.exams);
+   const mergedStats=mergeTopicStats(readExamTopicStats(),data.topicStats);
+   const entries=[
+    ["cc_progress",JSON.stringify(mergedProgress)],["cc_projects",JSON.stringify(mergedProjects)],
+    ["cc_challenges",JSON.stringify(mergedChallenges)],["cc_bookmarks",JSON.stringify(mergedBookmarks)],
+    ["cc_notes_v1",JSON.stringify(mergedNotes)],["cc_drafts_v1",JSON.stringify(mergedDrafts)],
+    ["cc_project_steps_v1",JSON.stringify(mergedSteps)],[examHistoryKey,JSON.stringify(mergedExams)],
+    [examTopicStatsKey,JSON.stringify(mergedStats)],[STORAGE_SCHEMA_KEY,String(STORAGE_SCHEMA_VERSION)]
+   ];
+   writeStorageBatch(entries);
+   done=mergedProgress;completedProjects=mergedProjects;completedChallenges=mergedChallenges;projectSteps=mergedSteps;savedDrafts=mergedDrafts;
    editor.value=restoreDraft("javascriptPlayground",starter);
    webHtml.value=restoreDraft("webHtml",webDefaults.html);webCss.value=restoreDraft("webCss",webDefaults.css);webJs.value=restoreDraft("webJs",webDefaults.js);runWebLab();
    pythonEditor.value=restoreDraft("python:"+activePythonExample,pythonExamples[activePythonExample]||"");
    $("#challengeCode").value=restoreDraft("challenge:"+activeChallenge.id,activeChallenge.starter);
    $("#projectCode").value=restoreDraft("project:"+activeProject.id,activeProject.code);renderProjectPreview();
    renderMenu();progress();renderProjectCards();renderProjectTasks();renderChallengeMenu();updateProjectStatus();renderExamHistory();renderExamTopicStats();
-   $("#learningToolsStatus").textContent="Данные импортированы. Существующий прогресс сохранён и объединён с копией.";
-  }catch(error){$("#learningToolsStatus").textContent="Не удалось импортировать файл: "+error.message;}
+   $("#learningToolsStatus").textContent="Резервная копия импортирована. Прогресс и материалы объединены; существующие данные сохранены.";
+  }catch(error){$("#learningToolsStatus").textContent="Импорт отменён: "+(error&&error.name==="QuotaExceededError"?"недостаточно места в хранилище. Освободи место и повтори попытку.":error.message||"не удалось записать данные.");}
   event.target.value="";
  };
  reader.onerror=()=>{$("#learningToolsStatus").textContent="Не удалось прочитать выбранный файл.";event.target.value="";};
  reader.readAsText(file);
 });
+
 
 
 /* Личный учебный кабинет: закладки и заметки */
@@ -284,6 +306,41 @@ function readExamTopicStats(){
  Object.entries(value).slice(0,20).forEach(([key,item])=>{if(!/^(html-structure|html-document|css-foundation|css-layout|js-foundation|js-browser|py-foundation|py-data|other)$/.test(key)||!item||typeof item!=="object")return;const correct=Number.isInteger(item.correct)?Math.max(0,Math.min(100000,item.correct)):0;const total=Number.isInteger(item.total)?Math.max(0,Math.min(100000,item.total)):0;if(total)clean[key]={correct:Math.min(correct,total),total};});return clean;
  }catch(_){return{};}
 }
+
+/* Версионирование и безопасная миграция локальных учебных данных */
+const STORAGE_SCHEMA_KEY="cc_storage_schema";
+const STORAGE_SCHEMA_VERSION=2;
+function readStoredValue(key,fallback){try{const raw=localStorage.getItem(key);return raw===null?fallback:JSON.parse(raw);}catch(_){return fallback;}}
+function normalizeNotes(value){const clean={};if(!value||typeof value!=="object"||Array.isArray(value))return clean;Object.entries(value).slice(0,100).forEach(([key,note])=>{if(validIds.has(key)&&typeof note==="string"&&note.length<=5000)clean[key]=note;});return clean;}
+function normalizeDrafts(value){const clean={};if(!value||typeof value!=="object"||Array.isArray(value))return clean;Object.entries(value).slice(0,100).forEach(([key,draft])=>{if(key!=="__proto__"&&key!=="constructor"&&key!=="prototype"&&/^[a-zA-Z0-9:_-]{1,120}$/.test(key)&&typeof draft==="string"&&draft.length<=150000)clean[key]=draft;});return clean;}
+function normalizeHistory(value){const clean={};if(!value||typeof value!=="object"||Array.isArray(value))return clean;Object.entries(value).slice(0,30).forEach(([key,item])=>{if(!/^[a-zA-Zа-яА-Я0-9 +:-]{1,100}$/.test(key)||!item||typeof item!=="object")return;const attempts=Number.isInteger(item.attempts)?Math.max(0,Math.min(100000,item.attempts)):0,best=Number.isInteger(item.best)?Math.max(0,Math.min(100,item.best)):0,last=Number.isInteger(item.last)?Math.max(0,Math.min(100,item.last)):0;if(attempts)clean[key]={attempts,best,last};});return clean;}
+function normalizeTopicStats(value){const clean={},allowed=/^(html-structure|html-document|css-foundation|css-layout|js-foundation|js-browser|py-foundation|py-data|other)$/;if(!value||typeof value!=="object"||Array.isArray(value))return clean;Object.entries(value).slice(0,20).forEach(([key,item])=>{if(!allowed.test(key)||!item||typeof item!=="object")return;const total=Number.isInteger(item.total)?Math.max(0,Math.min(100000,item.total)):0,correct=Number.isInteger(item.correct)?Math.max(0,Math.min(total,item.correct)):0;if(total)clean[key]={correct,total};});return clean;}
+function writeStorageBatch(entries){const previous=new Map();try{entries.forEach(([key])=>previous.set(key,localStorage.getItem(key)));entries.forEach(([key,value])=>localStorage.setItem(key,value));return true;}catch(error){for(const [key,value] of previous){try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}catch(_){}}throw error;}}
+function migrateLearningStorage(){
+ let version=Number(readStoredValue(STORAGE_SCHEMA_KEY,0));if(!Number.isInteger(version)||version<0||version>STORAGE_SCHEMA_VERSION)version=0;
+ if(version===STORAGE_SCHEMA_VERSION)return true;
+ const entries=[];
+ if(version<1){
+  entries.push(["cc_progress",JSON.stringify(sanitizeKnownIds(readStoredValue("cc_progress",[]),validIds))]);
+  entries.push(["cc_bookmarks",JSON.stringify(sanitizeKnownIds(readStoredValue("cc_bookmarks",[]),validIds))]);
+  entries.push(["cc_projects",JSON.stringify(sanitizeKnownIds(readStoredValue("cc_projects",[]),knownProjectIds))]);
+  entries.push(["cc_challenges",JSON.stringify(sanitizeKnownIds(readStoredValue("cc_challenges",[]),getKnownChallengeIds(challengeTasks)))]);
+  version=1;
+ }
+ if(version<2){
+  entries.push(["cc_notes_v1",JSON.stringify(normalizeNotes(readStoredValue("cc_notes_v1",{})))]);
+  entries.push(["cc_drafts_v1",JSON.stringify(normalizeDrafts(readStoredValue("cc_drafts_v1",{})))]);
+  entries.push(["cc_project_steps_v1",JSON.stringify(normalizeProjectSteps(readStoredValue("cc_project_steps_v1",{})))]);
+  entries.push([examHistoryKey,JSON.stringify(normalizeHistory(readStoredValue(examHistoryKey,{})))]);
+  entries.push([examTopicStatsKey,JSON.stringify(normalizeTopicStats(readStoredValue(examTopicStatsKey,{})))]);
+  version=2;
+ }
+ entries.push([STORAGE_SCHEMA_KEY,String(version)]);
+ try{writeStorageBatch(entries);projectSteps=normalizeProjectSteps(readStoredValue("cc_project_steps_v1",{}));return true;}
+ catch(_){return false;}
+}
+const storageMigrationSucceeded=migrateLearningStorage();
+
 function recordExamAnswer(question,correct){
  const topic=topicForQuestion(question),stats=readExamTopicStats(),item=stats[topic.key]||{correct:0,total:0};item.total=Math.min(100000,item.total+1);if(correct)item.correct=Math.min(item.total,item.correct+1);stats[topic.key]=item;
  try{localStorage.setItem(examTopicStatsKey,JSON.stringify(stats));}catch(_){}
