@@ -6,7 +6,7 @@
 <title>CodeCraft — академия программирования</title><link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header class="topbar"><a class="brand" href="#"><span class="brand-mark">&lt;/&gt;</span> CodeCraft</a><button class="menu-btn" id="menuBtn" aria-label="Открыть меню" aria-expanded="false">☰</button><nav id="nav"><a href="#paths">Направления</a><a href="#learn">Обучение</a><a href="#playground">Практика</a><a href="#quiz">Тест</a></nav></header>
+<header class="topbar"><a class="brand" href="#"><span class="brand-mark">&lt;/&gt;</span> CodeCraft</a><button class="menu-btn" id="menuBtn" aria-label="Открыть меню" aria-expanded="false">☰</button><nav id="nav"><a href="#paths">Направления</a><a href="#learn">Обучение</a><a href="#playground">Практика</a><a href="#projects">Проекты</a><a href="#quiz">Тест</a></nav></header>
 <main class="shell">
 <section class="hero"><div><p class="eyebrow">ТВОЙ ПУТЬ В IT НАЧИНАЕТСЯ ЗДЕСЬ</p><h1>Учись создавать.<br><span>Создавай будущее.</span></h1><p class="lead">Понятные уроки, практика в браузере и заметный прогресс. Начни с нуля и двигайся в собственном темпе.</p><div class="actions"><a class="btn" href="#paths">Выбрать направление <b>→</b></a><a class="btn ghost" href="#playground">Попробовать код</a></div></div><div class="code-card"><div class="window-dots"><i></i><i></i><i></i><span>hello.js</span></div><pre><span class="purple">const</span> future = <span class="green">"developer"</span>;
 
@@ -26,6 +26,16 @@
 const completed = 2;
 console.log("Привет, " + name + "!");
 console.log("Мои завершённые уроки: " + completed);</textarea><div class="editor-actions"><button class="btn" id="runCode">▶ Запустить</button><button class="btn ghost" id="clearOutput">Очистить вывод</button></div><pre class="output" id="output" aria-live="polite">Вывод программы появится здесь…</pre></div><iframe id="jsSandbox" title="Изолированная среда JavaScript" src="sandbox.html" sandbox="allow-scripts" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0"></iframe></section>
+
+<section id="projects" class="section">
+ <div class="section-heading"><div><p class="eyebrow">СОЗДАВАЙ САМОСТОЯТЕЛЬНО</p><h2>Мастерская мини-проектов</h2></div><span class="pill">HTML + CSS · Без сборки</span></div>
+ <p class="project-intro">Выбери задачу, измени код и посмотри результат. Начни с шаблона, а затем выполни дополнительные требования.</p>
+ <div class="project-grid" id="projectGrid"></div>
+ <div class="project-workbench">
+  <div class="project-instructions"><span class="pill" id="projectLevel">Практика · Начальный</span><h3 id="projectTitle">Карточка профиля</h3><p id="projectDescription"></p><h4>Что нужно сделать</h4><ul id="projectTasks"></ul><button class="small-btn" id="completeProject">Отметить проект выполненным</button><p class="project-status" id="projectStatus" aria-live="polite"></p></div>
+  <div class="project-editor"><div class="editor-head"><span>HTML + CSS</span><button class="small-btn" id="resetProject">Вернуть шаблон</button></div><textarea id="projectCode" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Редактор HTML и CSS проекта"></textarea><div class="editor-actions"><button class="btn" id="previewProject">▶ Обновить предпросмотр</button></div><iframe id="projectPreview" title="Предпросмотр учебного проекта" sandbox="" loading="lazy"></iframe><p class="preview-note">Предпросмотр изолирован: JavaScript отключён, сетевые запросы заблокированы.</p></div>
+ </div>
+</section>
 <section id="quiz" class="section"><div class="section-heading"><div><p class="eyebrow">ЗАКРЕПИ ЗНАНИЯ</p><h2>Быстрая проверка</h2></div></div><div class="quiz-card"><h3>Какой тег HTML создаёт ссылку?</h3><div id="quizOptions" class="quiz-options"><button data-answer="0">&lt;link&gt;</button><button data-answer="1">&lt;a&gt;</button><button data-answer="2">&lt;href&gt;</button></div><p id="quizFeedback" class="feedback" aria-live="polite">Выбери один вариант.</p><button class="small-btn" id="retryQuiz">Повторить вопрос</button></div></section>
 </main><footer><div class="shell">© 2026 CodeCraft <span>Учись в своём темпе. Создавай каждый день.</span></div></footer>
 <script src="js/lessons.js"></script><script src="js/app.js"></script>
