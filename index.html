@@ -7,7 +7,7 @@
 </head>
 <body>
 <a class="skip-link" href="#mainContent">Перейти к содержимому</a>
-<header class="topbar"><a class="brand" href="#"><span class="brand-mark">&lt;/&gt;</span> CodeCraft</a><button class="menu-btn" id="menuBtn" aria-label="Открыть меню" aria-expanded="false">☰</button><nav id="nav"><a href="#paths">Направления</a><a href="#learn">Обучение</a><a href="#playground">Практика</a><a href="#challenges">Задания</a><a href="#projects">Проекты</a><a href="#quiz">Тест</a></nav></header>
+<header class="topbar"><a class="brand" href="#"><span class="brand-mark">&lt;/&gt;</span> CodeCraft</a><button class="menu-btn" id="menuBtn" aria-label="Открыть меню" aria-expanded="false">☰</button><nav id="nav"><a href="#paths">Направления</a><a href="#learn">Обучение</a><a href="#web-lab">Веб-лаборатория</a><a href="#challenges">Задания</a><a href="#projects">Проекты</a><a href="#quiz">Тест</a></nav></header>
 <main class="shell" id="mainContent">
 <section class="hero"><div><p class="eyebrow">ТВОЙ ПУТЬ В IT НАЧИНАЕТСЯ ЗДЕСЬ</p><h1>Учись создавать.<br><span>Создавай будущее.</span></h1><p class="lead">Понятные уроки, практика в браузере и заметный прогресс. Начни с нуля и двигайся в собственном темпе.</p><div class="actions"><a class="btn" href="#paths">Выбрать направление <b>→</b></a><a class="btn ghost" href="#playground">Попробовать код</a></div></div><div class="code-card"><div class="window-dots"><i></i><i></i><i></i><span>hello.js</span></div><pre><span class="purple">const</span> future = <span class="green">"developer"</span>;
 
@@ -29,6 +29,20 @@ const completed = 2;
 console.log("Привет, " + name + "!");
 console.log("Мои завершённые уроки: " + completed);</textarea><div class="editor-actions"><button class="btn" id="runCode">▶ Запустить</button><button class="btn ghost" id="clearOutput">Очистить вывод</button></div><pre class="output" id="output" aria-live="polite">Вывод программы появится здесь…</pre></div><iframe id="jsSandbox" title="Изолированная среда JavaScript" src="sandbox.html" sandbox="allow-scripts" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0"></iframe></section>
 
+<section id="web-lab" class="section">
+ <div class="section-heading"><div><p class="eyebrow">СОЗДАЙ СВОЮ СТРАНИЦУ</p><h2>Веб-лаборатория</h2></div><span class="pill">HTML · CSS · JavaScript</span></div>
+ <p class="project-intro">Редактируй три части сайта отдельно и запускай результат. Код выполняется в изолированном окне без доступа к данным и страницам сайта.</p>
+ <div class="web-lab">
+  <div class="web-editors">
+   <div class="web-editor"><div class="editor-head"><label for="webHtml">index.html</label><span>HTML</span></div><textarea id="webHtml" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="HTML редактор"></textarea></div>
+   <div class="web-editor"><div class="editor-head"><label for="webCss">style.css</label><span>CSS</span></div><textarea id="webCss" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="CSS редактор"></textarea></div>
+   <div class="web-editor"><div class="editor-head"><label for="webJs">script.js</label><span>JavaScript</span></div><textarea id="webJs" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="JavaScript редактор"></textarea></div>
+   <div class="editor-actions"><button class="btn" id="runWebLab">▶ Запустить страницу</button><button class="btn ghost" id="resetWebLab">Сбросить пример</button></div>
+   <p class="preview-note" id="webLabStatus" aria-live="polite">Измени код и нажми «Запустить страницу».</p>
+  </div>
+  <div class="web-preview-wrap"><div class="editor-head"><span>Предпросмотр</span><span>Изолированный iframe</span></div><iframe id="webLabPreview" title="Предпросмотр HTML, CSS и JavaScript" sandbox="allow-scripts" loading="lazy"></iframe></div>
+ </div>
+</section>
 <section id="challenges" class="section">
  <div class="section-heading"><div><p class="eyebrow">ПРОВЕРЬ СЕБЯ НА ПРАКТИКЕ</p><h2>Лаборатория заданий</h2></div><span class="pill">Автоматическая проверка</span></div>
  <p class="project-intro">Выбери задачу, напиши решение и проверь его. Проверка анализирует структуру и ключевые конструкции кода — ничего не запускается в основной странице.</p>
