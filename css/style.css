@@ -216,3 +216,29 @@ footer span{float:none}
 .exam-review-item p{margin:0;color:var(--mint);font-size:12px;overflow-wrap:anywhere}
 .exam-review-item small{color:var(--muted);font-size:11px;line-height:1.5;overflow-wrap:anywhere}
 .exam-result .small-btn{justify-self:start;min-height:42px}
+
+/* Рабочая область веб-лаборатории: вкладки, масштаб и узкие экраны */
+.web-workspace{display:grid;gap:10px}
+.workspace-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:9px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.workspace-tabs,.workspace-tools{display:flex;align-items:center;gap:6px;min-width:0}
+.workspace-tab{min-height:38px;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel2);color:var(--muted);font-size:12px;font-weight:750}
+.workspace-tab.active{border-color:var(--mint);background:#15352f;color:var(--mint)}
+.workspace-tools span{min-width:42px;text-align:center;color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+.workspace-tools .small-btn{min-width:38px;min-height:38px;padding:7px}
+.web-editors .editor-actions{margin-top:12px}
+.web-editors .preview-note{margin:9px 0 0}
+@media(max-width:760px){
+ .workspace-toolbar{align-items:stretch}
+ .workspace-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%}
+ .workspace-tab{padding:8px 4px;font-size:11px}
+ .workspace-tools{justify-content:flex-end}
+ .web-lab{grid-template-columns:minmax(0,1fr)}
+ .web-editors,.web-preview-wrap{display:none}
+ .web-editor.mobile-active,.web-preview-wrap.mobile-active{display:block}
+ .web-editors:has(.web-editor.mobile-active){display:block}
+ .web-editors:has(.web-editor.mobile-active) .web-editor:not(.mobile-active){display:none}
+ .web-editors:has(.web-editor.mobile-active) .editor-actions,.web-editors:has(.web-editor.mobile-active) .preview-note{display:flex}
+ #webLabPreview{height:55vh;min-height:280px;max-height:620px}
+ .web-editor textarea{min-height:42vh;max-height:65vh;font-size:13px;resize:vertical}
+}
+@media(max-width:380px){.workspace-tab{font-size:10px}.workspace-toolbar{padding:7px}}
