@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:;">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CodeCraft Python sandbox</title>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+<script>
+"use strict";
+const send = payload => parent.postMessage(payload, "*");
+if (typeof Sk === "undefined") {
+  send({type:"CODECRAFT_PYTHON_ERROR",message:"Не удалось загрузить Skulpt. Проверь подключение к интернету и обнови страницу."});
+} else {
+  function builtinRead(path) {
+    const files = Sk.builtinFiles && Sk.builtinFiles.files;
+    if (!files || typeof files[path] !== "string") throw new Error("Модуль недоступен в учебной библиотеке: " + path);
+    return files[path];
+  }
+  let running = false;
+  window.addEventListener("message", event => {
+    if (event.source !== parent || !event.data || event.data.type !== "CODECRAFT_PYTHON_RUN" || running) return;
+    const id = event.data.id;
+    const code = String(event.data.code || "");
+    let output = "";
+    running = true;
+    try {
+      Sk.configure({
+        output: text => { output += String(text); },
+        read: builtinRead,
+        __future__: Sk.python3,
+        execLimit: 3000
+      });
+      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true)).then(
+        () => { running = false; send({type:"CODECRAFT_PYTHON_RESULT",id,output:output || "Программа выполнена без вывода."}); },
+        error => { running = false; send({type:"CODECRAFT_PYTHON_RESULT",id,output,error:String(error && error.toString ? error.toString() : error)}); }
+      );
+    } catch (error) {
+      running = false;
+      send({type:"CODECRAFT_PYTHON_RESULT",id,output,error:String(error && error.message ? error.message : error)});
+    }
+  });
+  send({type:"CODECRAFT_PYTHON_READY"});
+}
+</script>
+</body>
+</html>
