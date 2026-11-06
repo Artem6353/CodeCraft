@@ -22,7 +22,7 @@ const context = { window: {} };
 vm.runInNewContext(lessonsSource, context, { filename: "js/lessons.js" });
 const lessons = context.window.CODECRAFT_LESSONS;
 assert.ok(Array.isArray(lessons), "lesson catalog must be an array");
-assert.equal(lessons.length, 32, "expected 32 lessons");
+assert.equal(lessons.length, 44, "expected 44 lessons");
 const lessonIds = lessons.map(item => item.id);
 assert.equal(new Set(lessonIds).size, lessonIds.length, "lesson IDs must be unique");
 for (const lesson of lessons) {
@@ -31,7 +31,7 @@ for (const lesson of lessons) {
   assert.ok(Number.isInteger(lesson.correct) && lesson.correct >= 0 && lesson.correct < lesson.options.length, "lesson answer index is invalid");
   assert.ok(lesson.question && lesson.explanation, "lesson question or explanation is missing");
 }
-for (const [course, count] of [["HTML и CSS", 16], ["JavaScript", 8], ["Python", 8]]) {
+for (const [course, count] of [["HTML и CSS", 20], ["JavaScript", 12], ["Python", 12]]) {
   assert.equal(lessons.filter(item => item.course === course).length, count, "unexpected lesson count: " + course);
 }
 
@@ -124,6 +124,10 @@ assert.equal(app.split("calculateLearningXP(done.length,completedProjects.length
 assert.match(app, /challenges:safeStoredArray\("cc_challenges",getKnownChallengeIds\(challengeTasks\)\)/, "backup export must use the current challenge registry");
 assert.match(app, /sanitizeKnownIds\(data.challenges,getKnownChallengeIds\(challengeTasks\)\)/, "backup import must use the current challenge registry");
 assert.match(css, /@media\(max-width:520px\)/);
+assert.match(css, /safe-area-inset-top/);
+assert.match(css, /100dvh/);
+assert.match(css, /orientation:landscape/);
+assert.match(css, /:focus-visible/);
 assert.match(css, /@media\(max-width:900px\)[\s\S]*?\.topbar nav\{display:none\}/, "tablet navigation must collapse before the header overflows");
 assert.match(css, /\.web-lab/);
 assert.match(html, /data-lab-panel="html"/);
@@ -139,12 +143,15 @@ assert.doesNotMatch(css, /:has\(/);
 assert.match(app, /function exportLearningData/);
 assert.match(app, /function renderStudentDashboard/);
 assert.match(app, /function validateProject/);
+assert.match(app, /function renderProjectTasks/);
+assert.match(app, /cc_project_steps_v1/);
+assert.match(app, /projectSteps:projectSteps/);
 const projectStart = app.indexOf("const projectTemplates = [");
 const projectEnd = app.indexOf("let activeProject", projectStart);
 assert.ok(projectStart >= 0 && projectEnd > projectStart, "project templates are missing");
 const projectSource = app.slice(projectStart, projectEnd).replace("const projectTemplates = ", "");
 const projectTemplates = vm.runInNewContext(projectSource);
-assert.equal(projectTemplates.length, 3, "expected three guided projects");
+assert.equal(projectTemplates.length, 6, "expected six guided projects");
 for (const project of projectTemplates) {
   assert.ok(Array.isArray(project.checks) && project.checks.length >= 4, "project checks missing: " + project.id);
   for (const [label, check] of project.checks) {
@@ -181,6 +188,7 @@ for (const course of ["HTML и CSS", "JavaScript", "Python"]) {
 }
 for (const level of ["Начальный", "Начальный+"]) {
   assert.ok(lessons.some(item => item.level === level), "exam difficulty is missing: " + level);
+assert.equal(lessons.filter(item => item.level === "Средний").length, 12, "expected 12 intermediate lessons");
 }
 assert.match(app, /function saveDraft/);
 assert.match(app, /CODECRAFT_PYTHON_PING/);
@@ -219,6 +227,7 @@ assert.match(pythonSandbox, /Перезапустить среду/);
 assert.match(pythonSandbox, /execLimit: 3000/);
 
 assert.equal(packageData.devDependencies["@playwright/test"], "1.56.1", "Playwright version must be pinned");
+assert.equal(packageData.devDependencies["@axe-core/playwright"], "4.10.3", "axe-core integration must be pinned");
 assert.equal(packageData.scripts["test:e2e"], "playwright test", "browser test script is missing");
 assert.match(playwrightConfig, /testDir: "\.\/tests\/e2e"/);
 assert.match(playwrightConfig, /webServer:/);
