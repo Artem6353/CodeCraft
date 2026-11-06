@@ -50,13 +50,13 @@ const examples = {
   "html-heading": "<h1>Hello</h1><p>Welcome</p>",
   "html-link": '<a href="https://example.com">Example</a>',
   "css-flex": ".cards { display: flex; gap: 12px; }",
-  "js-function": "function double(number) { return number * 2; }\\nconsole.log(double(5));",
+  "js-function": "function double(number) { return number * 2; }\nconsole.log(double(5));",
   "js-condition": 'const score = 75; if (score >= 60) { console.log("Зачёт"); } else { console.log("Попробуй ещё"); }',
   "html-semantic": "<header>Header</header><main><h1>Title</h1></main><footer>Footer</footer>",
   "css-grid": ".gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }",
   "js-array": 'const fruits = ["apple", "pear", "plum"]; fruits.push("orange");',
-  "py-loop": "for number in range(5):\\n    print(number)",
-  "py-dict": 'profile = {"name": "Аня", "level": 1}\\nprint(profile["name"])'
+  "py-loop": "for number in range(5):\n    print(number)",
+  "py-dict": 'profile = {"name": "Аня", "level": 1}\nprint(profile["name"])'
 };
 for (const task of challenges) {
   assert.ok(Array.isArray(task.checks) && task.checks.length > 0, "challenge checks missing: " + task.id);
