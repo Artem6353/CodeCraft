@@ -150,6 +150,10 @@ document.querySelectorAll("[data-course]").forEach(button => button.addEventList
   showLesson(firstByCourse < 0 ? 0 : firstByCourse);
   $("#learn").scrollIntoView({ behavior: "smooth" });
 }));
+let savedDrafts={};
+try{const value=JSON.parse(localStorage.getItem("cc_drafts_v1")||"{}");if(value&&typeof value==="object"&&!Array.isArray(value))savedDrafts=value;}catch(_){}
+function saveDraft(key,value){savedDrafts[key]=value;try{localStorage.setItem("cc_drafts_v1",JSON.stringify(savedDrafts));}catch(_){}}
+function restoreDraft(key,fallback){return typeof savedDrafts[key]==="string"?savedDrafts[key]:fallback;}
 const editor = $("#codeEditor"); const output = $("#output"); const starter = editor.value; const sandboxFrame = $("#jsSandbox");
 editor.value=restoreDraft("javascriptPlayground",starter);editor.addEventListener("input",()=>saveDraft("javascriptPlayground",editor.value));
 let requestId = 0; let sandboxReady = false; let pending = null;
@@ -231,10 +235,6 @@ button { padding: 10px 14px; border: 0; border-radius: 9px; background: #146c57;
   document.querySelector("#message").textContent = "Отличная работа! JavaScript работает.";
 });`
 };
-let savedDrafts={};
-try{const value=JSON.parse(localStorage.getItem("cc_drafts_v1")||"{}");if(value&&typeof value==="object"&&!Array.isArray(value))savedDrafts=value;}catch(_){}
-function saveDraft(key,value){savedDrafts[key]=value;try{localStorage.setItem("cc_drafts_v1",JSON.stringify(savedDrafts));}catch(_){}}
-function restoreDraft(key,fallback){return typeof savedDrafts[key]==="string"?savedDrafts[key]:fallback;}
 const webHtml=$("#webHtml"),webCss=$("#webCss"),webJs=$("#webJs"),webPreview=$("#webLabPreview");
 function resetWebLab(){webHtml.value=webDefaults.html;webCss.value=webDefaults.css;webJs.value=webDefaults.js;saveDraft("webHtml",webHtml.value);saveDraft("webCss",webCss.value);saveDraft("webJs",webJs.value);runWebLab();}
 function runWebLab(){
