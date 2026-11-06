@@ -27,6 +27,23 @@
 <section id="student-dashboard" class="section">
  <div class="section-heading"><div><p class="eyebrow">ТВОЙ ЛИЧНЫЙ ПРОГРЕСС</p><h2>Учебный кабинет</h2></div><span class="pill">Сохраняется на устройстве</span></div>
  <div class="student-stats" id="studentStats" aria-live="polite"></div>
+ <div class="student-guidance">
+  <section class="student-panel next-step-panel" aria-labelledby="nextStepTitle">
+   <div class="student-panel-heading"><h3>Твой следующий шаг</h3><span class="pill" id="nextStepBadge">План</span></div>
+   <h4 id="nextStepTitle">Продолжи обучение</h4>
+   <p class="next-step-copy" id="nextStepDescription" aria-live="polite"></p>
+   <p class="next-step-meta" id="nextStepMeta"></p>
+   <button class="btn" type="button" id="nextStepAction">Открыть урок</button>
+  </section>
+  <section class="student-panel course-progress-panel" aria-labelledby="courseProgressTitle">
+   <div class="student-panel-heading"><h3 id="courseProgressTitle">Прогресс по направлениям</h3><span>3 курса</span></div>
+   <div id="courseProgressList" class="course-progress-list"></div>
+  </section>
+  <section class="student-panel practice-progress-panel" aria-labelledby="practiceProgressTitle">
+   <div class="student-panel-heading"><h3 id="practiceProgressTitle">Практика и проекты</h3><span>Следующие цели</span></div>
+   <div id="practiceProgressList" class="practice-progress-list"></div>
+  </section>
+ </div>
  <div class="student-library">
   <div class="student-panel"><div class="student-panel-heading"><h3>Избранные уроки</h3><span id="bookmarkCount">0</span></div><div id="bookmarkList" class="saved-lesson-list"></div></div>
   <div class="student-panel"><div class="student-panel-heading"><h3>Мои заметки</h3><span id="notesCount">0</span></div><div id="notesList" class="saved-lesson-list"></div></div>
