@@ -399,5 +399,18 @@ $("#previewProject").addEventListener("click",renderProjectPreview);
 $("#resetProject").addEventListener("click",()=>{$("#projectCode").value=activeProject.code;saveDraft("project:"+activeProject.id,activeProject.code);renderProjectPreview();});
 $("#completeProject").addEventListener("click",()=>{if(!completedProjects.includes(activeProject.id))completedProjects.push(activeProject.id);try{localStorage.setItem("cc_projects",JSON.stringify(completedProjects));}catch(_){}updateProjectStatus();renderProjectCards();renderAchievements();});
 renderProjectCards();selectProject(activeProject.id);
+const connectionStatus=$("#connectionStatus");
+function updateConnectionStatus(){
+ if(!connectionStatus)return;
+ const online=navigator.onLine;
+ connectionStatus.textContent=online?"Онлайн":"Офлайн · доступен сохранённый контент";
+ connectionStatus.classList.toggle("offline",!online);
+}
+window.addEventListener("online",updateConnectionStatus);
+window.addEventListener("offline",updateConnectionStatus);
+updateConnectionStatus();
+if("serviceWorker" in navigator&&location.protocol!=="file:"){
+ window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
 showLesson(0); progress();
 })();
