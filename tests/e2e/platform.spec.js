@@ -71,6 +71,7 @@ test("runs JavaScript in the Worker, times out an infinite loop and recovers", a
 });
 
 test("runs Python in Skulpt when the CDN is available", async ({ page }) => {
+  await page.locator("#python-lab").scrollIntoViewIfNeeded();
   const status = page.locator("#pythonStatus");
   await expect(status).toContainText("Интерпретатор готов", { timeout: 30000 });
   await page.locator("#pythonCode").fill('print("python-ok")');
