@@ -298,6 +298,15 @@ test("mobile navigation supports Escape, outside click and link selection", asyn
   await expect(nav).not.toHaveClass(/open/);
   await expect(menuButton).toHaveAttribute("aria-expanded", "false");
   await expect(page).toHaveURL(/#learn$/);
+
+  await page.setViewportSize({ width: 900, height: 900 });
+  await menuButton.click();
+  await expect(nav).toHaveClass(/open/);
+  await page.setViewportSize({ width: 901, height: 900 });
+  await expect(nav).not.toHaveClass(/open/);
+  await expect(menuButton).toBeHidden();
+  await page.setViewportSize({ width: 900, height: 900 });
+  await expect(menuButton).toBeVisible();
 });
 
 test("checks keyboard access, reduced motion and responsive layouts", async ({ page }) => {
