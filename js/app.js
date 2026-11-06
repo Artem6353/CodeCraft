@@ -40,7 +40,7 @@ function renderAchievements(){
 function safeStoredArray(key,allowed){try{const value=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(value)?[...new Set(value.filter(id=>typeof id==="string"&&allowed.has(id)))]:[];}catch(_){return[];}}
 const knownProjectIds=new Set(["profile","portfolio","landing"]);
 function exportLearningData(){
- const payload={app:"CodeCraft",version:1,exportedAt:new Date().toISOString(),progress:done,projects:safeStoredArray("cc_projects",knownProjectIds),challenges:safeStoredArray("cc_challenges",new Set(["html-heading","html-link","css-flex","js-function","js-condition","html-semantic","css-grid","js-array","py-loop","py-dict"])),drafts:(()=>{try{return JSON.parse(localStorage.getItem("cc_drafts_v1")||"{}");}catch(_){return{};}})()};
+ const payload={app:"CodeCraft",version:1,exportedAt:new Date().toISOString(),progress:done,projects:safeStoredArray("cc_projects",knownProjectIds),challenges:safeStoredArray("cc_challenges",new Set(["html-heading","html-link","css-flex","js-function","js-condition","html-semantic","css-grid","js-array","py-loop","py-dict"])),bookmarks:safeStoredArray("cc_bookmarks",validIds),notes:(()=>{try{const value=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");if(!value||typeof value!=="object"||Array.isArray(value))return{};const clean={};Object.entries(value).slice(0,100).forEach(([key,note])=>{if(validIds.has(key)&&typeof note==="string"&&note.length<=5000)clean[key]=note;});return clean;}catch(_){return{};}})(),drafts:(()=>{try{return JSON.parse(localStorage.getItem("cc_drafts_v1")||"{}");}catch(_){return{};}})()};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
  const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="codecraft-progress.json";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
  $("#learningToolsStatus").textContent="Резервная копия подготовлена. Сохрани файл в удобное место.";
@@ -59,7 +59,7 @@ $("#importProgressFile").addEventListener("change",event=>{
    const importedProjects=Array.isArray(data.projects)?data.projects.filter(id=>knownProjectIds.has(id)):[];
    const allowedChallenges=new Set(["html-heading","html-link","css-flex","js-function","js-condition","html-semantic","css-grid","js-array","py-loop","py-dict"]);
    const importedChallenges=Array.isArray(data.challenges)?data.challenges.filter(id=>allowedChallenges.has(id)):[];
-   done=[...new Set([...done,...importedLessons])];completedProjects=[...new Set([...completedProjects,...importedProjects])];completedChallenges=[...new Set([...completedChallenges,...importedChallenges])];
+   done=[...new Set([...done,...importedLessons])];const importedBookmarks=Array.isArray(data.bookmarks)?[...new Set(data.bookmarks.filter(id=>validIds.has(id)))]:[];try{localStorage.setItem("cc_bookmarks",JSON.stringify([...new Set([...safeStoredArray("cc_bookmarks",validIds),...importedBookmarks])]));}catch(_){}if(data.notes&&typeof data.notes==="object"&&!Array.isArray(data.notes)){const cleanNotes={};Object.entries(data.notes).slice(0,100).forEach(([key,note])=>{if(validIds.has(key)&&typeof note==="string"&&note.length<=5000)cleanNotes[key]=note;});try{const existing=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");localStorage.setItem("cc_notes_v1",JSON.stringify({...existing,...cleanNotes}));}catch(_){localStorage.setItem("cc_notes_v1",JSON.stringify(cleanNotes));}}completedProjects=[...new Set([...completedProjects,...importedProjects])];completedChallenges=[...new Set([...completedChallenges,...importedChallenges])];
    saveProgress();localStorage.setItem("cc_projects",JSON.stringify(completedProjects));localStorage.setItem("cc_challenges",JSON.stringify(completedChallenges));
    if(data.drafts&&typeof data.drafts==="object"&&!Array.isArray(data.drafts)){
     const cleanDrafts={};
@@ -82,6 +82,25 @@ $("#importProgressFile").addEventListener("change",event=>{
  reader.readAsText(file);
 });
 
+
+/* Личный учебный кабинет: закладки и заметки */
+function renderStudentDashboard(){
+ const stats=$("#studentStats");if(!stats)return;
+ const bookmarks=safeStoredArray("cc_bookmarks",validIds);let notes={};
+ try{const value=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");if(value&&typeof value==="object"&&!Array.isArray(value))notes=value;}catch(_){}
+ const noteIds=Object.keys(notes).filter(id=>validIds.has(id)&&typeof notes[id]==="string"&&notes[id].trim());
+ const xp=done.length*20+safeStoredArray("cc_projects",knownProjectIds).length*50+safeStoredArray("cc_challenges",new Set(["html-heading","html-link","css-flex","js-function","js-condition","html-semantic","css-grid","js-array","py-loop","py-dict"])).length*30;
+ const cards=[[done.length+" / "+lessons.length,"уроков пройдено"],[bookmarks.length,"уроков в избранном"],[noteIds.length,"личных заметок"],[xp+" XP","заработано опыта"]];
+ stats.replaceChildren();cards.forEach(([value,label])=>{const card=document.createElement("div");card.className="student-stat";const strong=document.createElement("strong");strong.textContent=value;const small=document.createElement("span");small.textContent=label;card.append(strong,small);stats.append(card);});
+ $("#bookmarkCount").textContent=String(bookmarks.length);$("#notesCount").textContent=String(noteIds.length);
+ const bookmarkList=$("#bookmarkList");bookmarkList.replaceChildren();
+ if(!bookmarks.length){const empty=document.createElement("p");empty.className="student-empty";empty.textContent="Пока пусто. Добавляй уроки в избранное из учебной панели.";bookmarkList.append(empty);}
+ bookmarks.forEach(id=>{const lesson=lessons.find(item=>item.id===id);if(!lesson)return;const button=document.createElement("button");button.type="button";button.className="saved-lesson";const title=document.createElement("strong");title.textContent=lesson.title;const meta=document.createElement("small");meta.textContent=lesson.course;button.append(title,meta);button.addEventListener("click",()=>{const index=lessons.findIndex(item=>item.id===id);showLesson(index);$("#learn").scrollIntoView({behavior:"smooth"});});bookmarkList.append(button);});
+ const notesList=$("#notesList");notesList.replaceChildren();
+ if(!noteIds.length){const empty=document.createElement("p");empty.className="student-empty";empty.textContent="Здесь появятся твои заметки к урокам.";notesList.append(empty);}
+ noteIds.forEach(id=>{const lesson=lessons.find(item=>item.id===id);if(!lesson)return;const button=document.createElement("button");button.type="button";button.className="saved-lesson";const title=document.createElement("strong");title.textContent=lesson.title;const snippet=document.createElement("small");snippet.textContent=notes[id].trim().replace(/\\s+/g," ").slice(0,105);button.append(title,snippet);button.addEventListener("click",()=>{showLesson(lessons.findIndex(item=>item.id===id));$("#learn").scrollIntoView({behavior:"smooth"});});notesList.append(button);});
+}
+
 function progress() {
   const count = done.length;
   const percent = lessons.length ? Math.max(0, Math.min(100, Math.round(count / lessons.length * 100))) : 0;
@@ -89,6 +108,7 @@ function progress() {
   $("#progressPct").textContent = percent + "%";
   $("#progressCount").textContent = count + " из " + lessons.length + " уроков";
   renderAchievements();
+  renderStudentDashboard();
 }
 function renderMenu() {
   const menu = $("#lessonMenu");
@@ -129,6 +149,16 @@ function showLesson(index) {
   const description = document.createElement("p"); description.textContent = lesson.text;
   const example = document.createElement("pre"); example.textContent = lesson.code;
   const tip = document.createElement("p"); tip.className = "lesson-tip"; tip.textContent = "Запомни: " + lesson.tip;
+  const lessonTools=document.createElement("section");lessonTools.className="lesson-personal-tools";
+  let bookmarks=safeStoredArray("cc_bookmarks",validIds);let notes={};try{const storedNotes=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");if(storedNotes&&typeof storedNotes==="object"&&!Array.isArray(storedNotes))notes=storedNotes;}catch(_){}
+  const bookmarkButton=document.createElement("button");bookmarkButton.type="button";bookmarkButton.className="small-btn";bookmarkButton.textContent=bookmarks.includes(lesson.id)?"★ В избранном":"☆ Добавить в избранное";
+  bookmarkButton.setAttribute("aria-pressed",String(bookmarks.includes(lesson.id)));
+  bookmarkButton.addEventListener("click",()=>{const current=safeStoredArray("cc_bookmarks",validIds);const next=current.includes(lesson.id)?current.filter(id=>id!==lesson.id):[...current,lesson.id];try{localStorage.setItem("cc_bookmarks",JSON.stringify(next));}catch(_){}bookmarkButton.textContent=next.includes(lesson.id)?"★ В избранном":"☆ Добавить в избранное";bookmarkButton.setAttribute("aria-pressed",String(next.includes(lesson.id)));renderStudentDashboard();});
+  const noteLabel=document.createElement("label");noteLabel.className="lesson-note-label";noteLabel.textContent="Моя заметка к уроку";
+  const noteInput=document.createElement("textarea");noteInput.className="lesson-note-input";noteInput.maxLength=5000;noteInput.rows=3;noteInput.placeholder="Запиши важную мысль, вопрос или свой пример…";noteInput.value=typeof notes[lesson.id]==="string"?notes[lesson.id]:"";noteLabel.append(noteInput);
+  const noteStatus=document.createElement("span");noteStatus.className="lesson-note-status";noteStatus.setAttribute("aria-live","polite");noteStatus.textContent=noteInput.value?"Заметка сохранена на устройстве.":"Заметок пока нет.";
+  noteInput.addEventListener("input",()=>{let current={};try{const value=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");if(value&&typeof value==="object"&&!Array.isArray(value))current=value;}catch(_){}if(noteInput.value.trim())current[lesson.id]=noteInput.value;else delete current[lesson.id];try{localStorage.setItem("cc_notes_v1",JSON.stringify(current));noteStatus.textContent=noteInput.value.trim()?"Сохранено автоматически ✓":"Заметка удалена."; }catch(_){noteStatus.textContent="Не удалось сохранить заметку: хранилище недоступно.";}renderStudentDashboard();});
+  lessonTools.append(bookmarkButton,noteLabel,noteStatus);
   const exercise = document.createElement("section"); exercise.className = "lesson-exercise";
   const exerciseTitle = document.createElement("h4"); exerciseTitle.textContent = "Проверь себя";
   const question = document.createElement("p"); question.textContent = lesson.question;
@@ -154,7 +184,7 @@ function showLesson(index) {
   exercise.append(exerciseTitle, question, options, feedback, retry);
   const mark = document.createElement("button"); mark.type = "button"; mark.className = "btn"; mark.textContent = done.includes(lesson.id) ? "Урок пройден ✓" : "Отметить урок пройденным";
   mark.addEventListener("click", () => { if (!done.includes(lesson.id)) done.push(lesson.id); saveProgress(); renderMenu(); progress(); showLesson(index); });
-  panel.append(tag, heading, description, example, tip, exercise, mark);
+  panel.append(tag, heading, description, example, tip, lessonTools, exercise, mark);
   renderMenu();
 }
 document.querySelectorAll("[data-course]").forEach(button => button.addEventListener("click", () => {
@@ -397,7 +427,7 @@ function selectProject(id){const project=projectTemplates.find(item=>item.id===i
 $("#projectCode").addEventListener("input",()=>saveDraft("project:"+activeProject.id,$("#projectCode").value));
 $("#previewProject").addEventListener("click",renderProjectPreview);
 $("#resetProject").addEventListener("click",()=>{$("#projectCode").value=activeProject.code;saveDraft("project:"+activeProject.id,activeProject.code);renderProjectPreview();});
-$("#completeProject").addEventListener("click",()=>{if(!completedProjects.includes(activeProject.id))completedProjects.push(activeProject.id);try{localStorage.setItem("cc_projects",JSON.stringify(completedProjects));}catch(_){}updateProjectStatus();renderProjectCards();renderAchievements();});
+$("#completeProject").addEventListener("click",()=>{if(!completedProjects.includes(activeProject.id))completedProjects.push(activeProject.id);try{localStorage.setItem("cc_projects",JSON.stringify(completedProjects));}catch(_){}updateProjectStatus();renderProjectCards();renderAchievements();renderStudentDashboard();});
 renderProjectCards();selectProject(activeProject.id);
 const connectionStatus=$("#connectionStatus");
 function updateConnectionStatus(){
@@ -412,5 +442,5 @@ updateConnectionStatus();
 if("serviceWorker" in navigator&&location.protocol!=="file:"){
  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 }
-showLesson(0); progress();
+showLesson(0); progress(); renderStudentDashboard();
 })();
