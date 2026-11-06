@@ -208,7 +208,11 @@ function resetSandbox() {
   sandboxReady = false;
   sandboxFrame.src = "sandbox.html";
 }
-sandboxFrame.addEventListener("load", () => { sandboxReady = false; });
+sandboxFrame.addEventListener("load", () => {
+  sandboxReady = false;
+  sandboxFrame.contentWindow.postMessage({ type: "CODECRAFT_PING" }, "*");
+});
+sandboxFrame.contentWindow.postMessage({ type: "CODECRAFT_PING" }, "*");
 function finishJavaScriptRun(message, restart) {
   if (pending) clearTimeout(pending.timer);
   pending = null;
