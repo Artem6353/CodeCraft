@@ -77,7 +77,7 @@ const examples = {
   "css-grid": ".gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }",
   "js-array": 'const fruits = ["apple", "pear", "plum"]; fruits.push("orange");',
   "py-loop": "for number in range(5):\n    print(number)",
-  "py-dict": 'profile = {"name": "Аня", "level": 1}\nprint(profile["name"])'
+  "py-dict": 'profile = {"name": "Аня", "level": 1}\nprint(profile["name"])',
 
   "html-fix-image": '<img src="avatar.jpg" alt="Портрет автора">',
   "html-fix-form": '<label for="email">Электронная почта</label><input id="email" type="email">',
