@@ -98,6 +98,27 @@ for (const task of challenges) {
     assert.equal(check(sample), true, "sample failed " + task.id + " / " + label);
   }
 }
+
+const getKnownChallengeIdsSource = app.match(/function getKnownChallengeIds\\(tasks\\)\\{[^}]+\\}/)?.[0];
+const sanitizeKnownIdsSource = app.match(/function sanitizeKnownIds\\(value,allowed\\)\\{[^}]+\\}/)?.[0];
+const calculateLearningXPSource = app.match(/function calculateLearningXP\\(lessonCount,projectCount,challengeCount\\)\\{[^}]+\\}/)?.[0];
+assert.ok(getKnownChallengeIdsSource && sanitizeKnownIdsSource && calculateLearningXPSource, "shared progress helpers are missing");
+const getKnownChallengeIds = vm.runInNewContext("(" + getKnownChallengeIdsSource + ")");
+const sanitizeKnownIds = vm.runInNewContext("(" + sanitizeKnownIdsSource + ")");
+const calculateLearningXP = vm.runInNewContext("(" + calculateLearningXPSource + ")");
+const knownChallengeIds = getKnownChallengeIds(challenges);
+assert.equal(knownChallengeIds.size, 20, "backup allowlist must include all 20 current tasks");
+const allChallengeIds = challenges.map(task => task.id);
+const restoredChallenges = sanitizeKnownIds(JSON.parse(JSON.stringify(allChallengeIds)), knownChallengeIds);
+assert.deepEqual(Array.from(restoredChallenges), allChallengeIds, "all current challenge completions must survive backup round-trip");
+assert.deepEqual(Array.from(sanitizeKnownIds(["html-heading", "html-heading", "unknown-task", 42], knownChallengeIds)), ["html-heading"], "backup import must deduplicate and reject unknown challenge IDs");
+const legacyChallengeIds = ["html-heading", "html-link", "css-flex", "js-function", "js-condition", "html-semantic", "css-grid", "js-array", "py-loop", "py-dict"];
+assert.deepEqual(Array.from(sanitizeKnownIds(legacyChallengeIds, knownChallengeIds)), legacyChallengeIds, "version 1 backups with the original 10 tasks must remain compatible");
+assert.equal(calculateLearningXP(32, 3, 20), 850, "XP must use 20 per lesson, 50 per project and 30 per challenge");
+assert.equal(calculateLearningXP(32, 3, 10), 550, "legacy challenge progress must retain its earned XP");
+assert.equal((app.match(/calculateLearningXP\\(done.length,completedProjects.length,completedChallenges.length\\)/g) || []).length, 2, "achievement and student dashboard must use the same XP calculation");
+assert.match(app, /challenges:safeStoredArray\\("cc_challenges",getKnownChallengeIds\\(challengeTasks\\)\\)/, "backup export must use the current challenge registry");
+assert.match(app, /sanitizeKnownIds\\(data.challenges,getKnownChallengeIds\\(challengeTasks\\)\\)/, "backup import must use the current challenge registry");
 assert.match(css, /@media\(max-width:520px\)/);
 assert.match(css, /\.web-lab/);
 assert.match(html, /data-lab-panel="html"/);
