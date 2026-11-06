@@ -149,3 +149,15 @@ button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid va
 @media(max-width:900px){.learning-tools{grid-template-columns:1fr 1fr}.data-actions{grid-column:1/-1}}
 @media(max-width:760px){.lesson-menu{max-height:380px;grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.learning-tools{grid-template-columns:1fr;padding:10px}.data-actions{grid-column:auto}.data-actions button{flex:1}.lesson-menu{max-height:340px;grid-template-columns:1fr}.exam-actions button{flex:1}}
+
+/* Python-тренажёр */
+.python-workbench{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(220px,.65fr);gap:14px;align-items:start}
+.python-editor,.python-info{min-width:0;padding:16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.python-editor .editor-head{align-items:center;gap:10px}
+.python-editor .editor-head label{color:var(--text);font-weight:800}
+#pythonExample{max-width:170px;min-height:32px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#080f1c;color:var(--text);font-size:11px}
+#pythonCode{display:block;width:100%;min-height:270px;resize:vertical;padding:13px;border:1px solid var(--line);border-top:0;background:#080f1c;color:#dce7ff;font:13px/1.7 ui-monospace,Consolas,monospace;tab-size:4}
+.python-info h3{margin:2px 0 8px}.python-info ul{padding-left:19px}.python-info li,.python-info p{margin:7px 0;color:var(--muted);font-size:12px}
+.python-output{min-height:110px;max-height:280px;overflow:auto}
+@media(max-width:760px){.python-workbench{grid-template-columns:1fr}.python-info{order:2}}
+@media(max-width:480px){.python-editor,.python-info{padding:10px}#pythonCode{min-height:220px;font-size:13px}.python-editor .editor-head{align-items:flex-start;flex-direction:column}#pythonExample{max-width:none;width:100%}}
