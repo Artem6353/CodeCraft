@@ -116,7 +116,7 @@ const legacyChallengeIds = ["html-heading", "html-link", "css-flex", "js-functio
 assert.deepEqual(Array.from(sanitizeKnownIds(legacyChallengeIds, knownChallengeIds)), legacyChallengeIds, "version 1 backups with the original 10 tasks must remain compatible");
 assert.equal(calculateLearningXP(32, 3, 20), 1390, "XP must use 20 per lesson, 50 per project and 30 per challenge");
 assert.equal(calculateLearningXP(32, 3, 10), 1090, "legacy challenge progress must retain its earned XP");
-assert.equal((app.match(/calculateLearningXP\\(done.length,completedProjects.length,completedChallenges.length\\)/g) || []).length, 2, "achievement and student dashboard must use the same XP calculation");
+assert.equal(app.split("calculateLearningXP(done.length,completedProjects.length,completedChallenges.length)").length - 1, 2, "achievement and student dashboard must use the same XP calculation");
 assert.match(app, /challenges:safeStoredArray\("cc_challenges",getKnownChallengeIds\(challengeTasks\)\)/, "backup export must use the current challenge registry");
 assert.match(app, /sanitizeKnownIds\(data.challenges,getKnownChallengeIds\(challengeTasks\)\)/, "backup import must use the current challenge registry");
 assert.match(css, /@media\(max-width:520px\)/);
