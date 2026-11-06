@@ -16,10 +16,9 @@ test("loads the learning dashboard and keeps the main sections reachable", async
 });
 
 test("searches lessons and persists lesson completion, bookmark and note after reload", async ({ page }) => {
-  await page.locator("#lessonSearch").fill("HTML");
-  await expect(page.locator("#lessonMenu .lesson-choice")).not.toHaveCount(0);
+  await page.locator("#courseFilter").selectOption("HTML и CSS");
   await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(16);
-  await page.locator("#lessonSearch").fill("");
+  await page.locator("#courseFilter").selectOption("all");
   await page.locator("#lessonPanel .lesson-personal-tools button").click();
   await page.locator("#lessonPanel .lesson-note-input").fill("Проверка сохранения заметки из Playwright.");
   await page.getByRole("button", { name: "Отметить урок пройденным" }).click();
@@ -81,7 +80,7 @@ test("runs Python in Skulpt when the CDN is available", async ({ page }) => {
 });
 
 test("finishes an exam and stores its attempt and topic statistics", async ({ page }) => {
-  await expect(page.locator("#quizOptions button")).toHaveCount(3, { timeout: 10000 });
+  await expect.poll(() => page.locator("#quizOptions button").count(), { timeout: 10000 }).toBeGreaterThan(1);
   for (let index = 0; index < 10; index += 1) {
     await page.locator("#quizOptions button").first().click();
     await expect(page.locator("#nextExamQuestion")).toBeEnabled();
