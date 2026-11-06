@@ -79,6 +79,9 @@ assert.match(css, /\.web-lab/);
 assert.match(app, /function exportLearningData/);
 assert.match(app, /function startExam/);
 assert.match(app, /function saveDraft/);
+assert.match(app, /CODECRAFT_PYTHON_PING/);
+assert.match(app, /file\.size>2\*1024\*1024/);
+assert.match(app, /cleanDrafts/);
 assert.match(sandbox, /CODECRAFT_RUN/);
 assert.match(sandbox, /new Function/);
 
