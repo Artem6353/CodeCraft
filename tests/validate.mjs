@@ -36,11 +36,14 @@ for (const [course, count] of [["HTML и CSS", 20], ["JavaScript", 12], ["Python
 }
 
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
-assert.equal(new Set(ids).size, ids.length, "HTML IDs must be unique");
-const idSet = new Set(ids);
+const dynamicIds = [...app.matchAll(/\.id\s*=\s*["']([^"']+)["']/g)].map(match => match[1]);
+const allIds = [...ids, ...dynamicIds];
+assert.equal(new Set(allIds).size, allIds.length, "static and JavaScript-generated IDs must be unique");
+const idSet = new Set(allIds);
 for (const match of app.matchAll(/\$\("#([^"]+)"\)/g)) {
   assert.ok(idSet.has(match[1]), "app.js refers to missing HTML id #" + match[1]);
 }
+
 for (const section of ["paths", "learn", "playground", "web-lab", "challenges", "projects", "quiz"]) {
   assert.ok(html.includes('id="' + section + '"'), "missing page section " + section);
 }
