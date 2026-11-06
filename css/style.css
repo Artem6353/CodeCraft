@@ -27,3 +27,71 @@
 #projectPreview{display:block;width:100%;height:320px;border:1px solid var(--line);border-radius:10px;background:#fff}
 .preview-note{margin-bottom:0}
 @media(max-width:760px){.project-workbench{grid-template-columns:1fr}.project-grid{grid-template-columns:1fr}}
+
+
+/* Универсальная адаптация: мышь, клавиатура, сенсор и широкие экраны */
+:root{scrollbar-gutter:stable}
+.shell{width:min(1180px,calc(100% - 48px))}
+.topbar{padding-left:max(24px,calc((100% - 1180px)/2));padding-right:max(24px,calc((100% - 1180px)/2))}
+.topbar nav a{padding:9px 2px;white-space:nowrap}
+button,a,textarea{touch-action:manipulation}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+.skip-link{position:fixed;left:12px;top:8px;z-index:20;transform:translateY(-160%);padding:10px 14px;border-radius:9px;background:var(--mint);color:#08131b;font-weight:800}
+.skip-link:focus{transform:translateY(0)}
+.achievements-panel{margin-top:16px;padding:17px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(145deg,var(--panel),#101829)}
+.achievement-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.achievement-stat{min-width:0;padding:13px;border-radius:12px;background:var(--panel2)}
+.achievement-stat strong{display:block;font-size:21px;line-height:1.3}
+.achievement-stat span{color:var(--muted);font-size:11px}
+.achievement-track{height:7px;margin-top:9px;overflow:hidden;border-radius:20px;background:#293956}
+.achievement-track span{display:block;height:100%;border-radius:inherit;background:var(--mint)}
+.achievement-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}
+.achievement-item{display:flex;align-items:center;gap:10px;min-width:0;padding:10px;border:1px solid var(--line);border-radius:11px;background:#0d1728}
+.achievement-item.locked{opacity:.52}
+.achievement-icon{font-size:22px;flex:0 0 auto}
+.achievement-item strong{display:block;font-size:12px}
+.achievement-item small{display:block;color:var(--muted);font-size:10px;overflow-wrap:anywhere}
+.project-card,.lesson-choice,.quiz-options button,.small-btn,.btn{min-height:40px}
+#codeEditor,#projectCode{tab-size:2}
+#projectPreview{max-width:100%}
+@media(min-width:1100px){
+ .hero{grid-template-columns:minmax(0,1.05fr) minmax(420px,.95fr);gap:64px;padding-top:88px}
+ .learning-layout{grid-template-columns:270px minmax(0,1fr);gap:18px}
+ .lesson-panel{padding:28px}
+ .project-workbench{grid-template-columns:minmax(260px,.7fr) minmax(0,1.3fr);gap:18px}
+ .project-grid{gap:14px}
+}
+@media(min-width:761px) and (max-width:1020px){
+ .shell{width:calc(100% - 36px)}
+ .topbar{padding-left:18px;padding-right:18px}
+ .topbar nav{gap:13px}
+ .topbar nav a{font-size:12px}
+ .learning-layout{grid-template-columns:205px minmax(0,1fr)}
+ .project-workbench{grid-template-columns:minmax(220px,.8fr) minmax(0,1.2fr)}
+}
+@media(max-width:760px){
+ .shell{width:calc(100% - 32px)}
+ .topbar{padding-left:16px;padding-right:16px}
+ .achievement-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .project-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:520px){
+ .shell{width:calc(100% - 24px)}
+ .achievement-summary{grid-template-columns:1fr 1fr}
+ .achievement-summary .achievement-stat:last-child{grid-column:1/-1}
+ .achievement-list{grid-template-columns:1fr}
+ .project-grid{grid-template-columns:1fr}
+ .achievements-panel{padding:12px}
+ .btn{min-height:44px}
+ .small-btn{min-height:40px}
+ #codeEditor,#projectCode{font-size:13px;min-height:190px}
+ #projectPreview{height:280px}
+}
+@media(hover:hover) and (pointer:fine){
+ .path-card,.project-card,.lesson-choice,.achievement-item{transition:border-color .16s ease,transform .16s ease}
+ .path-card:hover,.project-card:hover,.lesson-choice:hover{border-color:#58769d}
+ .project-card:hover{transform:translateY(-2px)}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
