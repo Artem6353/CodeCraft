@@ -23,9 +23,9 @@ test("searches lessons and persists lesson completion, bookmark and note after r
   await page.locator("#lessonPanel .lesson-personal-tools button").click();
   await page.locator("#lessonPanel .lesson-note-input").fill("Проверка сохранения заметки из Playwright.");
   await page.getByRole("button", { name: "Отметить урок пройденным" }).click();
-  await expect(page.locator("#progressCount")).toContainText("1 из 32");
+  await expect(page.locator("#progressCount")).toContainText("1 из 44");
   await page.reload();
-  await expect(page.locator("#progressCount")).toContainText("1 из 32");
+  await expect(page.locator("#progressCount")).toContainText("1 из 44");
   await expect(page.locator("#bookmarkCount")).toHaveText("1");
   await expect(page.locator("#notesCount")).toHaveText("1");
   await expect(page.locator("#lessonPanel .lesson-note-input")).toHaveValue("Проверка сохранения заметки из Playwright.");
@@ -140,7 +140,7 @@ test("exports and imports a versioned learning backup", async ({ page }) => {
     buffer: Buffer.from(JSON.stringify(backup))
   });
   await expect(page.locator("#learningToolsStatus")).toContainText("Данные импортированы");
-  await expect(page.locator("#progressCount")).toContainText("1 из 32");
+  await expect(page.locator("#progressCount")).toContainText("1 из 44");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("cc_challenges") || "[]"))).toContain("html-heading");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("cc_projects") || "[]"))).toContain("profile");
   await page.locator("#projectGrid .project-card").filter({ hasText: "Доска задач" }).click();
@@ -183,7 +183,7 @@ test("keeps the interface within phone and desktop viewport widths", async ({ pa
 
 
 test("supports intermediate lessons and saves phased project milestones", async ({ page }) => {
-  await page.locator("#courseFilter").selectOption("Средний");
+  await page.locator("#lessonLevelFilter").selectOption("Средний");
   await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(12);
   await expect(page.locator("#progressCount")).toContainText("0 из 44");
   await page.locator("#projectGrid .project-card").filter({ hasText: "Панель показателей" }).click();
@@ -202,8 +202,8 @@ test("checks keyboard access, reduced motion and responsive layouts", async ({ p
   await expect(page.locator(".brand")).toBeFocused();
   for (const [width, height] of [[320,740],[360,800],[390,844],[414,896],[600,900],[768,1024],[820,1180],[1024,768],[1280,800],[1440,900],[1920,1080],[844,390]]) {
     await page.setViewportSize({ width, height });
-    const dimensions = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, document: document.documentElement.scrollWidth }));
-    expect(dimensions.document, `horizontal overflow at ${width}x${height}`).toBeLessThanOrEqual(dimensions.viewport + 1);
+    const dimensions = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, document: document.documentElement.scrollWidth, offenders:[...document.querySelectorAll("body *")].map(el=>{const r=el.getBoundingClientRect();return {tag:el.tagName,id:el.id,className:String(el.className||""),left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width)}}).filter(x=>x.width>0&&x.right>innerWidth+1).slice(0,12) }));
+    expect(dimensions.document, `horizontal overflow at ${width}x${height}: ${JSON.stringify(dimensions.offenders)}`).toBeLessThanOrEqual(dimensions.viewport + 1);
   }
 });
 
