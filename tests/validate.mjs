@@ -87,10 +87,10 @@ assert.match(app, /function parseHTMLForChecks/);
 assert.match(app, /function parseCSSForChecks/);
 assert.match(app, /function isJavaScriptSyntaxValid/);
 assert.match(app, /function parseProjectStructuralChecks/);
-assert.match(app, /const EXAM_TOPICS=Object\\.freeze/);
+assert.match(app, /const EXAM_TOPICS=Object\.freeze/);
 assert.match(app, /function isKnownExamTopic/);
 assert.match(app, /function formatQuestionCount/);
-assert.match(app, /startExam\\(examMissed\\.slice\\(\\),examConfigKey\\)/);
+assert.match(app, /startExam\(examMissed\.slice\(\),examConfigKey\)/);
 
 const examples = {
   "html-heading": "<h1>Hello</h1><p>Welcome</p>",
