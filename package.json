@@ -1,0 +1,14 @@
+{
+  "name": "codecraft",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:static": "node tests/validate.mjs",
+    "test:e2e": "playwright test",
+    "test": "npm run test:static && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
