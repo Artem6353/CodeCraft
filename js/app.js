@@ -13,6 +13,9 @@ function saveProgress() {
   try { localStorage.setItem("cc_progress", JSON.stringify(done)); } catch (_) { /* Хранилище может быть недоступно. */ }
 }
 const levels = [{name:"Новичок",min:0},{name:"Практик",min:100},{name:"Создатель",min:220},{name:"Мастер",min:360},{name:"Наставник",min:470}];
+function calculateLearningXP(lessonCount,projectCount,challengeCount){return lessonCount*20+projectCount*50+challengeCount*30;}
+function getKnownChallengeIds(tasks){return new Set(tasks.map(task=>task.id));}
+function sanitizeKnownIds(value,allowed){return Array.isArray(value)?[...new Set(value.filter(id=>typeof id==="string"&&allowed.has(id)))]:[];}
 const achievementDefinitions = [
  {id:"first-lesson",icon:"🌱",title:"Первый шаг",detail:"Заверши первый урок",test:()=>done.length>=1},
  {id:"four-lessons",icon:"📘",title:"Вошёл в ритм",detail:"Заверши 4 урока",test:()=>done.length>=4},
@@ -24,7 +27,7 @@ const achievementDefinitions = [
  {id:"all-challenges",icon:"🎯",title:"Мастер практики",detail:"Реши все практические задания",test:()=>completedChallenges.length===challengeTasks.length}
 ];
 function renderAchievements(){
- const xp=done.length*20+completedProjects.length*50+completedChallenges.length*30;
+ const xp=calculateLearningXP(done.length,completedProjects.length,completedChallenges.length);
  let current=levels[0],next=null;
  levels.forEach((level,index)=>{if(xp>=level.min)current=level;if(xp<level.min&&!next)next=level;});
  const base=current.min, target=next?next.min:current.min;
@@ -37,10 +40,10 @@ function renderAchievements(){
 }
 
 /* Поиск уроков, резервное копирование и восстановление учебных данных */
-function safeStoredArray(key,allowed){try{const value=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(value)?[...new Set(value.filter(id=>typeof id==="string"&&allowed.has(id)))]:[];}catch(_){return[];}}
+function safeStoredArray(key,allowed){try{return sanitizeKnownIds(JSON.parse(localStorage.getItem(key)||"[]"),allowed);}catch(_){return[];}}
 const knownProjectIds=new Set(["profile","portfolio","landing"]);
 function exportLearningData(){
- const payload={app:"CodeCraft",version:1,exportedAt:new Date().toISOString(),progress:done,projects:safeStoredArray("cc_projects",knownProjectIds),challenges:safeStoredArray("cc_challenges",new Set(["html-heading","html-link","css-flex","js-function","js-condition","html-semantic","css-grid","js-array","py-loop","py-dict"])),bookmarks:safeStoredArray("cc_bookmarks",validIds),notes:(()=>{try{const value=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");if(!value||typeof value!=="object"||Array.isArray(value))return{};const clean={};Object.entries(value).slice(0,100).forEach(([key,note])=>{if(validIds.has(key)&&typeof note==="string"&&note.length<=5000)clean[key]=note;});return clean;}catch(_){return{};}})(),drafts:(()=>{try{return JSON.parse(localStorage.getItem("cc_drafts_v1")||"{}");}catch(_){return{};}})(),exams:readExamHistory(),topicStats:readExamTopicStats()};
+ const payload={app:"CodeCraft",version:1,exportedAt:new Date().toISOString(),progress:done,projects:safeStoredArray("cc_projects",knownProjectIds),challenges:safeStoredArray("cc_challenges",getKnownChallengeIds(challengeTasks)),bookmarks:safeStoredArray("cc_bookmarks",validIds),notes:(()=>{try{const value=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");if(!value||typeof value!=="object"||Array.isArray(value))return{};const clean={};Object.entries(value).slice(0,100).forEach(([key,note])=>{if(validIds.has(key)&&typeof note==="string"&&note.length<=5000)clean[key]=note;});return clean;}catch(_){return{};}})(),drafts:(()=>{try{return JSON.parse(localStorage.getItem("cc_drafts_v1")||"{}");}catch(_){return{};}})(),exams:readExamHistory(),topicStats:readExamTopicStats()};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
  const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="codecraft-progress.json";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
  $("#learningToolsStatus").textContent="Резервная копия подготовлена. Сохрани файл в удобное место.";
@@ -58,7 +61,7 @@ $("#importProgressFile").addEventListener("change",event=>{
    const importedLessons=Array.isArray(data.progress)?data.progress.filter(id=>validIds.has(id)):[];
    const importedProjects=Array.isArray(data.projects)?data.projects.filter(id=>knownProjectIds.has(id)):[];
    const allowedChallenges=new Set(["html-heading","html-link","css-flex","js-function","js-condition","html-semantic","css-grid","js-array","py-loop","py-dict"]);
-   const importedChallenges=Array.isArray(data.challenges)?data.challenges.filter(id=>allowedChallenges.has(id)):[];
+   const importedChallenges=sanitizeKnownIds(data.challenges,getKnownChallengeIds(challengeTasks));
    done=[...new Set([...done,...importedLessons])];const importedBookmarks=Array.isArray(data.bookmarks)?[...new Set(data.bookmarks.filter(id=>validIds.has(id)))]:[];try{localStorage.setItem("cc_bookmarks",JSON.stringify([...new Set([...safeStoredArray("cc_bookmarks",validIds),...importedBookmarks])]));}catch(_){}if(data.notes&&typeof data.notes==="object"&&!Array.isArray(data.notes)){const cleanNotes={};Object.entries(data.notes).slice(0,100).forEach(([key,note])=>{if(validIds.has(key)&&typeof note==="string"&&note.length<=5000)cleanNotes[key]=note;});try{const existing=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");localStorage.setItem("cc_notes_v1",JSON.stringify({...existing,...cleanNotes}));}catch(_){localStorage.setItem("cc_notes_v1",JSON.stringify(cleanNotes));}}completedProjects=[...new Set([...completedProjects,...importedProjects])];completedChallenges=[...new Set([...completedChallenges,...importedChallenges])];if(data.exams&&typeof data.exams==="object"&&!Array.isArray(data.exams)){const merged=readExamHistory();Object.entries(data.exams).slice(0,30).forEach(([key,item])=>{if(!/^[a-zA-Zа-яА-Я0-9 +:-]{1,100}$/.test(key)||!item||typeof item!=="object")return;const attempts=Number.isInteger(item.attempts)?Math.max(0,Math.min(100000,item.attempts)):0,best=Number.isInteger(item.best)?Math.max(0,Math.min(100,item.best)):0,last=Number.isInteger(item.last)?Math.max(0,Math.min(100,item.last)):0;if(attempts){const old=merged[key]||{attempts:0,best:0,last:0};merged[key]={attempts:Math.min(100000,old.attempts+attempts),best:Math.max(old.best,best),last};}});try{localStorage.setItem(examHistoryKey,JSON.stringify(merged));}catch(_){}}
    if(data.topicStats&&typeof data.topicStats==="object"&&!Array.isArray(data.topicStats)){const merged=readExamTopicStats();Object.entries(data.topicStats).slice(0,20).forEach(([key,item])=>{if(!/^(html-structure|html-document|css-foundation|css-layout|js-foundation|js-browser|py-foundation|py-data|other)$/.test(key)||!item||typeof item!=="object")return;const total=Number.isInteger(item.total)?Math.max(0,Math.min(100000,item.total)):0,correct=Number.isInteger(item.correct)?Math.max(0,Math.min(total,item.correct)):0;if(total){const old=merged[key]||{correct:0,total:0};merged[key]={total:Math.min(100000,old.total+total),correct:Math.min(100000,old.correct+correct)};}});try{localStorage.setItem(examTopicStatsKey,JSON.stringify(merged));}catch(_){}}
    saveProgress();localStorage.setItem("cc_projects",JSON.stringify(completedProjects));localStorage.setItem("cc_challenges",JSON.stringify(completedChallenges));
@@ -90,7 +93,7 @@ function renderStudentDashboard(){
  const bookmarks=safeStoredArray("cc_bookmarks",validIds);let notes={};
  try{const value=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");if(value&&typeof value==="object"&&!Array.isArray(value))notes=value;}catch(_){}
  const noteIds=Object.keys(notes).filter(id=>validIds.has(id)&&typeof notes[id]==="string"&&notes[id].trim());
- const xp=done.length*20+safeStoredArray("cc_projects",knownProjectIds).length*50+safeStoredArray("cc_challenges",new Set(["html-heading","html-link","css-flex","js-function","js-condition","html-semantic","css-grid","js-array","py-loop","py-dict"])).length*30;
+ const xp=calculateLearningXP(done.length,completedProjects.length,completedChallenges.length);
  const cards=[[done.length+" / "+lessons.length,"уроков пройдено"],[bookmarks.length,"уроков в избранном"],[noteIds.length,"личных заметок"],[xp+" XP","заработано опыта"]];
  stats.replaceChildren();cards.forEach(([value,label])=>{const card=document.createElement("div");card.className="student-stat";const strong=document.createElement("strong");strong.textContent=value;const small=document.createElement("span");small.textContent=label;card.append(strong,small);stats.append(card);});
  $("#bookmarkCount").textContent=String(bookmarks.length);$("#notesCount").textContent=String(noteIds.length);
