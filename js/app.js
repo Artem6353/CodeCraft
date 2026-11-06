@@ -306,6 +306,7 @@ window.addEventListener("message",event=>{
  $("#runPython").disabled=false;$("#pythonStatus").textContent=event.data.error?"Выполнение завершилось с ошибкой.":"Выполнение завершено.";
  pythonPending=null;
 });
+pythonFrame.contentWindow.postMessage({type:"CODECRAFT_PYTHON_PING"},"*");
 $("#runPython").addEventListener("click",()=>{
  if(pythonPending)return;
  if(!pythonReady){$("#pythonStatus").textContent="Python ещё загружается. Проверь интернет и подожди немного.";return;}
