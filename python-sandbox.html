@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:; object-src 'none'; base-uri 'none'; form-action 'none';">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CodeCraft Python sandbox</title>
 </head>
@@ -11,11 +11,17 @@
 <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
 <script>
 "use strict";
+const MAX_CODE = 100000;
+const MAX_OUTPUT = 50000;
 const send = payload => parent.postMessage(payload, "*");
+function sendLoadError() {
+  send({ type: "CODECRAFT_PYTHON_ERROR", message: "Не удалось загрузить Skulpt. Проверь интернет и нажми «Перезапустить среду»." });
+}
 if (typeof Sk === "undefined" || !Sk.builtinFiles || !Sk.builtinFiles.files) {
-  const message="Не удалось загрузить Skulpt. Проверь подключение к интернету и обнови страницу.";
-  send({type:"CODECRAFT_PYTHON_ERROR",message});
-  window.addEventListener("message",event=>{if(event.source===parent&&event.data&&event.data.type==="CODECRAFT_PYTHON_PING")send({type:"CODECRAFT_PYTHON_ERROR",message});});
+  sendLoadError();
+  window.addEventListener("message", event => {
+    if (event.source === parent && event.data && event.data.type === "CODECRAFT_PYTHON_PING") sendLoadError();
+  });
 } else {
   function builtinRead(path) {
     const files = Sk.builtinFiles && Sk.builtinFiles.files;
@@ -24,30 +30,56 @@ if (typeof Sk === "undefined" || !Sk.builtinFiles || !Sk.builtinFiles.files) {
   }
   let running = false;
   window.addEventListener("message", event => {
-    if (event.source !== parent || !event.data) return;
-    if (event.data.type === "CODECRAFT_PYTHON_PING") { send({type:"CODECRAFT_PYTHON_READY"}); return; }
+    if (event.source !== parent || !event.data || typeof event.data !== "object") return;
+    if (event.data.type === "CODECRAFT_PYTHON_PING") { send({ type: "CODECRAFT_PYTHON_READY" }); return; }
     if (event.data.type !== "CODECRAFT_PYTHON_RUN" || running) return;
     const id = event.data.id;
-    const code = String(event.data.code || "");
+    if (!Number.isSafeInteger(id)) return;
+    const code = typeof event.data.code === "string" ? event.data.code : "";
+    if (code.length > MAX_CODE) {
+      send({ type: "CODECRAFT_PYTHON_RESULT", id, output: "", error: "Код слишком большой. Максимальный размер — 100 000 символов." });
+      return;
+    }
     let output = "";
+    let truncated = false;
     running = true;
     try {
       Sk.configure({
-        output: text => { output += String(text); },
+        output: text => {
+          if (truncated) return;
+          const chunk = String(text);
+          const remaining = MAX_OUTPUT - output.length;
+          if (chunk.length > remaining) {
+            output += chunk.slice(0, Math.max(0, remaining)) + "\n[Вывод ограничен: 50 000 символов]";
+            truncated = true;
+          } else {
+            output += chunk;
+            if (output.length >= MAX_OUTPUT) {
+              output = output.slice(0, MAX_OUTPUT) + "\n[Вывод ограничен: 50 000 символов]";
+              truncated = true;
+            }
+          }
+        },
         read: builtinRead,
         __future__: Sk.python3,
         execLimit: 3000
       });
       Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true)).then(
-        () => { running = false; send({type:"CODECRAFT_PYTHON_RESULT",id,output:output || "Программа выполнена без вывода."}); },
-        error => { running = false; send({type:"CODECRAFT_PYTHON_RESULT",id,output,error:String(error && error.toString ? error.toString() : error)}); }
+        () => {
+          running = false;
+          send({ type: "CODECRAFT_PYTHON_RESULT", id, output: output || "Программа выполнена без вывода." });
+        },
+        error => {
+          running = false;
+          send({ type: "CODECRAFT_PYTHON_RESULT", id, output, error: String(error && error.toString ? error.toString() : error).slice(0, 4000) });
+        }
       );
     } catch (error) {
       running = false;
-      send({type:"CODECRAFT_PYTHON_RESULT",id,output,error:String(error && error.message ? error.message : error)});
+      send({ type: "CODECRAFT_PYTHON_RESULT", id, output, error: String(error && error.message ? error.message : error).slice(0, 4000) });
     }
   });
-  send({type:"CODECRAFT_PYTHON_READY"});
+  send({ type: "CODECRAFT_PYTHON_READY" });
 }
 </script>
 </body>
