@@ -117,3 +117,15 @@ button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid va
 @media(max-width:900px){.challenge-workbench{grid-template-columns:1fr}.challenge-layout{grid-template-columns:180px minmax(0,1fr)}}
 @media(max-width:760px){.challenge-layout{grid-template-columns:1fr}.challenge-menu{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.challenge-menu{grid-template-columns:1fr}.challenge-brief,.challenge-editor{padding:12px}#challengeCode{min-height:210px;font-size:13px}}
+
+/* Полноценная веб-лаборатория */
+.web-lab{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.web-editors,.web-preview-wrap{min-width:0;padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.web-editor{margin-bottom:12px;min-width:0}
+.web-editor .editor-head label{color:var(--text);font-weight:700}
+.web-editor .editor-head span,.web-preview-wrap .editor-head span:last-child{color:var(--muted);font-size:10px}
+.web-editor textarea{display:block;width:100%;min-height:125px;resize:vertical;padding:12px;border:1px solid var(--line);border-top:0;background:#080f1c;color:#dce7ff;font:12px/1.65 ui-monospace,Consolas,monospace;tab-size:2}
+#webLabPreview{display:block;width:100%;height:650px;border:1px solid var(--line);border-radius:0 0 10px 10px;background:white}
+#webLabStatus{min-height:20px}
+@media(max-width:760px){.web-lab{grid-template-columns:1fr}#webLabPreview{height:420px}.web-editors,.web-preview-wrap{padding:11px}}
+@media(max-width:480px){.web-editor textarea{font-size:13px;min-height:145px}.web-editors,.web-preview-wrap{padding:9px}}
