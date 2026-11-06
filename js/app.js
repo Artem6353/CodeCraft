@@ -49,6 +49,7 @@ $("#exportProgress").addEventListener("click",exportLearningData);
 $("#importProgressButton").addEventListener("click",()=>$("#importProgressFile").click());
 $("#importProgressFile").addEventListener("change",event=>{
  const file=event.target.files&&event.target.files[0];if(!file)return;
+ if(file.size>2*1024*1024){$("#learningToolsStatus").textContent="Файл слишком большой. Максимальный размер резервной копии — 2 МБ.";event.target.value="";return;}
  const reader=new FileReader();
  reader.onload=()=>{
   try{
@@ -60,7 +61,18 @@ $("#importProgressFile").addEventListener("change",event=>{
    const importedChallenges=Array.isArray(data.challenges)?data.challenges.filter(id=>allowedChallenges.has(id)):[];
    done=[...new Set([...done,...importedLessons])];completedProjects=[...new Set([...completedProjects,...importedProjects])];completedChallenges=[...new Set([...completedChallenges,...importedChallenges])];
    saveProgress();localStorage.setItem("cc_projects",JSON.stringify(completedProjects));localStorage.setItem("cc_challenges",JSON.stringify(completedChallenges));
-   if(data.drafts&&typeof data.drafts==="object"&&!Array.isArray(data.drafts))localStorage.setItem("cc_drafts_v1",JSON.stringify(data.drafts));
+   if(data.drafts&&typeof data.drafts==="object"&&!Array.isArray(data.drafts)){
+    const cleanDrafts={};
+    Object.entries(data.drafts).slice(0,100).forEach(([key,value])=>{
+     if(key!=="__proto__"&&key!=="constructor"&&key!=="prototype"&&/^[a-zA-Z0-9:_-]{1,120}$/.test(key)&&typeof value==="string"&&value.length<=150000)cleanDrafts[key]=value;
+    });
+    savedDrafts=cleanDrafts;localStorage.setItem("cc_drafts_v1",JSON.stringify(cleanDrafts));
+   }
+   editor.value=restoreDraft("javascriptPlayground",starter);
+   webHtml.value=restoreDraft("webHtml",webDefaults.html);webCss.value=restoreDraft("webCss",webDefaults.css);webJs.value=restoreDraft("webJs",webDefaults.js);runWebLab();
+   pythonEditor.value=restoreDraft("python:"+activePythonExample,pythonExamples[activePythonExample]||"");
+   $("#challengeCode").value=restoreDraft("challenge:"+activeChallenge.id,activeChallenge.starter);
+   $("#projectCode").value=restoreDraft("project:"+activeProject.id,activeProject.code);renderProjectPreview();
    renderMenu();progress();renderProjectCards();renderChallengeMenu();updateProjectStatus();
    $("#learningToolsStatus").textContent="Данные импортированы. Существующий прогресс сохранён и объединён с копией.";
   }catch(error){$("#learningToolsStatus").textContent="Не удалось импортировать файл: "+error.message;}
