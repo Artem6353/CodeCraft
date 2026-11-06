@@ -9,6 +9,9 @@ const app = read("js/app.js");
 const lessonsSource = read("js/lessons.js");
 const sandbox = read("sandbox.html");
 const pythonSandbox = read("python-sandbox.html");
+const serviceWorker = read("sw.js");
+const manifest = JSON.parse(read("manifest.webmanifest"));
+const icon = read("assets/icon.svg");
 
 const context = { window: {} };
 vm.runInNewContext(lessonsSource, context, { filename: "js/lessons.js" });
@@ -46,6 +49,12 @@ assert.match(pythonSandbox, /skulpt-stdlib\.js/);
 assert.match(pythonSandbox, /execLimit: 3000/);
 assert.match(pythonSandbox, /CODECRAFT_PYTHON_RUN/);
 assert.match(css, /\.python-workbench/);
+assert.ok(manifest.name && manifest.short_name && manifest.start_url === "./", "web app manifest is invalid");
+assert.ok(manifest.icons.some(item => item.src === "assets/icon.svg"), "manifest icon is missing");
+assert.match(serviceWorker, /addAll\(CORE_FILES\)/);
+assert.match(serviceWorker, /clients\.claim/);
+assert.match(app, /navigator\.serviceWorker\.register/);
+assert.match(icon, /<svg/);
 assert.match(app, /connect-src[^;]*none/, "web preview must block network requests");
 
 const challengeMatch = app.match(/const challengeTasks = (\[[\s\S]*?\n\]);/);
