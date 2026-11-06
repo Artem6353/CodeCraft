@@ -23,5 +23,6 @@ jobs:
         run: |
           node --check js/app.js
           node --check js/lessons.js
+          node --check sw.js
       - name: Run platform quality checks
         run: node tests/validate.mjs
