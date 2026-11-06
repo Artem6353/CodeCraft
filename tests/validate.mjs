@@ -8,6 +8,7 @@ const css = read("css/style.css");
 const app = read("js/app.js");
 const lessonsSource = read("js/lessons.js");
 const sandbox = read("sandbox.html");
+const pythonSandbox = read("python-sandbox.html");
 
 const context = { window: {} };
 vm.runInNewContext(lessonsSource, context, { filename: "js/lessons.js" });
@@ -38,6 +39,13 @@ for (const section of ["paths", "learn", "playground", "web-lab", "challenges", 
 assert.match(html, /id="jsSandbox"[^>]*sandbox="allow-scripts"/);
 assert.match(html, /id="webLabPreview"[^>]*sandbox="allow-scripts"/);
 assert.match(html, /id="projectPreview"[^>]*sandbox=""/);
+assert.match(html, /id="pythonSandbox"[^>]*sandbox="allow-scripts"/);
+assert.ok(html.includes('id="python-lab"'), "Python training section is missing");
+assert.match(pythonSandbox, /skulpt@1\.2\.0\/dist\/skulpt\.min\.js/);
+assert.match(pythonSandbox, /skulpt-stdlib\.js/);
+assert.match(pythonSandbox, /execLimit: 3000/);
+assert.match(pythonSandbox, /CODECRAFT_PYTHON_RUN/);
+assert.match(css, /\.python-workbench/);
 assert.match(app, /connect-src[^;]*none/, "web preview must block network requests");
 
 const challengeMatch = app.match(/const challengeTasks = (\[[\s\S]*?\n\]);/);
