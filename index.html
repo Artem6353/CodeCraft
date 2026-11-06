@@ -89,7 +89,27 @@ print("Добро пожаловать в Python!")</textarea>
  </div>
  <iframe id="pythonSandbox" title="Изолированная среда Python" src="python-sandbox.html" sandbox="allow-scripts" loading="lazy" referrerpolicy="no-referrer" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0"></iframe>
 </section>
-<section id="quiz" class="section"><div class="section-heading"><div><p class="eyebrow">ПРОВЕРЬ СВОИ ЗНАНИЯ</p><h2>Экзамен CodeCraft</h2></div><span class="pill">10 случайных вопросов</span></div><div class="quiz-card"><div class="exam-top"><span id="examProgress">Вопрос 1 из 10</span><span id="examScore">Баллы: 0</span></div><div class="exam-track"><span id="examTrackFill"></span></div><h3 id="quizQuestion">Загрузка вопроса…</h3><div id="quizOptions" class="quiz-options"></div><p id="quizFeedback" class="feedback" aria-live="polite">Выбери один вариант ответа.</p><div class="exam-actions"><button class="small-btn" id="nextExamQuestion" disabled>Следующий вопрос</button><button class="small-btn" id="retryQuiz">Начать экзамен заново</button></div><div id="examResult" class="exam-result" aria-live="polite" hidden></div></div></section>
+<section id="quiz" class="section">
+ <div class="section-heading"><div><p class="eyebrow">ПРОВЕРЬ СВОИ ЗНАНИЯ</p><h2>Экзамен CodeCraft</h2></div><span class="pill">До 10 вопросов за попытку</span></div>
+ <div class="exam-settings">
+  <label>Направление
+   <select id="examCourse"><option value="all">Смешанный экзамен</option><option value="HTML и CSS">HTML и CSS</option><option value="JavaScript">JavaScript</option><option value="Python">Python</option></select>
+  </label>
+  <label>Сложность
+   <select id="examLevel"><option value="all">Все уровни</option><option value="Начальный">Начальный</option><option value="Начальный+">Начальный+</option></select>
+  </label>
+  <p id="examSettingsHint" aria-live="polite">Выбери направление и сложность. Вопросы будут перемешаны.</p>
+ </div>
+ <div class="quiz-card">
+  <div class="exam-top"><span id="examProgress">Вопрос 1 из 10</span><span id="examScore">Баллы: 0</span></div>
+  <div class="exam-track"><span id="examTrackFill"></span></div>
+  <h3 id="quizQuestion">Загрузка вопроса…</h3><div id="quizOptions" class="quiz-options"></div>
+  <p id="quizFeedback" class="feedback" aria-live="polite">Выбери один вариант ответа.</p>
+  <div class="exam-actions"><button class="small-btn" id="nextExamQuestion" disabled>Следующий вопрос</button><button class="small-btn" id="retryQuiz">Повторить экзамен</button></div>
+  <div id="examResult" class="exam-result" aria-live="polite" hidden></div>
+ </div>
+ <div class="exam-history-panel"><div class="student-panel-heading"><h3>Мои результаты</h3><span id="examHistoryCount">0</span></div><div id="examHistory" class="exam-history" aria-live="polite"></div><p class="student-hint">Лучшие результаты и количество попыток сохраняются в этом браузере. Экзамены не начисляют XP.</p></div>
+</section>
 </main><footer><div class="shell">© 2026 CodeCraft <span id="connectionStatus" class="connection-status" aria-live="polite">Проверяю соединение…</span><span>Учись в своём темпе. Создавай каждый день.</span></div></footer>
 <script src="js/lessons.js"></script><script src="js/app.js"></script>
 </body></html>
