@@ -131,7 +131,8 @@ test("exports and imports a versioned learning backup", async ({ page }) => {
     notes: { [lessonId]: "Заметка из резервной копии" },
     drafts: {},
     exams: {},
-    topicStats: {}
+    topicStats: {},
+    projectSteps: { "taskboard": [2] }
   };
   await page.locator("#importProgressFile").setInputFiles({
     name: "codecraft-e2e-backup.json",
@@ -142,6 +143,8 @@ test("exports and imports a versioned learning backup", async ({ page }) => {
   await expect(page.locator("#progressCount")).toContainText("1 из 32");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("cc_challenges") || "[]"))).toContain("html-heading");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("cc_projects") || "[]"))).toContain("profile");
+  await page.locator("#projectGrid .project-card").filter({ hasText: "Доска задач" }).click();
+  await expect(page.locator("#projectTasks input[type=checkbox]").nth(2)).toBeChecked();
 
   const downloadPromise = page.waitForEvent("download");
   await page.locator("#exportProgress").click();
@@ -170,6 +173,7 @@ test("keeps the interface within phone and desktop viewport widths", async ({ pa
     expect(dimensions.document, `horizontal overflow at viewport ${width}px: ${JSON.stringify(dimensions.offenders)}`).toBeLessThanOrEqual(dimensions.viewport + 1);
     if (width === 768) {
       await expect(page.locator("#menuBtn")).toBeVisible();
+      await expect(page.locator("#menuBtn")).toHaveAttribute("aria-controls", "nav");
       await page.locator("#menuBtn").click();
       await expect(page.locator("#nav")).toHaveClass(/open/);
       await expect(page.locator("#menuBtn")).toHaveAttribute("aria-expanded", "true");
@@ -209,4 +213,7 @@ test("passes automated WCAG 2.1 A/AA accessibility checks on core learning scree
   await page.locator("#courseFilter").selectOption("Средний");
   const courseScan = await new AxeBuilder({ page }).withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa"]).analyze();
   expect(courseScan.violations.map(item => ({ id:item.id, impact:item.impact, nodes:item.nodes.map(node=>node.target) }))).toEqual([]);
+  await page.locator("#projectGrid .project-card").filter({ hasText: "Доска задач" }).click();
+  const projectScan = await new AxeBuilder({ page }).withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa"]).analyze();
+  expect(projectScan.violations.map(item => ({ id:item.id, impact:item.impact, nodes:item.nodes.map(node=>node.target) }))).toEqual([]);
 });
