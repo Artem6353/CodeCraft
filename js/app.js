@@ -249,6 +249,63 @@ $("#runWebLab").addEventListener("click",runWebLab);
 $("#resetWebLab").addEventListener("click",resetWebLab);
 [["webHtml",webHtml,"html"],["webCss",webCss,"css"],["webJs",webJs,"js"]].forEach(([key,field,defaultKey])=>{field.value=restoreDraft(key,webDefaults[defaultKey]);field.addEventListener("input",()=>saveDraft(key,field.value));});
 runWebLab();
+
+/* Python-тренажёр на Skulpt в отдельном iframe */
+const pythonExamples={
+ hello:'name = "CodeCraft"\nprint("Привет,", name)\nprint("Добро пожаловать в Python!")',
+ loops:'for number in range(1, 6):\n    print("Шаг", number)',
+ lists:'fruits = ["яблоко", "груша", "слива"]\nfruits.append("апельсин")\nfor fruit in fruits:\n    print(fruit)',
+ functions:'def greet(name):\n    return "Привет, " + name\n\nprint(greet("CodeCraft"))'
+};
+const pythonEditor=$("#pythonCode"),pythonOutput=$("#pythonOutput"),pythonFrame=$("#pythonSandbox");
+let pythonReady=false,pythonPending=null,pythonRequestId=0,activePythonExample=$("#pythonExample").value;
+pythonEditor.value=restoreDraft("python:"+activePythonExample,pythonExamples[activePythonExample]||pythonEditor.value);
+pythonEditor.addEventListener("input",()=>saveDraft("python:"+activePythonExample,pythonEditor.value));
+$("#pythonExample").addEventListener("change",event=>{
+ activePythonExample=event.target.value;
+ pythonEditor.value=restoreDraft("python:"+activePythonExample,pythonExamples[activePythonExample]||pythonExamples.hello);
+ pythonOutput.textContent="Выбран пример: "+event.target.options[event.target.selectedIndex].text;
+ saveDraft("python:"+activePythonExample,pythonEditor.value);
+});
+$("#resetPython").addEventListener("click",()=>{
+ pythonEditor.value=pythonExamples[activePythonExample]||pythonExamples.hello;
+ saveDraft("python:"+activePythonExample,pythonEditor.value);
+ pythonOutput.textContent="Пример восстановлен.";
+});
+$("#clearPython").addEventListener("click",()=>{pythonOutput.textContent="Вывод очищен.";});
+function resetPythonSandbox(){
+ pythonReady=false;pythonFrame.src="python-sandbox.html";
+ $("#pythonStatus").textContent="Перезапускаю Python-среду…";
+}
+window.addEventListener("message",event=>{
+ if(event.source!==pythonFrame.contentWindow||!event.data)return;
+ if(event.data.type==="CODECRAFT_PYTHON_READY"){
+  pythonReady=true;$("#pythonStatus").textContent="Интерпретатор готов. Код выполняется локально в браузере.";
+  return;
+ }
+ if(event.data.type==="CODECRAFT_PYTHON_ERROR"){
+  pythonReady=false;$("#pythonStatus").textContent=event.data.message||"Не удалось загрузить Python.";
+  return;
+ }
+ if(event.data.type!=="CODECRAFT_PYTHON_RESULT"||!pythonPending||event.data.id!==pythonPending.id)return;
+ clearTimeout(pythonPending.timer);
+ pythonOutput.textContent=(event.data.output||"")+(event.data.error?"\nОшибка: "+event.data.error:"");
+ $("#runPython").disabled=false;$("#pythonStatus").textContent=event.data.error?"Выполнение завершилось с ошибкой.":"Выполнение завершено.";
+ pythonPending=null;
+});
+$("#runPython").addEventListener("click",()=>{
+ if(pythonPending)return;
+ if(!pythonReady){$("#pythonStatus").textContent="Python ещё загружается. Проверь интернет и подожди немного.";return;}
+ const id=++pythonRequestId;$("#runPython").disabled=true;pythonOutput.textContent="Выполняю Python-код…";
+ const timer=setTimeout(()=>{
+  if(!pythonPending||pythonPending.id!==id)return;
+  pythonPending=null;$("#runPython").disabled=false;pythonOutput.textContent="Превышено время ожидания. Среда перезапущена.";
+  resetPythonSandbox();
+ },7000);
+ pythonPending={id,timer};
+ pythonFrame.contentWindow.postMessage({type:"CODECRAFT_PYTHON_RUN",id,code:pythonEditor.value},"*");
+});
+
 const challengeTasks = [
  {id:"html-heading",language:"HTML",file:"index.html",title:"Создай заголовок",description:"Добавь на страницу главный заголовок первого уровня и абзац с приветствием. Используй реальные HTML-теги.",hint:"Нужны открывающий и закрывающий теги <h1> и <p>. Текст помести между ними.",starter:"<!-- Напиши здесь HTML -->\n",checks:[["Заголовок h1",code=>/<h1\b[^>]*>[\s\S]*?<\/h1\s*>/i.test(code)],["Абзац p",code=>/<p\b[^>]*>[\s\S]*?<\/p\s*>/i.test(code)],["Заголовок содержит текст",code=>/<h1\b[^>]*>\s*[^<\s][\s\S]*?<\/h1\s*>/i.test(code)]]},
  {id:"html-link",language:"HTML",file:"index.html",title:"Добавь ссылку",description:"Создай ссылку на https://example.com с понятным текстом. Ссылка должна содержать href.",hint:"Используй <a href=\"https://example.com\">Текст ссылки</a>.",starter:"<!-- Создай ссылку -->\n",checks:[["Тег a",code=>/<a\b[^>]*>[\s\S]*?<\/a\s*>/i.test(code)],["Атрибут href",code=>/<a\b[^>]*\bhref\s*=\s*(['\"])https:\/\/example\.com\1/i.test(code)],["Непустой текст ссылки",code=>/<a\b[^>]*>\s*[^<\s][\s\S]*?<\/a\s*>/i.test(code)]]},
