@@ -157,6 +157,7 @@ function renderMenu() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "lesson-choice" + (index === active ? " active" : "");
+    if(index===active)button.setAttribute("aria-current","step");
     button.textContent = (done.includes(lesson.id) ? "✓ " : "") + lesson.title;
     const small = document.createElement("small");
     small.textContent = lesson.course + " · " + lesson.level;
@@ -179,6 +180,38 @@ function showLesson(index) {
   const description = document.createElement("p"); description.textContent = lesson.text;
   const example = document.createElement("pre"); example.textContent = lesson.code;
   const tip = document.createElement("p"); tip.className = "lesson-tip"; tip.textContent = "Запомни: " + lesson.tip;
+  const courseIndexes=lessons.map((item,itemIndex)=>item.course===lesson.course?itemIndex:-1).filter(itemIndex=>itemIndex>=0);
+  const coursePosition=courseIndexes.indexOf(index);
+  const lessonNavigation=document.createElement("nav");
+  lessonNavigation.className="lesson-navigation";
+  lessonNavigation.setAttribute("aria-label","Навигация по урокам направления");
+  const previousLesson=document.createElement("button");
+  previousLesson.type="button";
+  previousLesson.id="lessonPrevious";
+  previousLesson.className="small-btn";
+  previousLesson.textContent="← Предыдущий";
+  previousLesson.disabled=coursePosition<=0;
+  const lessonSequence=document.createElement("span");
+  lessonSequence.id="lessonSequence";
+  lessonSequence.setAttribute("aria-live","polite");
+  lessonSequence.textContent="Урок "+(coursePosition+1)+" из "+courseIndexes.length+" · "+lesson.course;
+  const nextLesson=document.createElement("button");
+  nextLesson.type="button";
+  nextLesson.id="lessonNext";
+  nextLesson.className="small-btn";
+  nextLesson.textContent="Следующий →";
+  nextLesson.disabled=coursePosition===courseIndexes.length-1;
+  previousLesson.addEventListener("click",()=>{
+    if(coursePosition<=0)return;
+    showLesson(courseIndexes[coursePosition-1]);
+    $("#lessonPrevious")?.focus();
+  });
+  nextLesson.addEventListener("click",()=>{
+    if(coursePosition>=courseIndexes.length-1)return;
+    showLesson(courseIndexes[coursePosition+1]);
+    $("#lessonNext")?.focus();
+  });
+  lessonNavigation.append(previousLesson,lessonSequence,nextLesson);
   const lessonTools=document.createElement("section");lessonTools.className="lesson-personal-tools";
   let bookmarks=safeStoredArray("cc_bookmarks",validIds);let notes={};try{const storedNotes=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");if(storedNotes&&typeof storedNotes==="object"&&!Array.isArray(storedNotes))notes=storedNotes;}catch(_){}
   const bookmarkButton=document.createElement("button");bookmarkButton.type="button";bookmarkButton.className="small-btn";bookmarkButton.textContent=bookmarks.includes(lesson.id)?"★ В избранном":"☆ Добавить в избранное";
@@ -214,7 +247,7 @@ function showLesson(index) {
   exercise.append(exerciseTitle, question, options, feedback, retry);
   const mark = document.createElement("button"); mark.type = "button"; mark.className = "btn"; mark.textContent = done.includes(lesson.id) ? "Урок пройден ✓" : "Отметить урок пройденным";
   mark.addEventListener("click", () => { if (!done.includes(lesson.id)) done.push(lesson.id); saveProgress(); renderMenu(); progress(); showLesson(index); });
-  panel.append(tag, heading, description, example, tip, lessonTools, exercise, mark);
+  panel.append(tag, heading, description, example, tip, lessonNavigation, lessonTools, exercise, mark);
   renderMenu();
 }
 document.querySelectorAll("[data-course]").forEach(button => button.addEventListener("click", () => {
