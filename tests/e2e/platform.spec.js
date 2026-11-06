@@ -139,7 +139,7 @@ test("exports and imports a versioned learning backup", async ({ page }) => {
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(backup))
   });
-  await expect(page.locator("#learningToolsStatus")).toContainText("Данные импортированы");
+  await expect(page.locator("#learningToolsStatus")).toContainText("Резервная копия импортирована");
   await expect(page.locator("#progressCount")).toContainText("1 из 44");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("cc_challenges") || "[]"))).toContain("html-heading");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("cc_projects") || "[]"))).toContain("profile");
