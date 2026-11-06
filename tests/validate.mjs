@@ -89,6 +89,15 @@ for (const task of challenges) {
 }
 assert.match(css, /@media\(max-width:520px\)/);
 assert.match(css, /\.web-lab/);
+assert.match(html, /data-lab-panel="html"/);
+assert.match(html, /data-lab-panel="preview"/);
+assert.match(html, /id="editorFontUp"/);
+assert.match(app, /function selectLabPanel/);
+assert.match(app, /editor\.setRangeText\("  "/);
+assert.match(app, /event\.key==="Enter"/);
+assert.match(css, /\.workspace-tabs/);
+assert.match(css, /\.web-editor\.mobile-active/);
+
 assert.match(app, /function exportLearningData/);
 assert.match(app, /function renderStudentDashboard/);
 assert.match(app, /function validateProject/);
