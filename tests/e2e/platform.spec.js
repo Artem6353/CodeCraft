@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import fs from "node:fs/promises";
+import AxeBuilder from "@axe-core/playwright";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
@@ -8,8 +9,8 @@ test.beforeEach(async ({ page }) => {
 
 test("loads the learning dashboard and keeps the main sections reachable", async ({ page }) => {
   await expect(page).toHaveTitle(/CodeCraft/);
-  await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(32);
-  await expect(page.locator("#progressCount")).toContainText("0 из 32");
+  await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(44);
+  await expect(page.locator("#progressCount")).toContainText("0 из 44");
   for (const id of ["learn", "playground", "web-lab", "challenges", "projects", "python-lab", "quiz"]) {
     await expect(page.locator(`#${id}`)).toHaveCount(1);
   }
@@ -39,6 +40,12 @@ test("validates a practical task and a guided project and stores their completio
   await page.locator("#completeProject").click();
   await expect(page.locator("#projectStatus")).toContainText("Начислено 50 XP");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("cc_projects") || "[]"))).toContain("profile");
+  await page.locator("#projectGrid .project-card").filter({ hasText: "Доска задач" }).click();
+  await expect(page.locator("#projectTasks input[type=checkbox]")).toHaveCount(4);
+  await page.locator("#projectTasks input[type=checkbox]").first().check();
+  await page.reload();
+  await page.locator("#projectGrid .project-card").filter({ hasText: "Доска задач" }).click();
+  await expect(page.locator("#projectTasks input[type=checkbox]").first()).toBeChecked();
 });
 
 test("runs the web lab preview and executes its button interaction", async ({ page }) => {
@@ -145,6 +152,7 @@ test("exports and imports a versioned learning backup", async ({ page }) => {
   expect(exported.version).toBe(1);
   expect(exported.progress).toContain(lessonId);
   expect(exported.challenges).toContain("html-heading");
+  expect(exported.projectSteps).toBeTruthy();
 });
 
 test("keeps the interface within phone and desktop viewport widths", async ({ page }) => {
@@ -167,4 +175,38 @@ test("keeps the interface within phone and desktop viewport widths", async ({ pa
       await expect(page.locator("#menuBtn")).toHaveAttribute("aria-expanded", "true");
     }
   }
+});
+
+
+test("supports intermediate lessons and saves phased project milestones", async ({ page }) => {
+  await page.locator("#courseFilter").selectOption("Средний");
+  await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(12);
+  await expect(page.locator("#progressCount")).toContainText("0 из 44");
+  await page.locator("#projectGrid .project-card").filter({ hasText: "Панель показателей" }).click();
+  await page.locator("#projectTasks input[type=checkbox]").nth(1).check();
+  await expect(page.locator("#projectPhaseStatus")).toContainText("1 из 4");
+  const steps = await page.evaluate(() => JSON.parse(localStorage.getItem("cc_project_steps_v1") || "{}"));
+  expect(steps["data-dashboard"]).toContain(1);
+});
+
+test("checks keyboard access, reduced motion and responsive layouts", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".skip-link")).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".brand")).toBeFocused();
+  for (const [width, height] of [[320,740],[360,800],[390,844],[414,896],[600,900],[768,1024],[820,1180],[1024,768],[1280,800],[1440,900],[1920,1080],[844,390]]) {
+    await page.setViewportSize({ width, height });
+    const dimensions = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, document: document.documentElement.scrollWidth }));
+    expect(dimensions.document, `horizontal overflow at ${width}x${height}`).toBeLessThanOrEqual(dimensions.viewport + 1);
+  }
+});
+
+test("passes automated WCAG 2.1 A/AA accessibility checks on core learning screens", async ({ page }) => {
+  const scan = await new AxeBuilder({ page }).withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa"]).analyze();
+  expect(scan.violations.map(item => ({ id:item.id, impact:item.impact, nodes:item.nodes.map(node=>node.target) }))).toEqual([]);
+  await page.locator("#courseFilter").selectOption("Средний");
+  const courseScan = await new AxeBuilder({ page }).withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa"]).analyze();
+  expect(courseScan.violations.map(item => ({ id:item.id, impact:item.impact, nodes:item.nodes.map(node=>node.target) }))).toEqual([]);
 });
