@@ -268,7 +268,7 @@ assert.match(css, /\.topic-stat-card/);
 assert.match(app, /const STORAGE_SCHEMA_VERSION=2/);
 assert.match(app, /function migrateLearningStorage/);
 assert.match(app, /version>STORAGE_SCHEMA_VERSION\)return false/);
-assert.match(app, /data\.version===2&&data\.schemaVersion!==STORAGE_SCHEMA_VERSION/);
+assert.match(app, /data\.version===2&&\(!Number\.isInteger\(data\.schemaVersion\)\|\|data\.schemaVersion>STORAGE_SCHEMA_VERSION\)/);
 assert.match(app, /function writeStorageBatch/);
 assert.match(app, /function normalizeDrafts/);
 assert.match(app, /function mergeHistory/);
