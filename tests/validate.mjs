@@ -145,7 +145,7 @@ assert.match(app, /function renderStudentDashboard/);
 assert.match(app, /function validateProject/);
 assert.match(app, /function renderProjectTasks/);
 assert.match(app, /cc_project_steps_v1/);
-assert.match(app, /projectSteps:projectSteps/);
+assert.match(app, /projectSteps\};/);
 const projectStart = app.indexOf("const projectTemplates = [");
 const projectEnd = app.indexOf("let activeProject", projectStart);
 assert.ok(projectStart >= 0 && projectEnd > projectStart, "project templates are missing");
