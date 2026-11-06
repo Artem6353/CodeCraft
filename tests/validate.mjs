@@ -124,6 +124,7 @@ assert.equal(app.split("calculateLearningXP(done.length,completedProjects.length
 assert.match(app, /challenges:safeStoredArray\("cc_challenges",getKnownChallengeIds\(challengeTasks\)\)/, "backup export must use the current challenge registry");
 assert.match(app, /sanitizeKnownIds\(data.challenges,getKnownChallengeIds\(challengeTasks\)\)/, "backup import must use the current challenge registry");
 assert.match(css, /@media\(max-width:520px\)/);
+assert.match(css, /@media\(max-width:900px\)[\s\S]*?\.topbar nav\{display:none\}/, "tablet navigation must collapse before the header overflows");
 assert.match(css, /\.web-lab/);
 assert.match(html, /data-lab-panel="html"/);
 assert.match(html, /data-lab-panel="preview"/);
@@ -230,6 +231,7 @@ for (const scenario of [
   "validates a practical task",
   "runs the web lab preview",
   "times out an infinite loop",
+  "manually stops JavaScript execution",
   "runs Python in Skulpt",
   "finishes an exam",
   "exports and imports",
