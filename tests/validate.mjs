@@ -112,6 +112,22 @@ assert.match(app, /lesson-personal-tools/);
 assert.match(app, /bookmarks:safeStoredArray/);
 assert.match(app, /notes:\(\(\)=>/);
 assert.match(app, /function startExam/);
+assert.match(html, /id="examCourse"/);
+assert.match(html, /id="examLevel"/);
+assert.match(html, /id="examHistory"/);
+assert.match(app, /function shuffleExamItems/);
+assert.match(app, /function finishExam/);
+assert.match(app, /cc_exam_history_v1/);
+assert.match(app, /function renderExamHistory/);
+assert.match(css, /\.exam-settings/);
+assert.match(css, /\.exam-history-card/);
+for (const course of ["HTML и CSS", "JavaScript", "Python"]) {
+  const pool = lessons.filter(item => item.course === course && Array.isArray(item.options) && item.options.length >= 2 && Number.isInteger(item.correct));
+  assert.ok(pool.length >= 5, "exam track must contain at least five questions: " + course);
+}
+for (const level of ["Начальный", "Начальный+"]) {
+  assert.ok(lessons.some(item => item.level === level), "exam difficulty is missing: " + level);
+}
 assert.match(app, /function saveDraft/);
 assert.match(app, /CODECRAFT_PYTHON_PING/);
 assert.match(app, /file\.size>2\*1024\*1024/);
@@ -123,4 +139,4 @@ console.log("CodeCraft quality checks passed:");
 console.log("- 32 lessons, 3 tracks, valid answer data");
 console.log("- unique HTML IDs and complete app selectors");
 console.log("- 10 practical tasks and 100% passing sample checks");
-console.log("- isolated sandboxes, responsive styles, exam, backups and drafts");
+console.log("- isolated sandboxes, responsive styles, track/difficulty exams, score history, backups and drafts");
