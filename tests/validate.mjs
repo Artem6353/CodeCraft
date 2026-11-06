@@ -117,7 +117,7 @@ assert.match(html, /id="examLevel"/);
 assert.match(html, /id="examHistory"/);
 assert.match(app, /function shuffleExamItems/);
 assert.match(app, /function finishExam/);
-assert.match(app, /cc_exam_history_v1/);
+assert.match(app, /cc_exam_history_v1/);\nassert.match(app, /exams:readExamHistory\(\)/);\nassert.match(app, /data\.exams/);
 assert.match(app, /function renderExamHistory/);
 assert.match(css, /\.exam-settings/);
 assert.match(css, /\.exam-history-card/);
