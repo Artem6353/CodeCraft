@@ -191,3 +191,5 @@ footer span{float:none}
 .lesson-note-status{color:var(--mint);font-size:10px}
 @media(max-width:760px){.student-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.student-library{grid-template-columns:1fr}}
 @media(max-width:420px){.student-stat{padding:12px}.student-panel{padding:11px}}
+
+.project-checks{display:grid;gap:6px;margin-top:12px}.project-check{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:11px}.project-check.pass{border-color:#286b5b;color:var(--mint);background:#102b29}.project-check.fail{border-color:#75434a;color:#ffadb4;background:#321d29}.project-status.success{color:var(--mint)}.project-status.failure{color:#ffadb4}
