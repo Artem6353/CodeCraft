@@ -260,3 +260,27 @@ footer span{float:none}
  .topbar nav.open{display:flex;position:absolute;top:65px;left:0;right:0;padding:15px 20px;background:#0b1020;flex-direction:column;border-bottom:1px solid var(--line)}
  .menu-btn{display:block}
 }
+
+
+/* A3: safe-area, dynamic viewport, overflow containment and keyboard focus */
+:root{--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);scroll-padding-top:calc(82px + var(--safe-top))}
+html{min-width:320px;min-height:100%;scrollbar-gutter:stable}
+body{min-width:320px;min-height:100vh;min-height:100dvh;padding-left:var(--safe-left);padding-right:var(--safe-right);padding-bottom:var(--safe-bottom)}
+.topbar{padding-top:var(--safe-top);min-height:66px;height:auto}
+.shell,.hero>*,.learning-layout>*,.challenge-layout>*,.challenge-workbench>*,.project-workbench>*,.web-lab>*,.web-editors,.web-preview-wrap,.lesson-panel,.play-card,.quiz-card{min-width:0}
+pre,code,textarea,.lesson-panel p,.lesson-panel h3,.project-intro,.challenge-brief,.project-instructions{overflow-wrap:anywhere}
+.lesson-panel pre,.output{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere}
+iframe{max-width:100%}
+button,a,input,select,textarea{scroll-margin-block:calc(76px + var(--safe-top))}
+:focus-visible{outline:3px solid var(--mint)!important;outline-offset:3px!important}
+.skip-link{top:calc(8px + var(--safe-top));left:calc(12px + var(--safe-left))}
+@media(max-width:900px){.topbar nav.open{top:calc(65px + var(--safe-top));padding-left:max(16px,var(--safe-left));padding-right:max(16px,var(--safe-right))}}
+@media(max-width:560px){.topbar{min-height:calc(59px + var(--safe-top))}.topbar nav.open{top:calc(58px + var(--safe-top))}.section{padding-block:27px}.lesson-panel,.play-card,.quiz-card{padding:14px}.editor-actions .btn{flex:1 1 auto}.exam-settings{grid-template-columns:minmax(0,1fr)}}
+@media(orientation:landscape) and (max-height:500px){.hero{padding-top:24px;padding-bottom:18px}.topbar{position:relative}.web-editor textarea{min-height:180px;max-height:52vh}#webLabPreview{height:65vh;min-height:220px}}
+@media(min-width:1500px){.shell{width:min(1320px,calc(100% - 80px))}.hero{gap:76px}.section{padding-block:44px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.project-phase-status{margin:8px 0;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.project-phase{display:flex;align-items:flex-start;gap:9px;margin:9px 0;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:#0d1728;color:var(--text);font-size:12px;line-height:1.45}
+.project-phase input{width:18px;height:18px;flex:0 0 auto;margin:0;accent-color:var(--mint)}
+.project-phase span{min-width:0}
+.project-phase input:checked+span{text-decoration:line-through;color:var(--muted)}
