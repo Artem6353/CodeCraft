@@ -51,6 +51,36 @@ test("loads the learning dashboard and keeps the main sections reachable", async
   }
 });
 
+test("builds course analytics and recommends a next step from learning data", async ({ page }) => {
+  await expect(page.locator("#courseProgressList .course-progress-item")).toHaveCount(3);
+  await expect(page.locator("#practiceProgressList .practice-progress-item")).toHaveCount(2);
+  await expect(page.locator("#nextStepAction")).toHaveText("Открыть урок");
+
+  await page.evaluate(() => {
+    localStorage.setItem("cc_progress", JSON.stringify(["html1", "html2"]));
+    localStorage.setItem("cc_exam_topic_stats_v1", JSON.stringify({
+      "html-structure": { correct: 1, total: 4 }
+    }));
+  });
+  await page.reload();
+  await expect(page.locator("#courseProgressList .course-progress-item").first()).toContainText("2 из 20 уроков");
+  await expect(page.locator("#nextStepTitle")).toContainText("HTML: структура и элементы");
+  await expect(page.locator("#nextStepAction")).toHaveText("Тренировать тему");
+  await page.locator("#nextStepAction").click();
+  await expect(page.locator("#examSettingsHint")).toContainText("Тренировка темы: HTML: структура и элементы");
+
+  await page.evaluate(() => localStorage.removeItem("cc_exam_topic_stats_v1"));
+  await page.reload();
+  await expect(page.locator("#nextStepAction")).toHaveText("Открыть урок");
+  await page.locator("#nextStepAction").click();
+  await expect(page.locator("#lessonPanel h3")).toHaveText("Списки и семантика");
+
+  await page.evaluate(() => localStorage.setItem("cc_progress", JSON.stringify(window.CODECRAFT_LESSONS.map(lesson => lesson.id))));
+  await page.reload();
+  await expect(page.locator("#nextStepAction")).toHaveText("Открыть практику");
+  await expect(page.locator("#nextStepMeta")).toContainText("0 из 20");
+});
+
 test("searches lessons and persists lesson completion, bookmark and note after reload", async ({ page }) => {
   await page.locator("#courseFilter").selectOption("HTML и CSS");
   await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(20);
