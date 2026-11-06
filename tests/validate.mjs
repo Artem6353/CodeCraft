@@ -108,7 +108,7 @@ const sanitizeKnownIds = vm.runInNewContext("(" + sanitizeKnownIdsSource + ")");
 const calculateLearningXP = vm.runInNewContext("(" + calculateLearningXPSource + ")");
 const knownChallengeIds = getKnownChallengeIds(challenges);
 assert.equal(knownChallengeIds.size, 20, "backup allowlist must include all 20 current tasks");
-const allChallengeIds = challenges.map(task => task.id);
+const allChallengeIds = Array.from(challenges, task => task.id);
 const restoredChallenges = sanitizeKnownIds(JSON.parse(JSON.stringify(allChallengeIds)), knownChallengeIds);
 assert.deepEqual(Array.from(restoredChallenges), allChallengeIds, "all current challenge completions must survive backup round-trip");
 assert.deepEqual(Array.from(sanitizeKnownIds(["html-heading", "html-heading", "unknown-task", 42], knownChallengeIds)), ["html-heading"], "backup import must deduplicate and reject unknown challenge IDs");
