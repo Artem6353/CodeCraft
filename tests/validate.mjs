@@ -97,7 +97,7 @@ assert.match(app, /editor\.setRangeText\("  "/);
 assert.match(app, /event\.key==="Enter"/);
 assert.match(css, /\.workspace-tabs/);
 assert.match(css, /\.web-editor\.mobile-active/);
-assert.doesNotMatch(css, /:has\\\(/);
+assert.doesNotMatch(css, /:has\(/);
 
 assert.match(app, /function exportLearningData/);
 assert.match(app, /function renderStudentDashboard/);
