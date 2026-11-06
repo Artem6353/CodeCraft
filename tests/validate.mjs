@@ -50,6 +50,8 @@ assert.match(html, /id="projectPreview"[^>]*sandbox=""/);
 assert.match(html, /id="pythonSandbox"[^>]*sandbox="allow-scripts"/);
 assert.ok(html.includes('id="python-lab"'), "Python training section is missing");
 assert.ok(html.includes('id="student-dashboard"'), "student dashboard section is missing");
+assert.ok(html.includes('id="lessonLevelFilter"'), "lesson level filter is missing");
+assert.match(app, /\$\("#lessonLevelFilter"\)\.addEventListener/);
 assert.ok(html.includes('id="projectChecks"'), "project criteria output is missing");
 assert.ok(html.includes('id="bookmarkList"') && html.includes('id="notesList"'), "saved learning materials UI is missing");
 assert.match(pythonSandbox, /skulpt@1\.2\.0\/dist\/skulpt\.min\.js/);
