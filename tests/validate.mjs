@@ -161,10 +161,10 @@ console.log("- isolated sandboxes, responsive styles, track/difficulty exams, sc
 assert.match(app, /function topicForQuestion/);
 assert.match(app, /function readExamTopicStats/);
 assert.match(app, /function recordExamAnswer/);
-assert.match(app, /recordExamAnswer\\(question,chosen===question\\.correct\\)/);
+assert.match(app, /recordExamAnswer\(question,chosen===question\.correct\)/);
 assert.match(app, /function renderExamTopicStats/);
-assert.match(app, /data-topic=row\\.key/);
-assert.match(app, /topicStats:readExamTopicStats\\(\\)/);
-assert.match(app, /data\\.topicStats/);
+assert.match(app, /data-topic=row\.key/);
+assert.match(app, /topicStats:readExamTopicStats\(\)/);
+assert.match(app, /data\.topicStats/);
 assert.match(html, /id="examTopicStats"/);
-assert.match(css, /\\.topic-stat-card/);
+assert.match(css, /\.topic-stat-card/);
