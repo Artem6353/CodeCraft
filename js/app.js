@@ -259,6 +259,7 @@ const pythonExamples={
 };
 const pythonEditor=$("#pythonCode"),pythonOutput=$("#pythonOutput"),pythonFrame=$("#pythonSandbox");
 let pythonReady=false,pythonPending=null,pythonRequestId=0,activePythonExample=$("#pythonExample").value;
+pythonFrame.addEventListener("load",()=>{pythonFrame.contentWindow.postMessage({type:"CODECRAFT_PYTHON_PING"},"*");});
 pythonEditor.value=restoreDraft("python:"+activePythonExample,pythonExamples[activePythonExample]||pythonEditor.value);
 pythonEditor.addEventListener("input",()=>saveDraft("python:"+activePythonExample,pythonEditor.value));
 $("#pythonExample").addEventListener("change",event=>{
