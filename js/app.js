@@ -78,7 +78,7 @@ $("#importProgressFile").addEventListener("change",event=>{
    pythonEditor.value=restoreDraft("python:"+activePythonExample,pythonExamples[activePythonExample]||"");
    $("#challengeCode").value=restoreDraft("challenge:"+activeChallenge.id,activeChallenge.starter);
    $("#projectCode").value=restoreDraft("project:"+activeProject.id,activeProject.code);renderProjectPreview();
-   renderMenu();progress();renderProjectCards();renderChallengeMenu();updateProjectStatus();renderExamHistory();renderExamTopicStats();
+   renderMenu();progress();renderProjectCards();renderProjectTasks();renderChallengeMenu();updateProjectStatus();renderExamHistory();renderExamTopicStats();
    $("#learningToolsStatus").textContent="Данные импортированы. Существующий прогресс сохранён и объединён с копией.";
   }catch(error){$("#learningToolsStatus").textContent="Не удалось импортировать файл: "+error.message;}
   event.target.value="";
