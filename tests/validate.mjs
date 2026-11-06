@@ -12,6 +12,10 @@ const pythonSandbox = read("python-sandbox.html");
 const serviceWorker = read("sw.js");
 const manifest = JSON.parse(read("manifest.webmanifest"));
 const icon = read("assets/icon.svg");
+const packageData = JSON.parse(read("package.json"));
+const playwrightConfig = read("playwright.config.js");
+const e2eSpec = read("tests/e2e/platform.spec.js");
+const e2eServer = read("tests/e2e/server.mjs");
 new vm.Script(serviceWorker, { filename: "sw.js" });
 
 const context = { window: {} };
@@ -212,6 +216,25 @@ assert.match(app, /retryPython/);
 assert.match(html, /id="retryPython"/);
 assert.match(pythonSandbox, /Перезапустить среду/);
 assert.match(pythonSandbox, /execLimit: 3000/);
+
+assert.equal(packageData.devDependencies["@playwright/test"], "1.56.1", "Playwright version must be pinned");
+assert.equal(packageData.scripts["test:e2e"], "playwright test", "browser test script is missing");
+assert.match(playwrightConfig, /testDir: "\.\/tests\/e2e"/);
+assert.match(playwrightConfig, /webServer:/);
+assert.match(playwrightConfig, /retain-on-failure/);
+assert.match(e2eServer, /127\.0\.0\.1/);
+assert.match(e2eServer, /startsWith\(root \+ path\.sep\)/, "test server must prevent path traversal");
+for (const scenario of [
+  "loads the learning dashboard",
+  "persists lesson completion",
+  "validates a practical task",
+  "runs the web lab preview",
+  "times out an infinite loop",
+  "runs Python in Skulpt",
+  "finishes an exam",
+  "exports and imports",
+  "phone and desktop viewport"
+]) assert.ok(e2eSpec.includes(scenario), "missing browser scenario: " + scenario);
 
 console.log("CodeCraft quality checks passed:");
 console.log("- 32 lessons, 3 tracks, valid answer data");
