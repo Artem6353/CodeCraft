@@ -13,7 +13,9 @@
 "use strict";
 const send = payload => parent.postMessage(payload, "*");
 if (typeof Sk === "undefined") {
-  send({type:"CODECRAFT_PYTHON_ERROR",message:"Не удалось загрузить Skulpt. Проверь подключение к интернету и обнови страницу."});
+  const message="Не удалось загрузить Skulpt. Проверь подключение к интернету и обнови страницу.";
+  send({type:"CODECRAFT_PYTHON_ERROR",message});
+  window.addEventListener("message",event=>{if(event.source===parent&&event.data&&event.data.type==="CODECRAFT_PYTHON_PING")send({type:"CODECRAFT_PYTHON_ERROR",message});});
 } else {
   function builtinRead(path) {
     const files = Sk.builtinFiles && Sk.builtinFiles.files;
@@ -22,7 +24,9 @@ if (typeof Sk === "undefined") {
   }
   let running = false;
   window.addEventListener("message", event => {
-    if (event.source !== parent || !event.data || event.data.type !== "CODECRAFT_PYTHON_RUN" || running) return;
+    if (event.source !== parent || !event.data) return;
+    if (event.data.type === "CODECRAFT_PYTHON_PING") { send({type:"CODECRAFT_PYTHON_READY"}); return; }
+    if (event.data.type !== "CODECRAFT_PYTHON_RUN" || running) return;
     const id = event.data.id;
     const code = String(event.data.code || "");
     let output = "";
