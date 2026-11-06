@@ -1,8 +1,142 @@
-(()=>{"use strict";const $=s=>document.querySelector(s);const lessons=window.CODECRAFT_LESSONS||[];let done=[];try{done=JSON.parse(localStorage.getItem("cc_progress")||"[]")}catch(e){done=[]}let active=0;
-function progress(){const n=done.length,p=Math.round(n/lessons.length*100);$("#progressRing").style.setProperty("--p",p+"%");$("#progressPct").textContent=p+"%";$("#progressCount").textContent=n+" из "+lessons.length+" уроков"}
-function renderMenu(){const menu=$("#lessonMenu");menu.innerHTML="";lessons.forEach((l,i)=>{const b=document.createElement("button");b.className="lesson-choice"+(i===active?" active":"");b.innerHTML=(done.includes(l.id)?"✓ ":"")+l.title;const small=document.createElement("small");small.textContent=l.course+" · "+l.level;b.append(small);b.addEventListener("click",()=>showLesson(i));menu.append(b)})}
-function showLesson(i){active=i;const l=lessons[i],panel=$("#lessonPanel");panel.innerHTML="";const tag=document.createElement("span");tag.className="pill";tag.textContent=l.course+" · "+l.level;const h=document.createElement("h3");h.textContent=l.title;const p=document.createElement("p");p.textContent=l.text;const pre=document.createElement("pre");pre.textContent=l.code;const tip=document.createElement("p");tip.textContent="Запомни: "+l.tip;const btn=document.createElement("button");btn.className="btn";btn.textContent=done.includes(l.id)?"Урок пройден ✓":"Отметить урок пройденным";btn.addEventListener("click",()=>{if(!done.includes(l.id))done.push(l.id);try{localStorage.setItem("cc_progress",JSON.stringify(done))}catch(e){}renderMenu();progress();showLesson(i)});panel.append(tag,h,p,pre,tip,btn);renderMenu()}
-document.querySelectorAll("[data-course]").forEach(b=>b.addEventListener("click",()=>{const map={html:0,js:3,python:5};showLesson(map[b.dataset.course]||0);$("#learn").scrollIntoView({behavior:"smooth"})}));
-const starter=$("#codeEditor").value;$("#runCode").addEventListener("click",()=>{const lines=[];const fakeConsole={log:(...a)=>lines.push(a.map(v=>typeof v==="object"?JSON.stringify(v):String(v)).join(" "))};try{new Function("console",'"use strict";\n'+$("#codeEditor").value)(fakeConsole);$("#output").textContent=lines.length?lines.join("\n"):"Код выполнен без вывода."}catch(e){$("#output").textContent="Ошибка: "+e.message}});$("#resetEditor").addEventListener("click",()=>{$("#codeEditor").value=starter;$("#output").textContent="Пример восстановлен."});$("#clearOutput").addEventListener("click",()=>$("#output").textContent="Вывод очищен.");
-$("#quizOptions").addEventListener("click",e=>{const b=e.target.closest("button[data-answer]");if(!b)return;document.querySelectorAll("#quizOptions button").forEach(x=>x.classList.remove("correct","wrong"));if(b.dataset.answer==="1"){b.classList.add("correct");$("#quizFeedback").textContent="Правильно! Тег <a> создаёт гиперссылку."}else{b.classList.add("wrong");$("#quizFeedback").textContent="Пока неверно. Подсказка: нужный тег короткий и обозначает anchor."}});$("#retryQuiz").addEventListener("click",()=>{document.querySelectorAll("#quizOptions button").forEach(x=>x.classList.remove("correct","wrong"));$("#quizFeedback").textContent="Выбери один вариант."});
-$("#menuBtn").addEventListener("click",()=>$("#nav").classList.toggle("open"));$("#nav").addEventListener("click",e=>{if(e.target.closest("a"))$("#nav").classList.remove("open")});showLesson(0);progress()})();
+(()=>{
+"use strict";
+const $ = selector => document.querySelector(selector);
+const lessons = Array.isArray(window.CODECRAFT_LESSONS) ? window.CODECRAFT_LESSONS : [];
+const validIds = new Set(lessons.filter(item => item && typeof item.id === "string").map(item => item.id));
+let done = [];
+try {
+  const stored = JSON.parse(localStorage.getItem("cc_progress") || "[]");
+  if (Array.isArray(stored)) done = [...new Set(stored.filter(id => typeof id === "string" && validIds.has(id)))];
+} catch (_) { done = []; }
+let active = 0;
+function saveProgress() {
+  try { localStorage.setItem("cc_progress", JSON.stringify(done)); } catch (_) { /* Хранилище может быть недоступно. */ }
+}
+function progress() {
+  const count = done.length;
+  const percent = lessons.length ? Math.max(0, Math.min(100, Math.round(count / lessons.length * 100))) : 0;
+  $("#progressRing").style.setProperty("--p", percent + "%");
+  $("#progressPct").textContent = percent + "%";
+  $("#progressCount").textContent = count + " из " + lessons.length + " уроков";
+}
+function renderMenu() {
+  const menu = $("#lessonMenu");
+  menu.replaceChildren();
+  lessons.forEach((lesson, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "lesson-choice" + (index === active ? " active" : "");
+    button.textContent = (done.includes(lesson.id) ? "✓ " : "") + lesson.title;
+    const small = document.createElement("small");
+    small.textContent = lesson.course + " · " + lesson.level;
+    button.append(small);
+    button.addEventListener("click", () => showLesson(index));
+    menu.append(button);
+  });
+}
+function showLesson(index) {
+  if (!Number.isInteger(index) || index < 0 || index >= lessons.length) return;
+  active = index;
+  const lesson = lessons[index];
+  const panel = $("#lessonPanel");
+  panel.replaceChildren();
+  const tag = document.createElement("span");
+  tag.className = "pill";
+  tag.textContent = lesson.course + " · " + lesson.level;
+  const heading = document.createElement("h3");
+  heading.textContent = lesson.title;
+  const description = document.createElement("p");
+  description.textContent = lesson.text;
+  const example = document.createElement("pre");
+  example.textContent = lesson.code;
+  const tip = document.createElement("p");
+  tip.textContent = "Запомни: " + lesson.tip;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn";
+  button.textContent = done.includes(lesson.id) ? "Урок пройден ✓" : "Отметить урок пройденным";
+  button.addEventListener("click", () => {
+    if (!done.includes(lesson.id)) done.push(lesson.id);
+    saveProgress();
+    renderMenu();
+    progress();
+    showLesson(index);
+  });
+  panel.append(tag, heading, description, example, tip, button);
+  renderMenu();
+}
+document.querySelectorAll("[data-course]").forEach(button => button.addEventListener("click", () => {
+  const map = { html: 0, js: 3, python: 5 };
+  showLesson(map[button.dataset.course] ?? 0);
+  $("#learn").scrollIntoView({ behavior: "smooth" });
+}));
+
+const editor = $("#codeEditor");
+const output = $("#output");
+const starter = editor.value;
+const sandboxFrame = $("#jsSandbox");
+let requestId = 0;
+let sandboxReady = false;
+let pending = null;
+function resetSandbox() {
+  sandboxReady = false;
+  sandboxFrame.src = "sandbox.html";
+}
+sandboxFrame.addEventListener("load", () => { sandboxReady = true; });
+window.addEventListener("message", event => {
+  if (event.source !== sandboxFrame.contentWindow || !event.data) return;
+  if (event.data.type === "CODECRAFT_READY") { sandboxReady = true; return; }
+  if (event.data.type !== "CODECRAFT_RESULT" || !pending || event.data.id !== pending.id) return;
+  clearTimeout(pending.timer);
+  const result = event.data.output || "";
+  output.textContent = event.data.error ? (result ? result + "\n" : "") + "Ошибка: " + event.data.error : result;
+  pending = null;
+  $("#runCode").disabled = false;
+});
+$("#runCode").addEventListener("click", () => {
+  if (pending) return;
+  if (!sandboxReady) { output.textContent = "Среда запуска ещё загружается. Попробуй через секунду."; return; }
+  const id = ++requestId;
+  $("#runCode").disabled = true;
+  output.textContent = "Выполняю код…";
+  const timer = setTimeout(() => {
+    if (!pending || pending.id !== id) return;
+    pending = null;
+    output.textContent = "Превышено время выполнения. Среда перезапущена.";
+    $("#runCode").disabled = false;
+    resetSandbox();
+  }, 1800);
+  pending = { id, timer };
+  sandboxFrame.contentWindow.postMessage({ type: "CODECRAFT_RUN", id, code: editor.value }, "*");
+});
+$("#resetEditor").addEventListener("click", () => { editor.value = starter; output.textContent = "Пример восстановлен."; });
+$("#clearOutput").addEventListener("click", () => { output.textContent = "Вывод очищен."; });
+$("#quizOptions").addEventListener("click", event => {
+  const button = event.target.closest("button[data-answer]");
+  if (!button) return;
+  document.querySelectorAll("#quizOptions button").forEach(item => item.classList.remove("correct", "wrong"));
+  if (button.dataset.answer === "1") {
+    button.classList.add("correct");
+    $("#quizFeedback").textContent = "Правильно! Тег <a> создаёт гиперссылку.";
+  } else {
+    button.classList.add("wrong");
+    $("#quizFeedback").textContent = "Пока неверно. Подсказка: нужный тег короткий и обозначает anchor.";
+  }
+});
+$("#retryQuiz").addEventListener("click", () => {
+  document.querySelectorAll("#quizOptions button").forEach(item => item.classList.remove("correct", "wrong"));
+  $("#quizFeedback").textContent = "Выбери один вариант.";
+});
+$("#menuBtn").addEventListener("click", () => {
+  const isOpen = $("#nav").classList.toggle("open");
+  $("#menuBtn").setAttribute("aria-expanded", String(isOpen));
+});
+$("#nav").addEventListener("click", event => {
+  if (event.target.closest("a")) {
+    $("#nav").classList.remove("open");
+    $("#menuBtn").setAttribute("aria-expanded", "false");
+  }
+});
+showLesson(0);
+progress();
+})();
