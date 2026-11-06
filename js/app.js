@@ -35,6 +35,41 @@ function renderAchievements(){
  const list=$("#achievementList");list.replaceChildren();
  achievementDefinitions.forEach(item=>{const unlocked=item.test();const card=document.createElement("div");card.className="achievement-item"+(unlocked?"":" locked");const icon=document.createElement("span");icon.className="achievement-icon";icon.textContent=unlocked?item.icon:"🔒";const copy=document.createElement("div");const title=document.createElement("strong");title.textContent=item.title;const detail=document.createElement("small");detail.textContent=unlocked?"Получено ✓":item.detail;copy.append(title,detail);card.append(icon,copy);list.append(card);});
 }
+
+/* Поиск уроков, резервное копирование и восстановление учебных данных */
+function safeStoredArray(key,allowed){try{const value=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(value)?[...new Set(value.filter(id=>typeof id==="string"&&allowed.has(id)))]:[];}catch(_){return[];}}
+const knownProjectIds=new Set(["profile","portfolio","landing"]);
+function exportLearningData(){
+ const payload={app:"CodeCraft",version:1,exportedAt:new Date().toISOString(),progress:done,projects:safeStoredArray("cc_projects",knownProjectIds),challenges:safeStoredArray("cc_challenges",new Set(["html-heading","html-link","css-flex","js-function","js-condition","html-semantic","css-grid","js-array","py-loop","py-dict"])),drafts:(()=>{try{return JSON.parse(localStorage.getItem("cc_drafts_v1")||"{}");}catch(_){return{};}})()};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="codecraft-progress.json";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ $("#learningToolsStatus").textContent="Резервная копия подготовлена. Сохрани файл в удобное место.";
+}
+$("#exportProgress").addEventListener("click",exportLearningData);
+$("#importProgressButton").addEventListener("click",()=>$("#importProgressFile").click());
+$("#importProgressFile").addEventListener("change",event=>{
+ const file=event.target.files&&event.target.files[0];if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const data=JSON.parse(String(reader.result||""));
+   if(!data||data.app!=="CodeCraft"||data.version!==1)throw new Error("Это не файл резервной копии CodeCraft версии 1.");
+   const importedLessons=Array.isArray(data.progress)?data.progress.filter(id=>validIds.has(id)):[];
+   const importedProjects=Array.isArray(data.projects)?data.projects.filter(id=>knownProjectIds.has(id)):[];
+   const allowedChallenges=new Set(["html-heading","html-link","css-flex","js-function","js-condition","html-semantic","css-grid","js-array","py-loop","py-dict"]);
+   const importedChallenges=Array.isArray(data.challenges)?data.challenges.filter(id=>allowedChallenges.has(id)):[];
+   done=[...new Set([...done,...importedLessons])];completedProjects=[...new Set([...completedProjects,...importedProjects])];completedChallenges=[...new Set([...completedChallenges,...importedChallenges])];
+   saveProgress();localStorage.setItem("cc_projects",JSON.stringify(completedProjects));localStorage.setItem("cc_challenges",JSON.stringify(completedChallenges));
+   if(data.drafts&&typeof data.drafts==="object"&&!Array.isArray(data.drafts))localStorage.setItem("cc_drafts_v1",JSON.stringify(data.drafts));
+   renderMenu();progress();renderProjectCards();renderChallengeMenu();updateProjectStatus();
+   $("#learningToolsStatus").textContent="Данные импортированы. Существующий прогресс сохранён и объединён с копией.";
+  }catch(error){$("#learningToolsStatus").textContent="Не удалось импортировать файл: "+error.message;}
+  event.target.value="";
+ };
+ reader.onerror=()=>{$("#learningToolsStatus").textContent="Не удалось прочитать выбранный файл.";event.target.value="";};
+ reader.readAsText(file);
+});
+
 function progress() {
   const count = done.length;
   const percent = lessons.length ? Math.max(0, Math.min(100, Math.round(count / lessons.length * 100))) : 0;
@@ -46,7 +81,18 @@ function progress() {
 function renderMenu() {
   const menu = $("#lessonMenu");
   menu.replaceChildren();
-  lessons.forEach((lesson, index) => {
+  const query = ($("#lessonSearch")?.value || "").trim().toLocaleLowerCase("ru");
+  const course = $("#courseFilter")?.value || "all";
+  const filtered = lessons.map((lesson,index)=>({lesson,index})).filter(({lesson}) =>
+    (course === "all" || lesson.course === course) &&
+    (!query || [lesson.title,lesson.text,lesson.course,lesson.level].join(" ").toLocaleLowerCase("ru").includes(query))
+  );
+  if (!filtered.length) {
+    const empty = document.createElement("p"); empty.className="empty-state";
+    empty.textContent="Ничего не найдено. Измени запрос или выбери другое направление.";
+    menu.append(empty); return;
+  }
+  filtered.forEach(({lesson,index}) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "lesson-choice" + (index === active ? " active" : "");
@@ -58,6 +104,8 @@ function renderMenu() {
     menu.append(button);
   });
 }
+$("#lessonSearch").addEventListener("input",renderMenu);
+$("#courseFilter").addEventListener("change",renderMenu);
 function showLesson(index) {
   if (!Number.isInteger(index) || index < 0 || index >= lessons.length) return;
   active = index;
@@ -102,7 +150,7 @@ document.querySelectorAll("[data-course]").forEach(button => button.addEventList
   showLesson(firstByCourse < 0 ? 0 : firstByCourse);
   $("#learn").scrollIntoView({ behavior: "smooth" });
 }));
-const editor = $("#codeEditor"); const output = $("#output"); const starter = editor.value; const sandboxFrame = $("#jsSandbox");
+const editor = $("#codeEditor"); const output = $("#output"); const starter = editor.value; const sandboxFrame = $("#jsSandbox");\neditor.value=restoreDraft("javascriptPlayground",starter);editor.addEventListener("input",()=>saveDraft("javascriptPlayground",editor.value));
 let requestId = 0; let sandboxReady = false; let pending = null;
 function resetSandbox() { sandboxReady = false; sandboxFrame.src = "sandbox.html"; }
 sandboxFrame.addEventListener("load", () => { sandboxReady = true; });
@@ -122,15 +170,47 @@ $("#runCode").addEventListener("click", () => {
   const timer = setTimeout(() => { if (!pending || pending.id !== id) return; pending = null; output.textContent = "Превышено время выполнения. Среда перезапущена."; $("#runCode").disabled = false; resetSandbox(); }, 1800);
   pending = { id, timer }; sandboxFrame.contentWindow.postMessage({ type: "CODECRAFT_RUN", id, code: editor.value }, "*");
 });
-$("#resetEditor").addEventListener("click", () => { editor.value = starter; output.textContent = "Пример восстановлен."; });
+$("#resetEditor").addEventListener("click", () => { editor.value = starter; saveDraft("javascriptPlayground",starter); output.textContent = "Пример восстановлен."; });
 $("#clearOutput").addEventListener("click", () => { output.textContent = "Вывод очищен."; });
-$("#quizOptions").addEventListener("click", event => {
-  const button = event.target.closest("button[data-answer]"); if (!button) return;
-  document.querySelectorAll("#quizOptions button").forEach(item => item.classList.remove("correct", "wrong"));
-  if (button.dataset.answer === "1") { button.classList.add("correct"); $("#quizFeedback").textContent = "Правильно! Тег <a> создаёт гиперссылку."; }
-  else { button.classList.add("wrong"); $("#quizFeedback").textContent = "Пока неверно. Подсказка: нужный тег короткий и обозначает anchor."; }
+let examQuestions=[],examIndex=0,examScore=0,examAnswered=false;
+function startExam(){
+ const pool=lessons.filter(item=>Array.isArray(item.options)&&item.options.length>=2&&Number.isInteger(item.correct));
+ examQuestions=pool.slice().sort(()=>Math.random()-.5).slice(0,Math.min(10,pool.length));
+ examIndex=0;examScore=0;examAnswered=false;$("#examResult").hidden=true;renderExamQuestion();
+}
+function renderExamQuestion(){
+ const question=examQuestions[examIndex];if(!question)return;
+ $("#examProgress").textContent="Вопрос "+(examIndex+1)+" из "+examQuestions.length;
+ $("#examScore").textContent="Баллы: "+examScore;
+ $("#examTrackFill").style.width=(examIndex/examQuestions.length*100)+"%";
+ $("#quizQuestion").textContent=question.question;
+ $("#quizFeedback").textContent="Выбери один вариант ответа.";
+ $("#nextExamQuestion").disabled=true;
+ $("#nextExamQuestion").textContent=examIndex===examQuestions.length-1?"Показать результат":"Следующий вопрос";
+ const options=$("#quizOptions");options.replaceChildren();
+ question.options.forEach((option,index)=>{const button=document.createElement("button");button.type="button";button.dataset.answer=String(index);button.textContent=option;options.append(button);});
+ examAnswered=false;
+}
+$("#quizOptions").addEventListener("click",event=>{
+ const button=event.target.closest("button[data-answer]");if(!button||examAnswered)return;
+ const question=examQuestions[examIndex];if(!question)return;
+ examAnswered=true;const chosen=Number(button.dataset.answer);
+ [...$("#quizOptions").children].forEach((item,index)=>{item.disabled=true;if(index===question.correct)item.classList.add("correct");if(index===chosen&&chosen!==question.correct)item.classList.add("wrong");});
+ if(chosen===question.correct){examScore++;$("#quizFeedback").textContent="Верно! "+question.explanation;}
+ else $("#quizFeedback").textContent="Не совсем. Правильный ответ: "+question.options[question.correct]+". "+question.explanation;
+ $("#examScore").textContent="Баллы: "+examScore;$("#nextExamQuestion").disabled=false;
 });
-$("#retryQuiz").addEventListener("click", () => { document.querySelectorAll("#quizOptions button").forEach(item => item.classList.remove("correct", "wrong")); $("#quizFeedback").textContent = "Выбери один вариант."; });
+$("#nextExamQuestion").addEventListener("click",()=>{
+ if(!examAnswered)return;
+ if(examIndex<examQuestions.length-1){examIndex++;renderExamQuestion();return;}
+ $("#examTrackFill").style.width="100%";$("#examProgress").textContent="Экзамен завершён";
+ $("#quizQuestion").textContent="Результат экзамена";
+ $("#quizOptions").replaceChildren();$("#quizFeedback").textContent="Ты ответил правильно на "+examScore+" из "+examQuestions.length+" вопросов.";
+ const result=$("#examResult");result.hidden=false;result.textContent=examScore>=9?"Превосходно! Отличное понимание материала.":examScore>=7?"Хороший результат! Повтори темы, в которых ошибся.":examScore>=5?"Неплохо. Продолжай практиковаться и попробуй ещё раз.":"Это только начало. Вернись к урокам и повтори основы.";
+ $("#nextExamQuestion").disabled=true;
+});
+$("#retryQuiz").addEventListener("click",startExam);
+startExam();
 $("#menuBtn").addEventListener("click", () => { const isOpen = $("#nav").classList.toggle("open"); $("#menuBtn").setAttribute("aria-expanded", String(isOpen)); });
 $("#nav").addEventListener("click", event => { if (event.target.closest("a")) { $("#nav").classList.remove("open"); $("#menuBtn").setAttribute("aria-expanded", "false"); } });
 
@@ -150,8 +230,8 @@ button { padding: 10px 14px; border: 0; border-radius: 9px; background: #146c57;
   document.querySelector("#message").textContent = "Отличная работа! JavaScript работает.";
 });`
 };
-const webHtml=$("#webHtml"),webCss=$("#webCss"),webJs=$("#webJs"),webPreview=$("#webLabPreview");
-function resetWebLab(){webHtml.value=webDefaults.html;webCss.value=webDefaults.css;webJs.value=webDefaults.js;runWebLab();}
+draftBlock+`\nconst webHtml=$("#webHtml"),webCss=$("#webCss"),webJs=$("#webJs"),webPreview=$("#webLabPreview");`
+function resetWebLab(){webHtml.value=webDefaults.html;webCss.value=webDefaults.css;webJs.value=webDefaults.js;saveDraft("webHtml",webHtml.value);saveDraft("webCss",webCss.value);saveDraft("webJs",webJs.value);runWebLab();}
 function runWebLab(){
  const policy='<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data:; font-src data:; connect-src \'none\'; form-action \'none\'; base-uri \'none\';">';
  const safeCss=webCss.value.replace(/<\/style/gi, "<\\/style");
@@ -169,14 +249,20 @@ const challengeTasks = [
  {id:"css-flex",language:"CSS",file:"style.css",title:"Включи Flexbox",description:"Напиши CSS-правило для .cards: включи Flexbox и добавь расстояние между карточками.",hint:"Внутри .cards нужны display: flex и gap с любым ненулевым значением.",starter:".cards {\n  /* Твои стили */\n}\n",checks:[["Селектор .cards",code=>/\.cards\s*\{[\s\S]*?\}/i.test(code)],["display: flex",code=>/\.cards\s*\{[^}]*display\s*:\s*flex\s*;?/i.test(code)],["Отступ gap",code=>/\.cards\s*\{[^}]*gap\s*:\s*(?!0(?:px|rem|em|%)?\s*;?)[^;]+;?/i.test(code)]]},
  {id:"js-function",language:"JavaScript",file:"script.js",title:"Напиши функцию",description:"Создай функцию double, которая принимает число и возвращает его, умноженное на два. Добавь вызов функции.",hint:"Подойдут function double(number) и return number * 2. В конце вызови double(5).",starter:"// Напиши функцию double\n",checks:[["Объявлена функция double",code=>/function\s+double\s*\(/.test(code)],["Есть return",code=>/\breturn\b/.test(code)],["Умножение на 2",code=>/\*\s*2\b/.test(code)],["Есть вызов double",code=>/\bdouble\s*\(/g.test(code.replace(/function\s+double\s*\(/,""))]]},
  {id:"js-condition",language:"JavaScript",file:"script.js",title:"Добавь условие",description:"Создай переменную score и условие: если score не меньше 60, выведи «Зачёт», иначе — «Попробуй ещё».",hint:"Используй if, else, сравнение >= 60 и console.log().",starter:"const score = 75;\n// Добавь условие\n",checks:[["Условие if",code=>/\bif\s*\(/.test(code)],["Ветка else",code=>/\belse\b/.test(code)],["Порог 60",code=>/>=\s*60/.test(code)],["Вывод результата",code=>/console\s*\.\s*log\s*\(/.test(code)]]}
+ ,
+ {id:"html-semantic",language:"HTML",file:"index.html",title:"Собери семантический блок",description:"Создай структуру страницы с header, main и footer. Внутри main размести заголовок h1.",hint:"Используй три семантических элемента и не забудь закрывающие теги.",starter:"<!-- Семантическая структура -->\n",checks:[["Шапка header",code=>/<header\b[^>]*>[\s\S]*?<\/header\s*>/i.test(code)],["Основная область main",code=>/<main\b[^>]*>[\s\S]*?<\/main\s*>/i.test(code)],["Подвал footer",code=>/<footer\b[^>]*>[\s\S]*?<\/footer\s*>/i.test(code)],["Заголовок h1",code=>/<h1\b[^>]*>[\s\S]*?<\/h1\s*>/i.test(code)]]},
+ {id:"css-grid",language:"CSS",file:"style.css",title:"Создай сетку Grid",description:"Для .gallery включи CSS Grid, задай две колонки и расстояние между элементами.",hint:"Нужны display: grid, grid-template-columns и gap.",starter:".gallery {\n  /* Настрой сетку */\n}\n",checks:[["Селектор .gallery",code=>/\.gallery\s*\{[\s\S]*?\}/i.test(code)],["display: grid",code=>/\.gallery\s*\{[^}]*display\s*:\s*grid\s*;?/i.test(code)],["Колонки",code=>/\.gallery\s*\{[^}]*grid-template-columns\s*:/i.test(code)],["Промежуток gap",code=>/\.gallery\s*\{[^}]*gap\s*:\s*(?!0(?:px|rem|em|%)?\s*;?)[^;]+;?/i.test(code)]]},
+ {id:"js-array",language:"JavaScript",file:"script.js",title:"Поработай с массивом",description:"Создай массив fruits минимум с тремя элементами и добавь в конец ещё один элемент методом push.",hint:"Объяви const fruits = [...] и вызови fruits.push(...).",starter:"// Создай массив и добавь элемент\n",checks:[["Массив fruits",code=>/(?:const|let|var)\s+fruits\s*=\s*\[[\s\S]*?\]/.test(code)],["Не менее трёх элементов",code=>{const m=code.match(/(?:const|let|var)\s+fruits\s*=\s*\[([\s\S]*?)\]/);return !!m&&m[1].split(",").filter(x=>x.trim()).length>=3;}],["Вызов push",code=>/fruits\s*\.\s*push\s*\(/.test(code)]]},
+ {id:"py-loop",language:"Python",file:"main.py",title:"Напиши цикл Python",description:"Создай цикл for, который перебирает range(5) и выводит каждое число через print.",hint:"Шаблон: for number in range(5): затем строка с отступом print(number).",starter:"# Напиши цикл for\n",checks:[["Цикл for",code=>/\bfor\s+\w+\s+in\s+/.test(code)],["Диапазон range(5)",code=>/\brange\s*\(\s*5\s*\)/.test(code)],["Вывод print",code=>/\bprint\s*\(/.test(code)],["Есть отступ внутри цикла",code=>/\n[ \t]+print\s*\(/.test(code)]]},
+ {id:"py-dict",language:"Python",file:"main.py",title:"Создай словарь",description:"Создай словарь profile с ключами name и level, затем выведи имя через profile['name'].",hint:"Пример: profile = {'name': 'Аня', 'level': 1}.",starter:"# Создай словарь profile\n",checks:[["Словарь profile",code=>/profile\s*=\s*\{[\s\S]*?\}/.test(code)],["Ключ name",code=>/['"]name['"]\s*:/.test(code)],["Ключ level",code=>/['"]level['"]\s*:/.test(code)],["Доступ profile['name']",code=>/profile\s*\[\s*['"]name['"]\s*\]/.test(code)]]}
 ];
 let activeChallenge=challengeTasks[0],completedChallenges=[];
 try{const saved=JSON.parse(localStorage.getItem("cc_challenges")||"[]");if(Array.isArray(saved))completedChallenges=[...new Set(saved.filter(id=>challengeTasks.some(task=>task.id===id)))];}catch(_){}
 function renderChallengeMenu(){const menu=$("#challengeMenu");menu.replaceChildren();challengeTasks.forEach(task=>{const button=document.createElement("button");button.type="button";button.className="challenge-pick"+(task.id===activeChallenge.id?" active":"");const title=document.createElement("strong");title.textContent=(completedChallenges.includes(task.id)?"✓ ":"")+task.title;const meta=document.createElement("small");meta.textContent=task.language+" · "+(completedChallenges.includes(task.id)?"Решено":"30 XP");button.append(title,meta);button.addEventListener("click",()=>selectChallenge(task.id));menu.append(button);});}
-function selectChallenge(id){const task=challengeTasks.find(item=>item.id===id);if(!task)return;activeChallenge=task;$("#challengeLanguage").textContent=task.language;$("#challengeTitle").textContent=task.title;$("#challengeDescription").textContent=task.description;$("#challengeHint").textContent="Подсказка: "+task.hint;$("#challengeFile").textContent=task.file;$("#challengeCode").value=task.starter;$("#challengeResult").textContent=completedChallenges.includes(task.id)?"Задание уже решено. Можешь улучшить свой код!":"Напиши решение и запусти проверку.";$("#challengeResult").className="challenge-result";$("#challengeChecks").replaceChildren();renderChallengeMenu();}
+function selectChallenge(id){const task=challengeTasks.find(item=>item.id===id);if(!task)return;activeChallenge=task;$("#challengeLanguage").textContent=task.language;$("#challengeTitle").textContent=task.title;$("#challengeDescription").textContent=task.description;$("#challengeHint").textContent="Подсказка: "+task.hint;$("#challengeFile").textContent=task.file;$("#challengeCode").value=restoreDraft("challenge:"+task.id,task.starter);$("#challengeResult").textContent=completedChallenges.includes(task.id)?"Задание уже решено. Можешь улучшить свой код!":"Напиши решение и запусти проверку.";$("#challengeResult").className="challenge-result";$("#challengeChecks").replaceChildren();renderChallengeMenu();}
 function validateChallenge(){const code=$("#challengeCode").value;const checks=activeChallenge.checks.map(([label,test])=>({label,pass:test(code)}));const list=$("#challengeChecks");list.replaceChildren();checks.forEach(check=>{const item=document.createElement("div");item.className="challenge-check "+(check.pass?"pass":"fail");item.textContent=(check.pass?"✓ ":"○ ")+check.label;list.append(item);});const passed=checks.every(item=>item.pass);const result=$("#challengeResult");result.className="challenge-result "+(passed?"success":"failure");if(passed){const isNew=!completedChallenges.includes(activeChallenge.id);if(isNew){completedChallenges.push(activeChallenge.id);try{localStorage.setItem("cc_challenges",JSON.stringify(completedChallenges));}catch(_){}renderAchievements();renderChallengeMenu();}result.textContent="Отлично! Все проверки пройдены."+(isNew?" +30 XP начислено.":" Задание уже было засчитано.");}else{result.textContent="Пока не всё готово: исправь отмеченные пункты и проверь ещё раз.";}}
-$("#checkChallenge").addEventListener("click",validateChallenge);
-$("#challengeReset").addEventListener("click",()=>{$("#challengeCode").value=activeChallenge.starter;$("#challengeChecks").replaceChildren();$("#challengeResult").className="challenge-result";$("#challengeResult").textContent="Пример восстановлен. Попробуй решить задание.";});
+$("#challengeCode").addEventListener("input",()=>saveDraft("challenge:"+activeChallenge.id,$("#challengeCode").value));\n$("#checkChallenge").addEventListener("click",validateChallenge);
+$("#challengeReset").addEventListener("click",()=>{$("#challengeCode").value=activeChallenge.starter;saveDraft("challenge:"+activeChallenge.id,activeChallenge.starter);$("#challengeChecks").replaceChildren();$("#challengeResult").className="challenge-result";$("#challengeResult").textContent="Пример восстановлен. Попробуй решить задание.";});
 $("#challengeHintButton").addEventListener("click",()=>{$("#challengeHint").hidden=!$("#challengeHint").hidden;});
 renderChallengeMenu();selectChallenge(activeChallenge.id);
 const projectTemplates = [
@@ -229,9 +315,9 @@ try{const saved=JSON.parse(localStorage.getItem("cc_projects")||"[]");if(Array.i
 function updateProjectStatus(){const done=completedProjects.includes(activeProject.id);$("#projectStatus").textContent=done?"Проект отмечен как выполненный ✓":"Проект ещё не отмечен как выполненный.";$("#completeProject").textContent=done?"Проект выполнен ✓":"Отметить проект выполненным";}
 function renderProjectCards(){const grid=$("#projectGrid");grid.replaceChildren();projectTemplates.forEach(project=>{const card=document.createElement("button");card.type="button";card.className="project-card"+(project.id===activeProject.id?" active":"");const title=document.createElement("strong");title.textContent=project.title;const meta=document.createElement("small");meta.textContent=project.level+(completedProjects.includes(project.id)?" · ✓ Готово":" · "+project.tasks.length+" задачи");card.append(title,meta);card.addEventListener("click",()=>selectProject(project.id));grid.append(card);});}
 function renderProjectPreview(){const policy="<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'\">";const doc="<!doctype html><html lang=\"ru\"><head><meta charset=\"utf-8\">"+policy+"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{padding:12px}</style></head><body>"+$("#projectCode").value+"</body></html>";$("#projectPreview").srcdoc=doc;}
-function selectProject(id){const project=projectTemplates.find(item=>item.id===id);if(!project)return;activeProject=project;$("#projectLevel").textContent="Практика · "+project.level;$("#projectTitle").textContent=project.title;$("#projectDescription").textContent=project.description;const list=$("#projectTasks");list.replaceChildren();project.tasks.forEach(task=>{const li=document.createElement("li");li.textContent=task;list.append(li);});$("#projectCode").value=project.code;updateProjectStatus();renderProjectCards();renderProjectPreview();}
-$("#previewProject").addEventListener("click",renderProjectPreview);
-$("#resetProject").addEventListener("click",()=>{$("#projectCode").value=activeProject.code;renderProjectPreview();});
+function selectProject(id){const project=projectTemplates.find(item=>item.id===id);if(!project)return;activeProject=project;$("#projectLevel").textContent="Практика · "+project.level;$("#projectTitle").textContent=project.title;$("#projectDescription").textContent=project.description;const list=$("#projectTasks");list.replaceChildren();project.tasks.forEach(task=>{const li=document.createElement("li");li.textContent=task;list.append(li);});$("#projectCode").value=restoreDraft("project:"+project.id,project.code);updateProjectStatus();renderProjectCards();renderProjectPreview();}
+$("#projectCode").addEventListener("input",()=>saveDraft("project:"+activeProject.id,$("#projectCode").value));\n$("#previewProject").addEventListener("click",renderProjectPreview);
+$("#resetProject").addEventListener("click",()=>{$("#projectCode").value=activeProject.code;saveDraft("project:"+activeProject.id,activeProject.code);renderProjectPreview();});
 $("#completeProject").addEventListener("click",()=>{if(!completedProjects.includes(activeProject.id))completedProjects.push(activeProject.id);try{localStorage.setItem("cc_projects",JSON.stringify(completedProjects));}catch(_){}updateProjectStatus();renderProjectCards();renderAchievements();});
 renderProjectCards();selectProject(activeProject.id);
 showLesson(0); progress();
