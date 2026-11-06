@@ -206,3 +206,13 @@ footer span{float:none}
 .exam-history-card span{color:var(--mint);font-size:12px;font-weight:800}
 .exam-history-card small{color:var(--muted);font-size:10px}
 @media(max-width:520px){.exam-settings{grid-template-columns:1fr;padding:10px}.exam-settings p{grid-column:auto}.exam-history{grid-template-columns:1fr}.exam-history-panel{padding:10px}}
+
+/* Разбор ошибок после экзамена */
+.exam-result{display:grid;gap:10px;margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.exam-result>p{margin:0;color:var(--text);font-size:13px;line-height:1.55}
+.exam-result h4{margin:4px 0 0;font-size:14px}
+.exam-review-item{display:grid;gap:5px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0d1728;min-width:0}
+.exam-review-item strong{font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.exam-review-item p{margin:0;color:var(--mint);font-size:12px;overflow-wrap:anywhere}
+.exam-review-item small{color:var(--muted);font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.exam-result .small-btn{justify-self:start;min-height:42px}
