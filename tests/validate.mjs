@@ -195,7 +195,7 @@ assert.match(app, /function finishExam/);
 assert.match(app, /examMissed\.push\(question\)/);
 assert.match(app, /exam-review-item/);
 assert.match(app, /Повторить только ошибки/);
-assert.match(app, /startExam\(examMissed\.slice\(\)\)/);
+assert.match(app, /startExam\(examMissed\.slice\(\),examConfigKey\)/);
 assert.match(css, /\.exam-review-item/);
 assert.match(app, /cc_exam_history_v1/);
 assert.match(app, /exams:readExamHistory\(\)/);
