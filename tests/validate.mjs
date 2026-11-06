@@ -92,6 +92,18 @@ assert.match(css, /\.web-lab/);
 assert.match(app, /function exportLearningData/);
 assert.match(app, /function renderStudentDashboard/);
 assert.match(app, /function validateProject/);
+const projectStart = app.indexOf("const projectTemplates = [");
+const projectEnd = app.indexOf("let activeProject", projectStart);
+assert.ok(projectStart >= 0 && projectEnd > projectStart, "project templates are missing");
+const projectSource = app.slice(projectStart, projectEnd).replace("const projectTemplates = ", "");
+const projectTemplates = vm.runInNewContext(projectSource);
+assert.equal(projectTemplates.length, 3, "expected three guided projects");
+for (const project of projectTemplates) {
+  assert.ok(Array.isArray(project.checks) && project.checks.length >= 4, "project checks missing: " + project.id);
+  for (const [label, check] of project.checks) {
+    assert.equal(check(project.code), true, "starter project fails " + project.id + " / " + label);
+  }
+}
 assert.match(app, /activeProject\.checks\.map/);
 assert.match(app, /Начислено 50 XP/);
 assert.match(app, /cc_bookmarks/);
