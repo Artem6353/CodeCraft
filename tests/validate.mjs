@@ -65,7 +65,7 @@ const challengeMatch = app.match(/const challengeTasks = (\[[\s\S]*?\n\]);/);
 assert.ok(challengeMatch, "challenge task registry was not found");
 const challengeContext = {};
 const challenges = vm.runInNewContext("(" + challengeMatch[1] + ")", challengeContext);
-assert.equal(challenges.length, 10, "expected 10 practical tasks");
+assert.equal(challenges.length, 20, "expected 20 practical tasks");
 assert.equal(new Set(challenges.map(item => item.id)).size, challenges.length, "challenge IDs must be unique");
 const examples = {
   "html-heading": "<h1>Hello</h1><p>Welcome</p>",
@@ -78,6 +78,17 @@ const examples = {
   "js-array": 'const fruits = ["apple", "pear", "plum"]; fruits.push("orange");',
   "py-loop": "for number in range(5):\n    print(number)",
   "py-dict": 'profile = {"name": "Аня", "level": 1}\nprint(profile["name"])'
+
+  "html-fix-image": '<img src="avatar.jpg" alt="Портрет автора">',
+  "html-fix-form": '<label for="email">Электронная почта</label><input id="email" type="email">',
+  "css-fix-box": "* { box-sizing: border-box; } .card { width: 100%; padding: 24px; border: 2px solid; }",
+  "css-fix-mobile": ".cards { display: grid; grid-template-columns: repeat(2, 1fr); } @media (max-width: 600px) { .cards { grid-template-columns: 1fr; } }",
+  "css-fix-focus": "button:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }",
+  "js-fix-equality": 'const status = "ready"; if (status === "ready") { console.log("Можно продолжать"); }',
+  "js-fix-event": 'const button = document.querySelector("#save"); button.addEventListener("click", () => { console.log("Сохранено"); });',
+  "js-fix-last-item": "function lastItem(items) { return items[items.length - 1]; }",
+  "py-fix-range": "for number in range(1, 6):\n    print(number)",
+  "py-fix-dict": 'profile = {"name": "Аня"}\nprint(profile.get("city", "Не указан"))',
 };
 for (const task of challenges) {
   assert.ok(Array.isArray(task.checks) && task.checks.length > 0, "challenge checks missing: " + task.id);
@@ -155,7 +166,7 @@ assert.match(sandbox, /new Function/);
 console.log("CodeCraft quality checks passed:");
 console.log("- 32 lessons, 3 tracks, valid answer data");
 console.log("- unique HTML IDs and complete app selectors");
-console.log("- 10 practical tasks and 100% passing sample checks");
+console.log("- 20 practical tasks (10 creation + 10 debugging) with passing sample checks");
 console.log("- isolated sandboxes, responsive styles, track/difficulty exams, score history, backups and drafts");
 
 assert.match(app, /function topicForQuestion/);
