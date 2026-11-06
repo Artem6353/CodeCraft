@@ -167,3 +167,27 @@ footer .shell{display:flex;align-items:center;justify-content:space-between;gap:
 footer span{float:none}
 .connection-status{padding:4px 9px;border:1px solid var(--line);border-radius:20px;color:var(--mint);font-size:10px}
 .connection-status.offline{border-color:#81515a;background:#39202b;color:#ffd0d5}
+
+/* Личный кабинет ученика и личные материалы */
+.student-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.student-stat{display:grid;gap:5px;min-width:0;padding:16px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
+.student-stat strong{font-size:clamp(18px,2.5vw,25px);color:var(--mint);overflow-wrap:anywhere}
+.student-stat span{font-size:11px;color:var(--muted)}
+.student-library{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.student-panel{min-width:0;padding:15px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.student-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.student-panel-heading h3{margin:0;font-size:16px}
+.student-panel-heading span{min-width:26px;padding:4px 8px;border-radius:20px;background:#20354c;color:var(--mint);text-align:center;font-size:11px}
+.saved-lesson-list{display:grid;gap:7px}
+.saved-lesson{display:grid;gap:4px;width:100%;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#0d1728;color:var(--text);text-align:left;cursor:pointer}
+.saved-lesson strong{font-size:12px}
+.saved-lesson small{overflow:hidden;color:var(--muted);font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+.saved-lesson:hover,.saved-lesson:focus-visible{border-color:var(--mint);outline:none}
+.student-empty,.student-hint{color:var(--muted);font-size:11px;line-height:1.6}
+.lesson-personal-tools{display:grid;gap:9px;margin:16px 0;padding:13px;border:1px solid var(--line);border-radius:11px;background:#101c2e}
+.lesson-personal-tools .small-btn{justify-self:start}
+.lesson-note-label{display:grid;gap:6px;color:var(--muted);font-size:11px;font-weight:700}
+.lesson-note-input{width:100%;min-height:78px;resize:vertical;padding:10px;border:1px solid var(--line);border-radius:8px;background:#080f1c;color:var(--text);font:13px/1.5 inherit}
+.lesson-note-status{color:var(--mint);font-size:10px}
+@media(max-width:760px){.student-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.student-library{grid-template-columns:1fr}}
+@media(max-width:420px){.student-stat{padding:12px}.student-panel{padding:11px}}
