@@ -124,7 +124,7 @@
 
 ## Разработка и браузерные тесты (A2)
 - Приложение по-прежнему запускается как статический сайт и не требует npm для обычного использования.
-- Для разработки нужен Node.js 20+; браузерные тесты используют Playwright 1.56.1, axe-core Playwright 4.10.3 и Chromium.
+- Для разработки нужен Node.js 20+; браузерные тесты используют Playwright 1.56.1, axe-core Playwright 4.14.0 и Chromium.
 - Установка тестовых зависимостей: `npm install`.
 - Установка браузера: `npx playwright install chromium` (в Linux CI используем `npx playwright install --with-deps chromium`).
 - Запуск всех проверок: `npm test`; только браузерные сценарии: `npm run test:e2e`; только быстрые статические проверки: `npm run test:static`.
