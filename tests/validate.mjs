@@ -12,6 +12,7 @@ const pythonSandbox = read("python-sandbox.html");
 const serviceWorker = read("sw.js");
 const manifest = JSON.parse(read("manifest.webmanifest"));
 const icon = read("assets/icon.svg");
+new vm.Script(serviceWorker, { filename: "sw.js" });
 
 const context = { window: {} };
 vm.runInNewContext(lessonsSource, context, { filename: "js/lessons.js" });
