@@ -499,6 +499,40 @@ $("#previewProject").addEventListener("click",renderProjectPreview);
 $("#resetProject").addEventListener("click",()=>{$("#projectCode").value=activeProject.code;saveDraft("project:"+activeProject.id,activeProject.code);renderProjectPreview();});
 $("#completeProject").addEventListener("click",validateProject);
 renderProjectCards();selectProject(activeProject.id);
+// Мобильная рабочая область веб-лаборатории
+let activeLabPanel="html",editorFontSize=13;
+const labPanelNames=["html","css","js","preview"];
+function selectLabPanel(panel){
+ if(!labPanelNames.includes(panel))return;
+ activeLabPanel=panel;
+ document.querySelectorAll("[data-lab-panel]").forEach(button=>{
+  const active=button.dataset.labPanel===panel;
+  button.classList.toggle("active",active);button.setAttribute("aria-pressed",String(active));
+ });
+ document.querySelectorAll("[data-lab-panel-content]").forEach(node=>{
+  node.classList.toggle("mobile-active",node.dataset.labPanelContent===panel);
+ });
+}
+document.querySelectorAll("[data-lab-panel]").forEach(button=>button.addEventListener("click",()=>selectLabPanel(button.dataset.labPanel)));
+function applyEditorFontSize(){
+ ["#webHtml","#webCss","#webJs"].forEach(selector=>$(selector).style.fontSize=editorFontSize+"px");
+ $("#editorFontSize").textContent=editorFontSize+" px";
+}
+$("#editorFontDown").addEventListener("click",()=>{editorFontSize=Math.max(11,editorFontSize-1);applyEditorFontSize();});
+$("#editorFontUp").addEventListener("click",()=>{editorFontSize=Math.min(20,editorFontSize+1);applyEditorFontSize();});
+["#webHtml","#webCss","#webJs"].forEach(selector=>{
+ const editor=$(selector);
+ editor.addEventListener("keydown",event=>{
+  if(event.key==="Tab"){
+   event.preventDefault();const start=editor.selectionStart,end=editor.selectionEnd;
+   editor.setRangeText("  ",start,end,"end");
+   editor.dispatchEvent(new Event("input",{bubbles:true}));
+  }else if((event.ctrlKey||event.metaKey)&&event.key==="Enter"){
+   event.preventDefault();$("#runWebLab").click();
+  }
+ });
+});
+selectLabPanel("html");applyEditorFontSize();
 const connectionStatus=$("#connectionStatus");
 function updateConnectionStatus(){
  if(!connectionStatus)return;
