@@ -444,34 +444,43 @@ $("#resetPython").addEventListener("click",()=>{
  pythonOutput.textContent="Пример восстановлен.";
 });
 $("#clearPython").addEventListener("click",()=>{pythonOutput.textContent="Вывод очищен.";});
+const MAX_PYTHON_CODE=100000,MAX_PYTHON_OUTPUT=50100;
 function resetPythonSandbox(){
- pythonReady=false;pythonFrame.src="python-sandbox.html";
+ if(pythonPending)clearTimeout(pythonPending.timer);
+ pythonPending=null;pythonReady=false;$("#runPython").disabled=false;
+ pythonFrame.src="python-sandbox.html";
  $("#pythonStatus").textContent="Перезапускаю Python-среду…";
 }
+$("#retryPython").addEventListener("click",resetPythonSandbox);
 window.addEventListener("message",event=>{
- if(event.source!==pythonFrame.contentWindow||!event.data)return;
+ if(event.source!==pythonFrame.contentWindow||!event.data||typeof event.data!=="object")return;
  if(event.data.type==="CODECRAFT_PYTHON_READY"){
   pythonReady=true;$("#pythonStatus").textContent="Интерпретатор готов. Код выполняется локально в браузере.";
   return;
  }
  if(event.data.type==="CODECRAFT_PYTHON_ERROR"){
-  pythonReady=false;$("#pythonStatus").textContent=event.data.message||"Не удалось загрузить Python.";
+  pythonReady=false;
+  if(pythonPending){clearTimeout(pythonPending.timer);pythonPending=null;$("#runPython").disabled=false;}
+  $("#pythonStatus").textContent=String(event.data.message||"Не удалось загрузить Python.").slice(0,500);
   return;
  }
  if(event.data.type!=="CODECRAFT_PYTHON_RESULT"||!pythonPending||event.data.id!==pythonPending.id)return;
  clearTimeout(pythonPending.timer);
- pythonOutput.textContent=(event.data.output||"")+(event.data.error?"\nОшибка: "+event.data.error:"");
- $("#runPython").disabled=false;$("#pythonStatus").textContent=event.data.error?"Выполнение завершилось с ошибкой.":"Выполнение завершено.";
+ const result=typeof event.data.output==="string"?event.data.output.slice(0,MAX_PYTHON_OUTPUT):"";
+ const error=typeof event.data.error==="string"?event.data.error.slice(0,4000):"";
+ pythonOutput.textContent=result+(error?"\nОшибка: "+error:"");
+ $("#runPython").disabled=false;$("#pythonStatus").textContent=error?"Выполнение завершилось с ошибкой.":"Выполнение завершено.";
  pythonPending=null;
 });
 pythonFrame.contentWindow.postMessage({type:"CODECRAFT_PYTHON_PING"},"*");
 $("#runPython").addEventListener("click",()=>{
  if(pythonPending)return;
- if(!pythonReady){$("#pythonStatus").textContent="Python ещё загружается. Проверь интернет и подожди немного.";return;}
+ if(!pythonReady){$("#pythonStatus").textContent="Python ещё загружается или CDN недоступен. Проверь интернет и нажми «Перезапустить среду».";return;}
+ if(pythonEditor.value.length>MAX_PYTHON_CODE){pythonOutput.textContent="Код слишком большой. Максимальный размер — 100 000 символов.";return;}
  const id=++pythonRequestId;$("#runPython").disabled=true;pythonOutput.textContent="Выполняю Python-код…";
  const timer=setTimeout(()=>{
   if(!pythonPending||pythonPending.id!==id)return;
-  pythonPending=null;$("#runPython").disabled=false;pythonOutput.textContent="Превышено время ожидания. Среда перезапущена.";
+  pythonPending=null;$("#runPython").disabled=false;pythonOutput.textContent="Превышено время ожидания (7 с). Python-среда перезапущена.";
   resetPythonSandbox();
  },7000);
  pythonPending={id,timer};
