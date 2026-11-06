@@ -339,7 +339,7 @@ function migrateLearningStorage(){
  try{writeStorageBatch(entries);projectSteps=normalizeProjectSteps(readStoredValue("cc_project_steps_v1",{}));return true;}
  catch(_){return false;}
 }
-const storageMigrationSucceeded=migrateLearningStorage();
+
 
 function recordExamAnswer(question,correct){
  const topic=topicForQuestion(question),stats=readExamTopicStats(),item=stats[topic.key]||{correct:0,total:0};item.total=Math.min(100000,item.total+1);if(correct)item.correct=Math.min(item.total,item.correct+1);stats[topic.key]=item;
@@ -707,5 +707,6 @@ updateConnectionStatus();
 if("serviceWorker" in navigator&&location.protocol!=="file:"){
  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 }
+const storageMigrationSucceeded=migrateLearningStorage();
 showLesson(0); progress(); renderStudentDashboard();
 })();
