@@ -189,9 +189,10 @@ assert.match(sandbox, /activeWorker\.terminate\(\)/, "JavaScript sandbox must be
 assert.match(sandbox, /MAX_CODE = 100000/);
 assert.match(sandbox, /MAX_OUTPUT = 50000/);
 assert.match(sandbox, /new Function/);
-const workerSourceMatch = sandbox.match(/const workerSource = ("(?:\\\\.|[^"])*");/);
-assert.ok(workerSourceMatch, "isolated Worker source must be embedded as a string");
-const workerSource = JSON.parse(workerSourceMatch[1]);
+const workerSourceStart = sandbox.indexOf("const workerSource = ");
+const workerSourceEnd = sandbox.indexOf(";\nlet activeWorker", workerSourceStart);
+assert.ok(workerSourceStart >= 0 && workerSourceEnd > workerSourceStart, "isolated Worker source must be embedded as a string");
+const workerSource = JSON.parse(sandbox.slice(workerSourceStart + "const workerSource = ".length, workerSourceEnd));
 new vm.Script(workerSource, { filename: "sandbox-worker.js" });
 assert.match(workerSource, /new Function/);
 assert.match(workerSource, /CODECRAFT_WORKER_RESULT/);
