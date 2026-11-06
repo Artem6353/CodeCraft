@@ -204,7 +204,8 @@ function showLesson(index) {
   previousLesson.addEventListener("click",()=>{
     if(coursePosition<=0)return;
     showLesson(courseIndexes[coursePosition-1]);
-    $("#lessonPrevious")?.focus();
+    const previousButton=$("#lessonPrevious");
+    (previousButton&&!previousButton.disabled?previousButton:$("#lessonNext"))?.focus();
   });
   nextLesson.addEventListener("click",()=>{
     if(coursePosition>=courseIndexes.length-1)return;

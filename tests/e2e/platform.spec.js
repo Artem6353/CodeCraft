@@ -293,7 +293,8 @@ test("navigates lessons in course order and keeps keyboard focus", async ({ page
   await expect(page.locator("#lessonNext")).toBeFocused();
   await page.locator("#lessonPrevious").click();
   await expect(sequence).toContainText("Урок 1 из 20");
-  await expect(page.locator("#lessonPrevious")).toBeFocused();
+  await expect(page.locator("#lessonPrevious")).toBeDisabled();
+  await expect(page.locator("#lessonNext")).toBeFocused();
 
   await page.locator("#courseFilter").selectOption("JavaScript");
   await page.locator("#lessonMenu .lesson-choice").first().click();
