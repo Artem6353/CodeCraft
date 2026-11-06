@@ -12,12 +12,34 @@ let active = 0;
 function saveProgress() {
   try { localStorage.setItem("cc_progress", JSON.stringify(done)); } catch (_) { /* Хранилище может быть недоступно. */ }
 }
+const levels = [{name:"Новичок",min:0},{name:"Практик",min:100},{name:"Создатель",min:220},{name:"Мастер",min:360},{name:"Наставник",min:470}];
+const achievementDefinitions = [
+ {id:"first-lesson",icon:"🌱",title:"Первый шаг",detail:"Заверши первый урок",test:()=>done.length>=1},
+ {id:"four-lessons",icon:"📘",title:"Вошёл в ритм",detail:"Заверши 4 урока",test:()=>done.length>=4},
+ {id:"eight-lessons",icon:"🧠",title:"Уверенный ученик",detail:"Заверши 8 уроков",test:()=>done.length>=8},
+ {id:"all-lessons",icon:"🏆",title:"Полный курс",detail:"Заверши все уроки",test:()=>done.length===lessons.length&&lessons.length>0},
+ {id:"first-project",icon:"🛠️",title:"Создатель",detail:"Заверши первый мини-проект",test:()=>completedProjects.length>=1},
+ {id:"all-projects",icon:"🚀",title:"Портфолио готово",detail:"Заверши все мини-проекты",test:()=>completedProjects.length===projectTemplates.length}
+];
+function renderAchievements(){
+ const xp=done.length*20+completedProjects.length*50;
+ let current=levels[0],next=null;
+ levels.forEach((level,index)=>{if(xp>=level.min)current=level;if(xp<level.min&&!next)next=level;});
+ const base=current.min, target=next?next.min:current.min;
+ const pct=next?Math.max(0,Math.min(100,Math.round((xp-base)/(target-base)*100))):100;
+ const summary=$("#achievementSummary");summary.replaceChildren();
+ const stats=[[""+xp+" XP","Опыт за обучение"],[current.name,"Текущий уровень"],[done.length+" / "+lessons.length,"Пройдено уроков"]];
+ stats.forEach((stat,index)=>{const card=document.createElement("div");card.className="achievement-stat";const strong=document.createElement("strong");strong.textContent=stat[0];const label=document.createElement("span");label.textContent=stat[1];card.append(strong,label);if(index===1){const track=document.createElement("div");track.className="achievement-track";const fill=document.createElement("span");fill.style.width=pct+"%";track.append(fill);card.append(track);const note=document.createElement("span");note.textContent=next?(next.min-xp)+" XP до уровня «"+next.name+"»":"Максимальный уровень";card.append(note);}summary.append(card);});
+ const list=$("#achievementList");list.replaceChildren();
+ achievementDefinitions.forEach(item=>{const unlocked=item.test();const card=document.createElement("div");card.className="achievement-item"+(unlocked?"":" locked");const icon=document.createElement("span");icon.className="achievement-icon";icon.textContent=unlocked?item.icon:"🔒";const copy=document.createElement("div");const title=document.createElement("strong");title.textContent=item.title;const detail=document.createElement("small");detail.textContent=unlocked?"Получено ✓":item.detail;copy.append(title,detail);card.append(icon,copy);list.append(card);});
+}
 function progress() {
   const count = done.length;
   const percent = lessons.length ? Math.max(0, Math.min(100, Math.round(count / lessons.length * 100))) : 0;
   $("#progressRing").style.setProperty("--p", percent + "%");
   $("#progressPct").textContent = percent + "%";
   $("#progressCount").textContent = count + " из " + lessons.length + " уроков";
+  renderAchievements();
 }
 function renderMenu() {
   const menu = $("#lessonMenu");
@@ -163,7 +185,7 @@ function renderProjectPreview(){const policy="<meta http-equiv=\"Content-Securit
 function selectProject(id){const project=projectTemplates.find(item=>item.id===id);if(!project)return;activeProject=project;$("#projectLevel").textContent="Практика · "+project.level;$("#projectTitle").textContent=project.title;$("#projectDescription").textContent=project.description;const list=$("#projectTasks");list.replaceChildren();project.tasks.forEach(task=>{const li=document.createElement("li");li.textContent=task;list.append(li);});$("#projectCode").value=project.code;updateProjectStatus();renderProjectCards();renderProjectPreview();}
 $("#previewProject").addEventListener("click",renderProjectPreview);
 $("#resetProject").addEventListener("click",()=>{$("#projectCode").value=activeProject.code;renderProjectPreview();});
-$("#completeProject").addEventListener("click",()=>{if(!completedProjects.includes(activeProject.id))completedProjects.push(activeProject.id);try{localStorage.setItem("cc_projects",JSON.stringify(completedProjects));}catch(_){}updateProjectStatus();renderProjectCards();});
+$("#completeProject").addEventListener("click",()=>{if(!completedProjects.includes(activeProject.id))completedProjects.push(activeProject.id);try{localStorage.setItem("cc_projects",JSON.stringify(completedProjects));}catch(_){}updateProjectStatus();renderProjectCards();renderAchievements();});
 renderProjectCards();selectProject(activeProject.id);
 showLesson(0); progress();
 })();
