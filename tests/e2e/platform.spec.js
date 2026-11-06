@@ -290,7 +290,7 @@ test("mobile navigation supports Escape, outside click and link selection", asyn
   await expect(menuButton).toBeFocused();
 
   await menuButton.click();
-  await page.locator("#mainContent").click({ position: { x: 8, y: 8 } });
+  await page.locator(".brand").click();
   await expect(nav).not.toHaveClass(/open/);
 
   await menuButton.click();
