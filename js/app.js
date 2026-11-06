@@ -110,23 +110,100 @@ $("#importProgressFile").addEventListener("change",event=>{
 
 
 
-/* Личный учебный кабинет: закладки и заметки */
+/* Персональная аналитика и следующий учебный шаг */
+function buildCourseProgress(){
+ const names=["HTML и CSS","JavaScript","Python"];
+ return names.map(name=>{
+  const items=lessons.filter(item=>item.course===name);
+  const completed=items.filter(item=>done.includes(item.id)).length;
+  return{name,total:items.length,completed,percent:items.length?Math.round(completed/items.length*100):0};
+ });
+}
+function getNextLearningRecommendation(courseProgress){
+ const weakTopic=Object.entries(readExamTopicStats()).map(([key,item])=>{
+  const questions=lessons.filter(question=>topicForQuestion(question).key===key);
+  const topic=topicForQuestion(questions[0]||{});
+  return{key,label:topic.label,questions,total:item.total,correct:item.correct,accuracy:item.total?Math.round(item.correct/item.total*100):100};
+ }).filter(item=>item.questions.length&&item.total>=3&&item.accuracy<70)
+  .sort((a,b)=>a.accuracy-b.accuracy||b.total-a.total)[0];
+ if(weakTopic){
+  return{badge:"Точка роста",title:"Закрепи тему «"+weakTopic.label+"»",description:"Точность ответов — "+weakTopic.accuracy+"% ("+weakTopic.correct+" из "+weakTopic.total+"). Небольшая тематическая тренировка поможет разобраться в ошибках.",meta:"Рекомендация основана на твоих ответах в экзаменах.",action:"topic",target:weakTopic.key,button:"Тренировать тему"};
+ }
+ const started=courseProgress.filter(item=>item.completed>0&&item.completed<item.total).sort((a,b)=>b.percent-a.percent||b.completed-a.completed);
+ const targetCourse=started[0]||courseProgress.find(item=>item.total&&item.completed<item.total);
+ if(targetCourse){
+  const index=lessons.findIndex(item=>item.course===targetCourse.name&&!done.includes(item.id));
+  const lesson=lessons[index];
+  if(lesson)return{badge:"Продолжай",title:"Продолжи курс «"+targetCourse.name+"»",description:"Следующий урок — «"+lesson.title+"». Двигайся небольшими шагами: завершай урок и сразу закрепляй знания на практике.",meta:targetCourse.completed+" из "+targetCourse.total+" уроков · "+targetCourse.percent+"% курса пройдено.",action:"lesson",target:String(index),button:"Открыть урок"};
+ }
+ const challenge=challengeTasks.find(item=>!completedChallenges.includes(item.id));
+ if(challenge)return{badge:"Практика",title:"Закрепи знания на задании",description:"Попробуй решить «"+challenge.title+"». Практика помогает превратить прочитанное в навык.",meta:completedChallenges.length+" из "+challengeTasks.length+" практических заданий решено.",action:"challenge",target:challenge.id,button:"Открыть практику"};
+ const project=projectTemplates.find(item=>!completedProjects.includes(item.id));
+ if(project)return{badge:"Творческий шаг",title:"Собери мини-проект",description:"Следующая цель — «"+project.title+"». Создай небольшой законченный результат и проверь его критерии.",meta:completedProjects.length+" из "+projectTemplates.length+" мини-проектов завершено.",action:"project",target:project.id,button:"Открыть проект"};
+ return{badge:"Проверка знаний",title:"Проверь себя в смешанном экзамене",description:"Все уроки, задания и мини-проекты завершены. Проверь, насколько уверенно ты связываешь знания из разных направлений.",meta:"Можно повторять экзамен и улучшать лучший результат.",action:"exam",target:"",button:"Начать экзамен"};
+}
 function renderStudentDashboard(){
  const stats=$("#studentStats");if(!stats)return;
  const bookmarks=safeStoredArray("cc_bookmarks",validIds);let notes={};
  try{const value=JSON.parse(localStorage.getItem("cc_notes_v1")||"{}");if(value&&typeof value==="object"&&!Array.isArray(value))notes=value;}catch(_){}
  const noteIds=Object.keys(notes).filter(id=>validIds.has(id)&&typeof notes[id]==="string"&&notes[id].trim());
  const xp=calculateLearningXP(done.length,completedProjects.length,completedChallenges.length);
- const cards=[[done.length+" / "+lessons.length,"уроков пройдено"],[bookmarks.length,"уроков в избранном"],[noteIds.length,"личных заметок"],[xp+" XP","заработано опыта"]];
+ const cards=[[done.length+" / "+lessons.length,"уроков пройдено"],[completedChallenges.length+" / "+challengeTasks.length,"практических заданий"],[completedProjects.length+" / "+projectTemplates.length,"мини-проектов"],[bookmarks.length,"уроков в избранном"],[xp+" XP","заработано опыта"]];
  stats.replaceChildren();cards.forEach(([value,label])=>{const card=document.createElement("div");card.className="student-stat";const strong=document.createElement("strong");strong.textContent=value;const small=document.createElement("span");small.textContent=label;card.append(strong,small);stats.append(card);});
  $("#bookmarkCount").textContent=String(bookmarks.length);$("#notesCount").textContent=String(noteIds.length);
+ const courseProgress=buildCourseProgress(),courseList=$("#courseProgressList");courseList.replaceChildren();
+ courseProgress.forEach(item=>{
+  const card=document.createElement("article");card.className="course-progress-item";
+  const heading=document.createElement("div");heading.className="course-progress-heading";
+  const name=document.createElement("strong");name.textContent=item.name;
+  const percent=document.createElement("span");percent.textContent=item.percent+"%";
+  heading.append(name,percent);
+  const track=document.createElement("div");track.className="course-progress-track";track.setAttribute("role","progressbar");track.setAttribute("aria-label","Прогресс курса "+item.name);track.setAttribute("aria-valuemin","0");track.setAttribute("aria-valuemax",String(item.total));track.setAttribute("aria-valuenow",String(item.completed));track.setAttribute("aria-valuetext",item.completed+" из "+item.total+" уроков");
+  const fill=document.createElement("span");fill.style.width=item.percent+"%";track.append(fill);
+  const meta=document.createElement("small");meta.textContent=item.completed+" из "+item.total+" уроков пройдено";
+  card.append(heading,track,meta);courseList.append(card);
+ });
+ const practiceList=$("#practiceProgressList");practiceList.replaceChildren();
+ [["Практические задания",completedChallenges.length,challengeTasks.length],["Мини-проекты",completedProjects.length,projectTemplates.length]].forEach(([label,completed,total])=>{
+  const item=document.createElement("article");item.className="practice-progress-item";
+  const heading=document.createElement("div");heading.className="course-progress-heading";
+  const name=document.createElement("strong");name.textContent=label;
+  const count=document.createElement("span");count.textContent=completed+" / "+total;heading.append(name,count);
+  const track=document.createElement("div");track.className="course-progress-track";track.setAttribute("role","progressbar");track.setAttribute("aria-label",label);track.setAttribute("aria-valuemin","0");track.setAttribute("aria-valuemax",String(total));track.setAttribute("aria-valuenow",String(completed));
+  const fill=document.createElement("span");fill.style.width=(total?Math.round(completed/total*100):0)+"%";track.append(fill);
+  item.append(heading,track);practiceList.append(item);
+ });
+ const recommendation=getNextLearningRecommendation(courseProgress);
+ $("#nextStepBadge").textContent=recommendation.badge;$("#nextStepTitle").textContent=recommendation.title;
+ $("#nextStepDescription").textContent=recommendation.description;$("#nextStepMeta").textContent=recommendation.meta;
+ const action=$("#nextStepAction");action.textContent=recommendation.button;action.dataset.action=recommendation.action;action.dataset.target=recommendation.target||"";
  const bookmarkList=$("#bookmarkList");bookmarkList.replaceChildren();
  if(!bookmarks.length){const empty=document.createElement("p");empty.className="student-empty";empty.textContent="Пока пусто. Добавляй уроки в избранное из учебной панели.";bookmarkList.append(empty);}
  bookmarks.forEach(id=>{const lesson=lessons.find(item=>item.id===id);if(!lesson)return;const button=document.createElement("button");button.type="button";button.className="saved-lesson";const title=document.createElement("strong");title.textContent=lesson.title;const meta=document.createElement("small");meta.textContent=lesson.course;button.append(title,meta);button.addEventListener("click",()=>{const index=lessons.findIndex(item=>item.id===id);showLesson(index);$("#learn").scrollIntoView({behavior:"smooth"});});bookmarkList.append(button);});
  const notesList=$("#notesList");notesList.replaceChildren();
  if(!noteIds.length){const empty=document.createElement("p");empty.className="student-empty";empty.textContent="Здесь появятся твои заметки к урокам.";notesList.append(empty);}
- noteIds.forEach(id=>{const lesson=lessons.find(item=>item.id===id);if(!lesson)return;const button=document.createElement("button");button.type="button";button.className="saved-lesson";const title=document.createElement("strong");title.textContent=lesson.title;const snippet=document.createElement("small");snippet.textContent=notes[id].trim().replace(/\\s+/g," ").slice(0,105);button.append(title,snippet);button.addEventListener("click",()=>{showLesson(lessons.findIndex(item=>item.id===id));$("#learn").scrollIntoView({behavior:"smooth"});});notesList.append(button);});
+ noteIds.forEach(id=>{const lesson=lessons.find(item=>item.id===id);if(!lesson)return;const button=document.createElement("button");button.type="button";button.className="saved-lesson";const title=document.createElement("strong");title.textContent=lesson.title;const snippet=document.createElement("small");snippet.textContent=notes[id].trim().replace(/\s+/g," ").slice(0,105);button.append(title,snippet);button.addEventListener("click",()=>{showLesson(lessons.findIndex(item=>item.id===id));$("#learn").scrollIntoView({behavior:"smooth"});});notesList.append(button);});
 }
+$("#nextStepAction").addEventListener("click",()=>{
+ const button=$("#nextStepAction"),action=button.dataset.action,target=button.dataset.target;
+ if(action==="topic"){
+  const questions=lessons.filter(question=>topicForQuestion(question).key===target);
+  if(!questions.length)return;
+  $("#examCourse").value="all";$("#examLevel").value="all";
+  startExam(questions,"Тренировка темы: "+topicForQuestion(questions[0]).label);
+  $("#quiz").scrollIntoView({behavior:"smooth"});
+ }else if(action==="lesson"){
+  const index=Number(target);if(!Number.isInteger(index))return;
+  showLesson(index);$("#learn").scrollIntoView({behavior:"smooth"});
+ }else if(action==="challenge"){
+  selectChallenge(target);$("#challenges").scrollIntoView({behavior:"smooth"});
+ }else if(action==="project"){
+  selectProject(target);$("#projects").scrollIntoView({behavior:"smooth"});
+ }else if(action==="exam"){
+  $("#examCourse").value="all";$("#examLevel").value="all";startExam();
+  $("#quiz").scrollIntoView({behavior:"smooth"});
+ }
+});
 
 function progress() {
   const count = done.length;
@@ -503,7 +580,7 @@ $("#quizOptions").addEventListener("click",event=>{
  const question=examQuestions[examIndex];if(!question)return;
  examAnswered=true;const chosen=Number(button.dataset.answer);
  [...$("#quizOptions").children].forEach((item,index)=>{item.disabled=true;if(index===question.correct)item.classList.add("correct");if(index===chosen&&chosen!==question.correct)item.classList.add("wrong");});
- recordExamAnswer(question,chosen===question.correct);renderExamTopicStats();
+ recordExamAnswer(question,chosen===question.correct);renderExamTopicStats();renderStudentDashboard();
  if(chosen===question.correct){examScore++;$("#quizFeedback").textContent="Верно! "+question.explanation;}
  else {examMissed.push(question);$("#quizFeedback").textContent="Не совсем. Правильный ответ: "+question.options[question.correct]+". "+question.explanation;}
  $("#examScore").textContent="Баллы: "+examScore;$("#nextExamQuestion").disabled=false;
