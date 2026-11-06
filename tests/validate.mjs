@@ -114,8 +114,8 @@ assert.deepEqual(Array.from(restoredChallenges), allChallengeIds, "all current c
 assert.deepEqual(Array.from(sanitizeKnownIds(["html-heading", "html-heading", "unknown-task", 42], knownChallengeIds)), ["html-heading"], "backup import must deduplicate and reject unknown challenge IDs");
 const legacyChallengeIds = ["html-heading", "html-link", "css-flex", "js-function", "js-condition", "html-semantic", "css-grid", "js-array", "py-loop", "py-dict"];
 assert.deepEqual(Array.from(sanitizeKnownIds(legacyChallengeIds, knownChallengeIds)), legacyChallengeIds, "version 1 backups with the original 10 tasks must remain compatible");
-assert.equal(calculateLearningXP(32, 3, 20), 850, "XP must use 20 per lesson, 50 per project and 30 per challenge");
-assert.equal(calculateLearningXP(32, 3, 10), 550, "legacy challenge progress must retain its earned XP");
+assert.equal(calculateLearningXP(32, 3, 20), 1390, "XP must use 20 per lesson, 50 per project and 30 per challenge");
+assert.equal(calculateLearningXP(32, 3, 10), 1090, "legacy challenge progress must retain its earned XP");
 assert.equal((app.match(/calculateLearningXP\\(done.length,completedProjects.length,completedChallenges.length\\)/g) || []).length, 2, "achievement and student dashboard must use the same XP calculation");
 assert.match(app, /challenges:safeStoredArray\\("cc_challenges",getKnownChallengeIds\\(challengeTasks\\)\\)/, "backup export must use the current challenge registry");
 assert.match(app, /sanitizeKnownIds\\(data.challenges,getKnownChallengeIds\\(challengeTasks\\)\\)/, "backup import must use the current challenge registry");
