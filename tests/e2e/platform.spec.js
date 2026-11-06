@@ -68,6 +68,20 @@ test("runs JavaScript in the Worker, times out an infinite loop and recovers", a
   await page.locator("#codeEditor").fill('console.log("worker-recovered");');
   await page.locator("#runCode").click();
   await expect(page.locator("#output")).toContainText("worker-recovered");
+
+  await page.locator("#codeEditor").fill("const = ;");
+  await page.locator("#runCode").click();
+  await expect(page.locator("#output")).toContainText("Ошибка");
+  await expect(page.locator("#runCode")).toBeEnabled();
+});
+
+test("manually stops JavaScript execution without reloading the page", async ({ page }) => {
+  await page.locator("#codeEditor").fill("while (true) {}");
+  await page.locator("#runCode").click();
+  await expect(page.locator("#stopCode")).toBeEnabled();
+  await page.locator("#stopCode").click();
+  await expect(page.locator("#output")).toContainText("Выполнение остановлено");
+  await expect(page.locator("#runCode")).toBeEnabled();
 });
 
 test("runs Python in Skulpt when the CDN is available", async ({ page }) => {
@@ -139,8 +153,18 @@ test("keeps the interface within phone and desktop viewport widths", async ({ pa
     await expect(page.locator("#mainContent")).toBeVisible();
     const dimensions = await page.evaluate(() => ({
       viewport: document.documentElement.clientWidth,
-      document: document.documentElement.scrollWidth
+      document: document.documentElement.scrollWidth,
+      offenders: [...document.querySelectorAll("body *")].map(element => {
+        const rect = element.getBoundingClientRect();
+        return { tag: element.tagName, id: element.id, className: String(element.className || ""), left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width) };
+      }).filter(item => item.width > 0 && item.right > window.innerWidth + 1).slice(0, 8)
     }));
-    expect(dimensions.document, `horizontal overflow at viewport ${width}px`).toBeLessThanOrEqual(dimensions.viewport + 1);
+    expect(dimensions.document, `horizontal overflow at viewport ${width}px: ${JSON.stringify(dimensions.offenders)}`).toBeLessThanOrEqual(dimensions.viewport + 1);
+    if (width === 768) {
+      await expect(page.locator("#menuBtn")).toBeVisible();
+      await page.locator("#menuBtn").click();
+      await expect(page.locator("#nav")).toHaveClass(/open/);
+      await expect(page.locator("#menuBtn")).toHaveAttribute("aria-expanded", "true");
+    }
   }
 });
