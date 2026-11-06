@@ -76,6 +76,12 @@ const challengeContext = {};
 const challenges = vm.runInNewContext("(" + challengeMatch[1] + ")", challengeContext);
 assert.equal(challenges.length, 20, "expected 20 practical tasks");
 assert.equal(new Set(challenges.map(item => item.id)).size, challenges.length, "challenge IDs must be unique");
+
+assert.match(app, /function parseHTMLForChecks/);
+assert.match(app, /function parseCSSForChecks/);
+assert.match(app, /function isJavaScriptSyntaxValid/);
+assert.match(app, /function parseProjectStructuralChecks/);
+
 const examples = {
   "html-heading": "<h1>Hello</h1><p>Welcome</p>",
   "html-link": '<a href="https://example.com">Example</a>',

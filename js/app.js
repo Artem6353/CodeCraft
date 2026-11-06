@@ -640,6 +640,112 @@ const challengeTasks = [
  {id:"py-fix-dict",mode:"debug",language:"Python",file:"main.py",title:"Безопасно прочитай ключ",description:'Ключ city может отсутствовать. Исправь доступ к словарю так, чтобы программа вывела значение по умолчанию "Не указан".',hint:'Используй метод profile.get("city", "Не указан").',starter:'profile = {"name": "Аня"}\nprint(profile["city"])\n',checks:[["Метод get",code=>/profile\.get\s*\(/.test(code)],["Ключ city",code=>/get\s*\(\s*["']city["']/.test(code)],["Значение по умолчанию",code=>/get\s*\([^)]*,\s*["']Не указан["']/.test(code)]]}
 
 ];
+function parseHTMLForChecks(code){
+ return new DOMParser().parseFromString(String(code||""),"text/html");
+}
+function parseCSSForChecks(code){
+ const detached=document.implementation.createHTMLDocument("");
+ const style=detached.createElement("style");
+ style.textContent=String(code||"");
+ detached.head.append(style);
+ try{return Array.from(style.sheet?.cssRules||[]);}catch(_){return [];}
+}
+function findCSSStyleRule(rules,selector){
+ for(const rule of rules){
+  if(rule.type===1&&rule.selectorText&&rule.selectorText.split(",").map(item=>item.trim()).includes(selector))return rule;
+  if(rule.cssRules){
+   const nested=findCSSStyleRule(Array.from(rule.cssRules),selector);
+   if(nested)return nested;
+  }
+ }
+ return null;
+}
+function getCSSDeclaration(code,selector,property){
+ const rule=findCSSStyleRule(parseCSSForChecks(code),selector);
+ return rule?rule.style.getPropertyValue(property).trim():"";
+}
+function hasPositiveCSSLength(value){
+ const match=String(value||"").trim().match(/^(\d*\.?\d+)(?:px|rem|em|%|vw|vh|ch|ex|cm|mm|pt|pc)?$/i);
+ return Boolean(match&&Number(match[1])>0);
+}
+function findMobileCSSRule(code,selector){
+ for(const rule of parseCSSForChecks(code)){
+  if(rule.type!==4)continue;
+  const match=String(rule.conditionText||"").match(/max-width\s*:\s*(\d+(?:\.\d+)?)px/i);
+  if(match&&Number(match[1])<=600){
+   const found=findCSSStyleRule(Array.from(rule.cssRules||[]),selector);
+   if(found)return found;
+  }
+ }
+ return null;
+}
+function isJavaScriptSyntaxValid(code){
+ try{new Function(String(code||""));return true;}catch(_){return false;}
+}
+function parseProjectStructuralChecks(code){
+ const doc=parseHTMLForChecks(code);
+ const ids=Array.from(doc.querySelectorAll("[id]")).map(node=>node.id);
+ const styleText=Array.from(doc.querySelectorAll("style")).map(node=>node.textContent||"").join("\\n");
+ return [
+  ["В разметке есть непустой h1",()=>{const heading=doc.querySelector("h1");return Boolean(heading&&heading.textContent.trim());}],
+  ["HTML ID не повторяются",()=>new Set(ids).size===ids.length],
+  ["CSS содержит разобранные правила",()=>parseCSSForChecks(styleText).length>0]
+ ];
+}
+const parsedChallengeChecks={
+ "html-heading":[
+  ["Заголовок h1",code=>Boolean(parseHTMLForChecks(code).querySelector("h1"))],
+  ["Абзац p",code=>Boolean(parseHTMLForChecks(code).querySelector("p"))],
+  ["Заголовок содержит текст",code=>{const node=parseHTMLForChecks(code).querySelector("h1");return Boolean(node&&node.textContent.trim());}]
+ ],
+ "html-link":[
+  ["Тег a",code=>Boolean(parseHTMLForChecks(code).querySelector("a"))],
+  ["Атрибут href",code=>{const node=parseHTMLForChecks(code).querySelector("a");return Boolean(node&&node.getAttribute("href")==="https://example.com");}],
+  ["Непустой текст ссылки",code=>{const node=parseHTMLForChecks(code).querySelector("a");return Boolean(node&&node.textContent.trim());}]
+ ],
+ "html-semantic":[
+  ["Шапка header",code=>Boolean(parseHTMLForChecks(code).querySelector("header"))],
+  ["Основная область main",code=>Boolean(parseHTMLForChecks(code).querySelector("main"))],
+  ["Подвал footer",code=>Boolean(parseHTMLForChecks(code).querySelector("footer"))],
+  ["Заголовок h1 внутри main",code=>Boolean(parseHTMLForChecks(code).querySelector("main h1"))]
+ ],
+ "html-fix-image":[
+  ["Изображение img",code=>Boolean(parseHTMLForChecks(code).querySelector("img"))],
+  ["Непустой alt",code=>{const node=parseHTMLForChecks(code).querySelector("img");return Boolean(node&&node.hasAttribute("alt")&&node.getAttribute("alt").trim());}]
+ ],
+ "html-fix-form":[
+  ["Подпись label",code=>Boolean(parseHTMLForChecks(code).querySelector("label"))],
+  ["Связь for=email",code=>Boolean(parseHTMLForChecks(code).querySelector('label[for="email"]'))],
+  ["Поле с id=email",code=>Boolean(parseHTMLForChecks(code).querySelector("input#email"))]
+ ],
+ "css-flex":[
+  ["Селектор .cards",code=>Boolean(findCSSStyleRule(parseCSSForChecks(code),".cards"))],
+  ["display: flex",code=>getCSSDeclaration(code,".cards","display")==="flex"],
+  ["Отступ gap",code=>hasPositiveCSSLength(getCSSDeclaration(code,".cards","gap"))]
+ ],
+ "css-grid":[
+  ["Селектор .gallery",code=>Boolean(findCSSStyleRule(parseCSSForChecks(code),".gallery"))],
+  ["display: grid",code=>getCSSDeclaration(code,".gallery","display")==="grid"],
+  ["Колонки",code=>Boolean(getCSSDeclaration(code,".gallery","grid-template-columns"))],
+  ["Промежуток gap",code=>hasPositiveCSSLength(getCSSDeclaration(code,".gallery","gap"))]
+ ],
+ "css-fix-box":[
+  ["Универсальный селектор",code=>Boolean(findCSSStyleRule(parseCSSForChecks(code),"*"))],
+  ["box-sizing: border-box",code=>getCSSDeclaration(code,"*","box-sizing")==="border-box"]
+ ],
+ "css-fix-mobile":[
+  ["Media query для ширины до 600px",code=>Boolean(findMobileCSSRule(code,".cards"))],
+  ["Одна колонка .cards",code=>{const rule=findMobileCSSRule(code,".cards");return Boolean(rule&&rule.style.getPropertyValue("grid-template-columns").trim()==="1fr");}]
+ ],
+ "css-fix-focus":[
+  ["Правило button:focus-visible",code=>Boolean(findCSSStyleRule(parseCSSForChecks(code),"button:focus-visible"))],
+  ["Видимый outline",code=>{const value=getCSSDeclaration(code,"button:focus-visible","outline");return Boolean(value&&value.toLowerCase()!=="none");}]
+ ]
+};
+challengeTasks.forEach(task=>{
+ if(parsedChallengeChecks[task.id])task.checks=parsedChallengeChecks[task.id];
+ if(task.language==="JavaScript")task.checks.push(["Синтаксис JavaScript корректен",isJavaScriptSyntaxValid]);
+});
 let activeChallenge=challengeTasks[0],completedChallenges=[];
 try{const saved=JSON.parse(localStorage.getItem("cc_challenges")||"[]");if(Array.isArray(saved))completedChallenges=[...new Set(saved.filter(id=>challengeTasks.some(task=>task.id===id)))];}catch(_){}
 function renderChallengeMenu(){const menu=$("#challengeMenu");menu.replaceChildren();challengeTasks.forEach(task=>{const button=document.createElement("button");button.type="button";button.className="challenge-pick"+(task.id===activeChallenge.id?" active":"");const title=document.createElement("strong");title.textContent=(completedChallenges.includes(task.id)?"✓ ":"")+task.title;const meta=document.createElement("small");meta.textContent=task.language+" · "+(task.mode==="debug"?"Исправление ошибки":"Практика")+" · "+(completedChallenges.includes(task.id)?"Решено":"30 XP");button.append(title,meta);button.addEventListener("click",()=>selectChallenge(task.id));menu.append(button);});}
@@ -704,7 +810,11 @@ function updateProjectStatus(){const done=completedProjects.includes(activeProje
 function renderProjectTasks(){const list=$("#projectTasks");list.replaceChildren();const completed=projectSteps[activeProject.id]||[];activeProject.tasks.forEach((task,index)=>{const li=document.createElement("li");const label=document.createElement("label");label.className="project-phase";const input=document.createElement("input");input.type="checkbox";input.checked=completed.includes(index);input.setAttribute("aria-label","Этап "+(index+1)+": "+task);const text=document.createElement("span");text.textContent=task;input.addEventListener("change",()=>{const next=new Set(projectSteps[activeProject.id]||[]);if(input.checked)next.add(index);else next.delete(index);projectSteps[activeProject.id]=[...next].sort((a,b)=>a-b);try{localStorage.setItem("cc_project_steps_v1",JSON.stringify(projectSteps));}catch(_){}updateProjectPhaseStatus();});label.append(input,text);li.append(label);list.append(li);});updateProjectPhaseStatus();}
 function updateProjectPhaseStatus(){const done=(projectSteps[activeProject.id]||[]).length,total=activeProject.tasks.length;$("#projectPhaseStatus").textContent="Этапы проекта: "+done+" из "+total+" отмечено";}
 function validateProject(){
- const checks=activeProject.checks.map(([label,test])=>({label,pass:test($("#projectCode").value)}));
+ const code=$("#projectCode").value;
+ const checks=[
+  ...parseProjectStructuralChecks(code).map(([label,test])=>({label,pass:test()})),
+  ...activeProject.checks.map(([label,test])=>({label,pass:test(code)}))
+ ];
  const list=$("#projectChecks");list.replaceChildren();
  checks.forEach(check=>{const item=document.createElement("div");item.className="project-check "+(check.pass?"pass":"fail");item.textContent=(check.pass?"✓ ":"○ ")+check.label;list.append(item);});
  const passed=checks.every(item=>item.pass),isNew=!completedProjects.includes(activeProject.id);

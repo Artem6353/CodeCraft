@@ -23,6 +23,25 @@ test("shares indentation and keyboard guidance across every code editor", async 
   }
 });
 
+
+test("rejects code hidden in comments and JavaScript syntax errors", async ({ page }) => {
+  await page.locator("#challengeCode").fill("<!-- <h1>Заголовок</h1><p>Текст</p> -->");
+  await page.locator("#checkChallenge").click();
+  await expect(page.locator("#challengeResult")).toContainText("Пока не всё готово");
+  await expect(page.locator("#challengeChecks .fail")).not.toHaveCount(0);
+
+  await page.locator("#challengeMenu .challenge-pick").filter({ hasText: "Включи Flexbox" }).click();
+  await page.locator("#challengeCode").fill("/* .cards { display: flex; gap: 12px; } */");
+  await page.locator("#challengeCode").press("Control+Enter");
+  await expect(page.locator("#challengeResult")).toContainText("Пока не всё готово");
+
+  await page.locator("#challengeMenu .challenge-pick").filter({ hasText: "Напиши функцию" }).click();
+  await page.locator("#challengeCode").fill("function double(number) { return number * 2; }\\ndouble(5);\\nconst broken = ;");
+  await page.locator("#challengeCode").press("Control+Enter");
+  await expect(page.locator("#challengeChecks")).toContainText("Синтаксис JavaScript корректен");
+  await expect(page.locator("#challengeChecks .fail")).not.toHaveCount(0);
+});
+
 test("loads the learning dashboard and keeps the main sections reachable", async ({ page }) => {
   await expect(page).toHaveTitle(/CodeCraft/);
   await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(44);
@@ -303,6 +322,17 @@ test("navigates lessons in course order and keeps keyboard focus", async ({ page
   await page.locator("#lessonNext").click();
   await expect(sequence).toContainText("Урок 2 из 12");
   await expect(page.locator("#lessonMenu .lesson-choice[aria-current=step]")).toHaveCount(1);
+});
+
+
+test("checks all six project templates with parsed HTML and CSS criteria", async ({ page }) => {
+  const titles = ["Карточка профиля", "Мини-портфолио", "Страница продукта", "Доска задач", "Карточки викторины", "Панель показателей"];
+  for (const title of titles) {
+    await page.locator("#projectGrid .project-card").filter({ hasText: title }).click();
+    await page.locator("#completeProject").click();
+    await expect(page.locator("#projectStatus")).toContainText("Все критерии выполнены");
+    await expect(page.locator("#projectChecks .fail")).toHaveCount(0);
+  }
 });
 
 test("supports intermediate lessons and saves phased project milestones", async ({ page }) => {
