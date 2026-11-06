@@ -41,15 +41,26 @@ console.log("Мои завершённые уроки: " + completed);</textarea
 <section id="web-lab" class="section">
  <div class="section-heading"><div><p class="eyebrow">СОЗДАЙ СВОЮ СТРАНИЦУ</p><h2>Веб-лаборатория</h2></div><span class="pill">HTML · CSS · JavaScript</span></div>
  <p class="project-intro">Редактируй три части сайта отдельно и запускай результат. Код выполняется в изолированном окне без доступа к данным и страницам сайта.</p>
- <div class="web-lab">
-  <div class="web-editors">
-   <div class="web-editor"><div class="editor-head"><label for="webHtml">index.html</label><span>HTML</span></div><textarea id="webHtml" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="HTML редактор"></textarea></div>
-   <div class="web-editor"><div class="editor-head"><label for="webCss">style.css</label><span>CSS</span></div><textarea id="webCss" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="CSS редактор"></textarea></div>
-   <div class="web-editor"><div class="editor-head"><label for="webJs">script.js</label><span>JavaScript</span></div><textarea id="webJs" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="JavaScript редактор"></textarea></div>
-   <div class="editor-actions"><button class="btn" id="runWebLab">▶ Запустить страницу</button><button class="btn ghost" id="resetWebLab">Сбросить пример</button></div>
-   <p class="preview-note" id="webLabStatus" aria-live="polite">Измени код и нажми «Запустить страницу».</p>
+ <div class="web-workspace">
+  <div class="workspace-toolbar" role="group" aria-label="Управление веб-редактором">
+   <div class="workspace-tabs" role="group" aria-label="Выбор файла или предпросмотра">
+    <button type="button" class="workspace-tab active" data-lab-panel="html" aria-pressed="true">HTML</button>
+    <button type="button" class="workspace-tab" data-lab-panel="css" aria-pressed="false">CSS</button>
+    <button type="button" class="workspace-tab" data-lab-panel="js" aria-pressed="false">JS</button>
+    <button type="button" class="workspace-tab" data-lab-panel="preview" aria-pressed="false">Предпросмотр</button>
+   </div>
+   <div class="workspace-tools"><button type="button" class="small-btn" id="editorFontDown" aria-label="Уменьшить шрифт редактора">A−</button><span id="editorFontSize" aria-live="polite">13 px</span><button type="button" class="small-btn" id="editorFontUp" aria-label="Увеличить шрифт редактора">A+</button></div>
   </div>
-  <div class="web-preview-wrap"><div class="editor-head"><span>Предпросмотр</span><span>Изолированный iframe</span></div><iframe id="webLabPreview" title="Предпросмотр HTML, CSS и JavaScript" sandbox="allow-scripts" loading="lazy"></iframe></div>
+  <div class="web-lab">
+   <div class="web-editors">
+    <div class="web-editor" data-lab-panel-content="html"><div class="editor-head"><label for="webHtml">index.html</label><span>HTML</span></div><textarea id="webHtml" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="HTML редактор"></textarea></div>
+    <div class="web-editor" data-lab-panel-content="css"><div class="editor-head"><label for="webCss">style.css</label><span>CSS</span></div><textarea id="webCss" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="CSS редактор"></textarea></div>
+    <div class="web-editor" data-lab-panel-content="js"><div class="editor-head"><label for="webJs">script.js</label><span>JavaScript</span></div><textarea id="webJs" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="JavaScript редактор"></textarea></div>
+    <div class="editor-actions"><button class="btn" id="runWebLab">▶ Запустить страницу</button><button class="btn ghost" id="resetWebLab">Сбросить пример</button></div>
+    <p class="preview-note" id="webLabStatus" aria-live="polite">Измени код и нажми «Запустить страницу».</p>
+   </div>
+   <div class="web-preview-wrap" data-lab-panel-content="preview"><div class="editor-head"><span>Предпросмотр</span><span>Изолированный iframe</span></div><iframe id="webLabPreview" title="Предпросмотр HTML, CSS и JavaScript" sandbox="allow-scripts" loading="lazy"></iframe></div>
+  </div>
  </div>
 </section>
 <section id="challenges" class="section">
