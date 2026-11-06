@@ -273,6 +273,33 @@ test("supports intermediate lessons and saves phased project milestones", async 
   expect(steps["data-dashboard"]).toContain(1);
 });
 
+test("mobile navigation supports Escape, outside click and link selection", async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 900 });
+  const menuButton = page.locator("#menuBtn");
+  const nav = page.locator("#nav");
+  await expect(menuButton).toBeVisible();
+  await menuButton.click();
+  await expect(nav).toHaveClass(/open/);
+  await expect(menuButton).toHaveAttribute("aria-expanded", "true");
+  await expect(menuButton).toHaveAttribute("aria-label", "Закрыть меню");
+  await expect(nav.locator("a").first()).toBeFocused();
+
+  await page.keyboard.press("Escape");
+  await expect(nav).not.toHaveClass(/open/);
+  await expect(menuButton).toHaveAttribute("aria-expanded", "false");
+  await expect(menuButton).toBeFocused();
+
+  await menuButton.click();
+  await page.locator("#mainContent").click({ position: { x: 8, y: 8 } });
+  await expect(nav).not.toHaveClass(/open/);
+
+  await menuButton.click();
+  await nav.getByRole("link", { name: "Обучение" }).click();
+  await expect(nav).not.toHaveClass(/open/);
+  await expect(menuButton).toHaveAttribute("aria-expanded", "false");
+  await expect(page).toHaveURL(/#learn$/);
+});
+
 test("checks keyboard access, reduced motion and responsive layouts", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 844, height: 390 });
