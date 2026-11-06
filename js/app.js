@@ -202,23 +202,56 @@ function restoreDraft(key,fallback){return typeof savedDrafts[key]==="string"?sa
 const editor = $("#codeEditor"); const output = $("#output"); const starter = editor.value; const sandboxFrame = $("#jsSandbox");
 editor.value=restoreDraft("javascriptPlayground",starter);editor.addEventListener("input",()=>saveDraft("javascriptPlayground",editor.value));
 let requestId = 0; let sandboxReady = false; let pending = null;
-function resetSandbox() { sandboxReady = false; sandboxFrame.src = "sandbox.html"; }
-sandboxFrame.addEventListener("load", () => { sandboxReady = true; });
+const MAX_JS_CODE = 100000;
+const MAX_JS_OUTPUT = 50100;
+function resetSandbox() {
+  sandboxReady = false;
+  sandboxFrame.src = "sandbox.html";
+}
+sandboxFrame.addEventListener("load", () => { sandboxReady = false; });
+function finishJavaScriptRun(message, restart) {
+  if (pending) clearTimeout(pending.timer);
+  pending = null;
+  $("#runCode").disabled = false;
+  $("#stopCode").disabled = true;
+  output.textContent = message;
+  if (restart) resetSandbox();
+}
 window.addEventListener("message", event => {
-  if (event.source !== sandboxFrame.contentWindow || !event.data) return;
+  if (event.source !== sandboxFrame.contentWindow || !event.data || typeof event.data !== "object") return;
   if (event.data.type === "CODECRAFT_READY") { sandboxReady = true; return; }
+  if (event.data.type === "CODECRAFT_ERROR") {
+    if (!pending || event.data.id !== pending.id) return;
+    finishJavaScriptRun("Ошибка среды: " + String(event.data.message || "не удалось запустить Worker").slice(0, 4000), true);
+    return;
+  }
   if (event.data.type !== "CODECRAFT_RESULT" || !pending || event.data.id !== pending.id) return;
-  clearTimeout(pending.timer);
-  const result = event.data.output || "";
-  output.textContent = event.data.error ? (result ? result + "\n" : "") + "Ошибка: " + event.data.error : result;
-  pending = null; $("#runCode").disabled = false;
+  const result = typeof event.data.output === "string" ? event.data.output.slice(0, MAX_JS_OUTPUT) : "";
+  const error = typeof event.data.error === "string" ? event.data.error.slice(0, 4000) : "";
+  finishJavaScriptRun(error ? (result ? result + "\n" : "") + "Ошибка: " + error : result || "Код выполнен.", false);
 });
 $("#runCode").addEventListener("click", () => {
   if (pending) return;
   if (!sandboxReady) { output.textContent = "Среда запуска ещё загружается. Попробуй через секунду."; return; }
-  const id = ++requestId; $("#runCode").disabled = true; output.textContent = "Выполняю код…";
-  const timer = setTimeout(() => { if (!pending || pending.id !== id) return; pending = null; output.textContent = "Превышено время выполнения. Среда перезапущена."; $("#runCode").disabled = false; resetSandbox(); }, 1800);
-  pending = { id, timer }; sandboxFrame.contentWindow.postMessage({ type: "CODECRAFT_RUN", id, code: editor.value }, "*");
+  if (editor.value.length > MAX_JS_CODE) {
+    output.textContent = "Код слишком большой. Максимальный размер — 100 000 символов.";
+    return;
+  }
+  const id = ++requestId;
+  $("#runCode").disabled = true;
+  $("#stopCode").disabled = false;
+  output.textContent = "Выполняю код в отдельном Worker…";
+  const timer = setTimeout(() => {
+    if (!pending || pending.id !== id) return;
+    finishJavaScriptRun("Время выполнения превышено (1,8 с). Worker остановлен, среда перезапущена.", true);
+  }, 1800);
+  pending = { id, timer };
+  sandboxFrame.contentWindow.postMessage({ type: "CODECRAFT_RUN", id, code: editor.value }, "*");
+});
+$("#stopCode").addEventListener("click", () => {
+  if (!pending) return;
+  try { sandboxFrame.contentWindow.postMessage({ type: "CODECRAFT_CANCEL" }, "*"); } catch (_) {}
+  finishJavaScriptRun("Выполнение остановлено. Среда перезапущена.", true);
 });
 $("#resetEditor").addEventListener("click", () => { editor.value = starter; saveDraft("javascriptPlayground",starter); output.textContent = "Пример восстановлен."; });
 $("#clearOutput").addEventListener("click", () => { output.textContent = "Вывод очищен."; });
