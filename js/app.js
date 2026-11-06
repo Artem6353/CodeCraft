@@ -120,8 +120,10 @@ function renderMenu() {
   menu.replaceChildren();
   const query = ($("#lessonSearch")?.value || "").trim().toLocaleLowerCase("ru");
   const course = $("#courseFilter")?.value || "all";
+  const level = $("#lessonLevelFilter")?.value || "all";
   const filtered = lessons.map((lesson,index)=>({lesson,index})).filter(({lesson}) =>
     (course === "all" || lesson.course === course) &&
+    (level === "all" || lesson.level === level) &&
     (!query || [lesson.title,lesson.text,lesson.course,lesson.level].join(" ").toLocaleLowerCase("ru").includes(query))
   );
   if (!filtered.length) {
@@ -143,6 +145,7 @@ function renderMenu() {
 }
 $("#lessonSearch").addEventListener("input",renderMenu);
 $("#courseFilter").addEventListener("change",renderMenu);
+$("#lessonLevelFilter").addEventListener("change",renderMenu);
 function showLesson(index) {
   if (!Number.isInteger(index) || index < 0 || index >= lessons.length) return;
   active = index;
