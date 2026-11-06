@@ -262,6 +262,30 @@ test("keeps the interface within phone and desktop viewport widths", async ({ pa
 });
 
 
+test("navigates lessons in course order and keeps keyboard focus", async ({ page }) => {
+  const sequence = page.locator("#lessonSequence");
+  const previous = page.locator("#lessonPrevious");
+  const next = page.locator("#lessonNext");
+  await expect(sequence).toContainText("Урок 1 из 20");
+  await expect(previous).toBeDisabled();
+  await expect(next).toBeEnabled();
+
+  await next.click();
+  await expect(sequence).toContainText("Урок 2 из 20");
+  await expect(page.locator("#lessonNext")).toBeFocused();
+  await page.locator("#lessonPrevious").click();
+  await expect(sequence).toContainText("Урок 1 из 20");
+  await expect(page.locator("#lessonPrevious")).toBeFocused();
+
+  await page.locator("#courseFilter").selectOption("JavaScript");
+  await page.locator("#lessonMenu .lesson-choice").first().click();
+  await expect(sequence).toContainText("Урок 1 из 12");
+  await expect(previous).toBeDisabled();
+  await page.locator("#lessonNext").click();
+  await expect(sequence).toContainText("Урок 2 из 12");
+  await expect(page.locator("#lessonMenu .lesson-choice[aria-current=step]")).toHaveCount(1);
+});
+
 test("supports intermediate lessons and saves phased project milestones", async ({ page }) => {
   await page.locator("#lessonLevelFilter").selectOption("Средний");
   await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(12);
