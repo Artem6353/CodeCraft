@@ -193,3 +193,16 @@ footer span{float:none}
 @media(max-width:420px){.student-stat{padding:12px}.student-panel{padding:11px}}
 
 .project-checks{display:grid;gap:6px;margin-top:12px}.project-check{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:11px}.project-check.pass{border-color:#286b5b;color:var(--mint);background:#102b29}.project-check.fail{border-color:#75434a;color:#ffadb4;background:#321d29}.project-status.success{color:var(--mint)}.project-status.failure{color:#ffadb4}
+
+/* Экзамены по направлениям и сохранённые результаты */
+.exam-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 12px;padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
+.exam-settings label{display:grid;gap:6px;color:var(--muted);font-size:11px;font-weight:700}
+.exam-settings select{width:100%;min-width:0;min-height:42px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#080f1c;color:var(--text);font:inherit;font-size:13px}
+.exam-settings p{grid-column:1/-1;margin:0;color:var(--mint);font-size:11px}
+.exam-history-panel{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.exam-history{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.exam-history-card{display:grid;gap:5px;min-width:0;padding:11px;border:1px solid var(--line);border-radius:9px;background:#0d1728}
+.exam-history-card strong{font-size:12px;overflow-wrap:anywhere}
+.exam-history-card span{color:var(--mint);font-size:12px;font-weight:800}
+.exam-history-card small{color:var(--muted);font-size:10px}
+@media(max-width:520px){.exam-settings{grid-template-columns:1fr;padding:10px}.exam-settings p{grid-column:auto}.exam-history{grid-template-columns:1fr}.exam-history-panel{padding:10px}}
