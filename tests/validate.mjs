@@ -163,7 +163,7 @@ assert.match(app, /function readExamTopicStats/);
 assert.match(app, /function recordExamAnswer/);
 assert.match(app, /recordExamAnswer\(question,chosen===question\.correct\)/);
 assert.match(app, /function renderExamTopicStats/);
-assert.match(app, /data-topic=row\.key/);
+assert.match(app, /dataset\.topic=row\.key/);
 assert.match(app, /topicStats:readExamTopicStats\(\)/);
 assert.match(app, /data\.topicStats/);
 assert.match(html, /id="examTopicStats"/);
