@@ -235,9 +235,8 @@ footer span{float:none}
  .web-lab{grid-template-columns:minmax(0,1fr)}
  .web-editors,.web-preview-wrap{display:none}
  .web-editor.mobile-active,.web-preview-wrap.mobile-active{display:block}
- .web-editors:has(.web-editor.mobile-active){display:block}
- .web-editors:has(.web-editor.mobile-active) .web-editor:not(.mobile-active){display:none}
- .web-editors:has(.web-editor.mobile-active) .editor-actions,.web-editors:has(.web-editor.mobile-active) .preview-note{display:flex}
+ .web-editors.panel-html-active,.web-editors.panel-css-active,.web-editors.panel-js-active{display:block}
+ .web-editors.panel-html-active .web-editor:not([data-lab-panel-content="html"]),.web-editors.panel-css-active .web-editor:not([data-lab-panel-content="css"]),.web-editors.panel-js-active .web-editor:not([data-lab-panel-content="js"]){display:none}
  #webLabPreview{height:55vh;min-height:280px;max-height:620px}
  .web-editor textarea{min-height:42vh;max-height:65vh;font-size:13px;resize:vertical}
 }
