@@ -336,7 +336,7 @@ $("#quizOptions").addEventListener("click",event=>{
  const question=examQuestions[examIndex];if(!question)return;
  examAnswered=true;const chosen=Number(button.dataset.answer);
  [...$("#quizOptions").children].forEach((item,index)=>{item.disabled=true;if(index===question.correct)item.classList.add("correct");if(index===chosen&&chosen!==question.correct)item.classList.add("wrong");});
- recordExamAnswer(question,chosen===question.correct);
+ recordExamAnswer(question,chosen===question.correct);renderExamTopicStats();
  if(chosen===question.correct){examScore++;$("#quizFeedback").textContent="Верно! "+question.explanation;}
  else {examMissed.push(question);$("#quizFeedback").textContent="Не совсем. Правильный ответ: "+question.options[question.correct]+". "+question.explanation;}
  $("#examScore").textContent="Баллы: "+examScore;$("#nextExamQuestion").disabled=false;
