@@ -134,6 +134,25 @@ $("#retryQuiz").addEventListener("click", () => { document.querySelectorAll("#qu
 $("#menuBtn").addEventListener("click", () => { const isOpen = $("#nav").classList.toggle("open"); $("#menuBtn").setAttribute("aria-expanded", String(isOpen)); });
 $("#nav").addEventListener("click", event => { if (event.target.closest("a")) { $("#nav").classList.remove("open"); $("#menuBtn").setAttribute("aria-expanded", "false"); } });
 
+
+/* Полноценная HTML/CSS/JS лаборатория */
+const webDefaults = {
+ html: '<main class="card">\\n  <h1>Привет, CodeCraft!</h1>\\n  <p>Это моя первая веб-страница.</p>\\n  <button id="helloButton">Нажми меня</button>\\n  <p id="message"></p>\\n</main>',
+ css: 'body { font-family: system-ui, sans-serif; padding: 24px; background: #eef2ff; }\\n.card { max-width: 440px; margin: 20px auto; padding: 24px; border-radius: 18px; background: white; box-shadow: 0 8px 30px #22335522; }\\nbutton { padding: 10px 14px; border: 0; border-radius: 9px; background: #146c57; color: white; }',
+ js: 'document.querySelector("#helloButton").addEventListener("click", () => {\\n  document.querySelector("#message").textContent = "Отличная работа! JavaScript работает.";\\n});'
+};
+const webHtml=$("#webHtml"),webCss=$("#webCss"),webJs=$("#webJs"),webPreview=$("#webLabPreview");
+function resetWebLab(){webHtml.value=webDefaults.html;webCss.value=webDefaults.css;webJs.value=webDefaults.js;runWebLab();}
+function runWebLab(){
+ const policy='<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data:; font-src data:; connect-src \'none\'; form-action \'none\'; base-uri \'none\';">';
+ const safeCss=webCss.value.replace(/<\\/style/gi,"<\\\\/style");
+ const safeJs=webJs.value.replace(/<\\/script/gi,"<\\\\/script");
+ const documentText='<!doctype html><html lang="ru"><head><meta charset="utf-8">'+policy+'<meta name="viewport" content="width=device-width,initial-scale=1"><style>'+safeCss+'</style></head><body>'+webHtml.value+'<script>'+safeJs+'\\n<\\/script></body></html>';
+ webPreview.srcdoc=documentText;
+ $("#webLabStatus").textContent="Предпросмотр обновлён. Если страница не изменилась, проверь код и запусти ещё раз.";
+}
+$("#runWebLab").addEventListener("click",runWebLab);
+$("#resetWebLab").addEventListener("click",resetWebLab);
 const challengeTasks = [
  {id:"html-heading",language:"HTML",file:"index.html",title:"Создай заголовок",description:"Добавь на страницу главный заголовок первого уровня и абзац с приветствием. Используй реальные HTML-теги.",hint:"Нужны открывающий и закрывающий теги <h1> и <p>. Текст помести между ними.",starter:"<!-- Напиши здесь HTML -->\n",checks:[["Заголовок h1",code=>/<h1\b[^>]*>[\s\S]*?<\/h1\s*>/i.test(code)],["Абзац p",code=>/<p\b[^>]*>[\s\S]*?<\/p\s*>/i.test(code)],["Заголовок содержит текст",code=>/<h1\b[^>]*>\s*[^<\s][\s\S]*?<\/h1\s*>/i.test(code)]]},
  {id:"html-link",language:"HTML",file:"index.html",title:"Добавь ссылку",description:"Создай ссылку на https://example.com с понятным текстом. Ссылка должна содержать href.",hint:"Используй <a href=\"https://example.com\">Текст ссылки</a>.",starter:"<!-- Создай ссылку -->\n",checks:[["Тег a",code=>/<a\b[^>]*>[\s\S]*?<\/a\s*>/i.test(code)],["Атрибут href",code=>/<a\b[^>]*\bhref\s*=\s*(['\"])https:\/\/example\.com\1/i.test(code)],["Непустой текст ссылки",code=>/<a\b[^>]*>\s*[^<\s][\s\S]*?<\/a\s*>/i.test(code)]]},
