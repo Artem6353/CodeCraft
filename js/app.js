@@ -453,8 +453,35 @@ $("#examTopicStats").addEventListener("click",event=>{const button=event.target.
 $("#examCourse").addEventListener("change",startExam);
 $("#examLevel").addEventListener("change",startExam);
 renderExamHistory();renderExamTopicStats();startExam();
-$("#menuBtn").addEventListener("click", () => { const isOpen = $("#nav").classList.toggle("open"); $("#menuBtn").setAttribute("aria-expanded", String(isOpen)); });
-$("#nav").addEventListener("click", event => { if (event.target.closest("a")) { $("#nav").classList.remove("open"); $("#menuBtn").setAttribute("aria-expanded", "false"); } });
+const menuButton=$("#menuBtn");
+const mainNav=$("#nav");
+function setMobileMenuOpen(open,{focusFirst=false,returnFocus=false}={}){
+  mainNav.classList.toggle("open",open);
+  menuButton.setAttribute("aria-expanded",String(open));
+  menuButton.setAttribute("aria-label",open?"Закрыть меню":"Открыть меню");
+  if(open&&focusFirst)mainNav.querySelector("a")?.focus();
+  if(!open&&returnFocus)menuButton.focus();
+}
+menuButton.addEventListener("click",()=>setMobileMenuOpen(!mainNav.classList.contains("open"),{focusFirst:true}));
+mainNav.addEventListener("click",event=>{
+  if(event.target.closest("a"))setMobileMenuOpen(false);
+});
+document.addEventListener("keydown",event=>{
+  if(event.key==="Escape"&&mainNav.classList.contains("open")){
+    setMobileMenuOpen(false,{returnFocus:true});
+  }
+});
+document.addEventListener("pointerdown",event=>{
+  if(mainNav.classList.contains("open")&&!mainNav.contains(event.target)&&!menuButton.contains(event.target)){
+    setMobileMenuOpen(false);
+  }
+});
+const desktopNavigation=window.matchMedia("(min-width: 901px)");
+const resetDesktopMenu=event=>{
+  if(event.matches&&mainNav.classList.contains("open"))setMobileMenuOpen(false);
+};
+if(desktopNavigation.addEventListener)desktopNavigation.addEventListener("change",resetDesktopMenu);
+else desktopNavigation.addListener(resetDesktopMenu);
 
 
 /* Полноценная HTML/CSS/JS лаборатория */
