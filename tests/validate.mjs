@@ -99,9 +99,9 @@ for (const task of challenges) {
   }
 }
 
-const getKnownChallengeIdsSource = app.match(/function getKnownChallengeIds\\(tasks\\)\\{[^}]+\\}/)?.[0];
-const sanitizeKnownIdsSource = app.match(/function sanitizeKnownIds\\(value,allowed\\)\\{[^}]+\\}/)?.[0];
-const calculateLearningXPSource = app.match(/function calculateLearningXP\\(lessonCount,projectCount,challengeCount\\)\\{[^}]+\\}/)?.[0];
+const getKnownChallengeIdsSource = app.match(/function getKnownChallengeIds\(tasks\)\{[^}]+\}/)?.[0];
+const sanitizeKnownIdsSource = app.match(/function sanitizeKnownIds\(value,allowed\)\{[^}]+\}/)?.[0];
+const calculateLearningXPSource = app.match(/function calculateLearningXP\(lessonCount,projectCount,challengeCount\)\{[^}]+\}/)?.[0];
 assert.ok(getKnownChallengeIdsSource && sanitizeKnownIdsSource && calculateLearningXPSource, "shared progress helpers are missing");
 const getKnownChallengeIds = vm.runInNewContext("(" + getKnownChallengeIdsSource + ")");
 const sanitizeKnownIds = vm.runInNewContext("(" + sanitizeKnownIdsSource + ")");
@@ -117,8 +117,8 @@ assert.deepEqual(Array.from(sanitizeKnownIds(legacyChallengeIds, knownChallengeI
 assert.equal(calculateLearningXP(32, 3, 20), 1390, "XP must use 20 per lesson, 50 per project and 30 per challenge");
 assert.equal(calculateLearningXP(32, 3, 10), 1090, "legacy challenge progress must retain its earned XP");
 assert.equal((app.match(/calculateLearningXP\\(done.length,completedProjects.length,completedChallenges.length\\)/g) || []).length, 2, "achievement and student dashboard must use the same XP calculation");
-assert.match(app, /challenges:safeStoredArray\\("cc_challenges",getKnownChallengeIds\\(challengeTasks\\)\\)/, "backup export must use the current challenge registry");
-assert.match(app, /sanitizeKnownIds\\(data.challenges,getKnownChallengeIds\\(challengeTasks\\)\\)/, "backup import must use the current challenge registry");
+assert.match(app, /challenges:safeStoredArray\("cc_challenges",getKnownChallengeIds\(challengeTasks\)\)/, "backup export must use the current challenge registry");
+assert.match(app, /sanitizeKnownIds\(data.challenges,getKnownChallengeIds\(challengeTasks\)\)/, "backup import must use the current challenge registry");
 assert.match(css, /@media\(max-width:520px\)/);
 assert.match(css, /\.web-lab/);
 assert.match(html, /data-lab-panel="html"/);
