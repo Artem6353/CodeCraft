@@ -61,6 +61,7 @@ function startWorker(id, code) {
 }
 window.addEventListener("message", event => {
   if (event.source !== parent || !event.data || typeof event.data !== "object") return;
+  if (event.data.type === "CODECRAFT_PING") { send({ type: "CODECRAFT_READY" }); return; }
   if (event.data.type === "CODECRAFT_CANCEL") { stopWorker(); return; }
   if (event.data.type !== "CODECRAFT_RUN") return;
   const id = event.data.id;
