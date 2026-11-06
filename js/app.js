@@ -374,7 +374,7 @@ $("#challengeReset").addEventListener("click",()=>{$("#challengeCode").value=act
 $("#challengeHintButton").addEventListener("click",()=>{$("#challengeHint").hidden=!$("#challengeHint").hidden;});
 renderChallengeMenu();selectChallenge(activeChallenge.id);
 const projectTemplates = [
- {id:"profile",title:"Карточка профиля",level:"Начальный",description:"Собери карточку с именем, описанием и ссылкой.",tasks:["Добавь своё имя и описание.","Используй заголовок и абзац.","Оформи карточку через CSS.","Сделай ссылку заметной."],code:`<main class="card">
+ {id:"profile",checks:[["Заголовок h1",code=>code.includes("<h1")&&code.includes("</h1>")],["Абзац с описанием",code=>code.includes("<p")&&code.includes("</p>")],["Стили карточки .card",code=>code.includes(".card{")||code.includes(".card {")],["Ссылка на странице",code=>code.includes("<a ")&&code.includes("href=")]],title:"Карточка профиля",level:"Начальный",description:"Собери карточку с именем, описанием и ссылкой.",tasks:["Добавь своё имя и описание.","Используй заголовок и абзац.","Оформи карточку через CSS.","Сделай ссылку заметной."],code:`<main class="card">
   <div class="avatar">Я</div>
   <h1>Привет! Я разработчик</h1>
   <p>Изучаю HTML и CSS и создаю первые сайты.</p>
@@ -387,7 +387,7 @@ body{margin:0;min-height:100vh;display:grid;place-items:center;background:#eef2f
 .avatar{margin:auto;width:72px;height:72px;display:grid;place-items:center;border-radius:50%;background:#d8fff1;color:#12634d;font-size:28px;font-weight:bold}
 a{display:inline-block;margin-top:10px;padding:10px 16px;border-radius:9px;background:#12634d;color:white;text-decoration:none}
 </style>`},
- {id:"portfolio",title:"Мини-портфолио",level:"Начальный+",description:"Сделай страницу, на которой представишь себя и свои работы.",tasks:["Создай шапку с названием.","Добавь раздел «Обо мне».","Покажи минимум две работы.","Размести карточки через CSS Grid."],code:`<header><h1>Моё портфолио</h1><p>Первые шаги в веб-разработке</p></header>
+ {id:"portfolio",checks:[["Шапка сайта",code=>code.includes("<header")&&code.includes("</header>")],["Раздел с заголовком",code=>code.includes("<section")&&code.includes("<h2")],["Не менее двух карточек",code=>(code.match(/<article/g)||[]).length>=2],["Сетка CSS Grid",code=>code.includes("display:grid")||code.includes("display: grid")]],title:"Мини-портфолио",level:"Начальный+",description:"Сделай страницу, на которой представишь себя и свои работы.",tasks:["Создай шапку с названием.","Добавь раздел «Обо мне».","Покажи минимум две работы.","Размести карточки через CSS Grid."],code:`<header><h1>Моё портфолио</h1><p>Первые шаги в веб-разработке</p></header>
 <main>
  <section><h2>Обо мне</h2><p>Я учусь создавать сайты и люблю экспериментировать.</p></section>
  <section class="works"><article><h3>Проект 1</h3><p>Моя первая страница.</p></article><article><h3>Проект 2</h3><p>Моя вторая идея.</p></article></section>
@@ -399,7 +399,7 @@ main{max-width:850px;margin:30px auto;padding:0 18px}
 .works{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
 article{padding:18px;background:white;border-radius:14px;box-shadow:0 5px 18px #17243a12}
 </style>`},
- {id:"landing",title:"Страница продукта",level:"Средний",description:"Собери презентационную страницу выдуманного приложения или сервиса.",tasks:["Сформулируй заголовок и пользу продукта.","Добавь заметную кнопку действия.","Создай блок из трёх преимуществ.","Проверь адаптивность на узком экране."],code:`<header>
+ {id:"landing",checks:[["Главный заголовок",code=>code.includes("<h1")&&code.includes("</h1>")],["Кнопка действия",code=>code.includes('class="cta"')],["Три блока преимуществ",code=>(code.match(/<article/g)||[]).length>=3],["Адаптивная сетка",code=>code.includes("auto-fit")&&code.includes("minmax")]],title:"Страница продукта",level:"Средний",description:"Собери презентационную страницу выдуманного приложения или сервиса.",tasks:["Сформулируй заголовок и пользу продукта.","Добавь заметную кнопку действия.","Создай блок из трёх преимуществ.","Проверь адаптивность на узком экране."],code:`<header>
  <nav><strong>FocusApp</strong><a href="#features">Возможности</a></nav>
  <section class="hero"><p>Меньше хаоса — больше результата</p><h1>Планируй день спокойно</h1><a class="cta" href="#features">Посмотреть возможности</a></section>
 </header>
@@ -420,14 +420,23 @@ article{padding:20px;border:1px solid #dce4ef;border-radius:14px}
 ];
 let activeProject=projectTemplates[0], completedProjects=[];
 try{const saved=JSON.parse(localStorage.getItem("cc_projects")||"[]");if(Array.isArray(saved))completedProjects=[...new Set(saved.filter(id=>projectTemplates.some(p=>p.id===id)))];}catch(_){}
-function updateProjectStatus(){const done=completedProjects.includes(activeProject.id);$("#projectStatus").textContent=done?"Проект отмечен как выполненный ✓":"Проект ещё не отмечен как выполненный.";$("#completeProject").textContent=done?"Проект выполнен ✓":"Отметить проект выполненным";}
+function updateProjectStatus(){const done=completedProjects.includes(activeProject.id);$("#projectStatus").textContent=done?"Проект успешно проверен и сохранён ✓":"Выполни все критерии и нажми «Проверить проект».";$("#completeProject").textContent=done?"Проверить ещё раз":"Проверить проект";}
+function validateProject(){
+ const checks=activeProject.checks.map(([label,test])=>({label,pass:test($("#projectCode").value)}));
+ const list=$("#projectChecks");list.replaceChildren();
+ checks.forEach(check=>{const item=document.createElement("div");item.className="project-check "+(check.pass?"pass":"fail");item.textContent=(check.pass?"✓ ":"○ ")+check.label;list.append(item);});
+ const passed=checks.every(item=>item.pass),isNew=!completedProjects.includes(activeProject.id);
+ if(passed&&isNew){completedProjects.push(activeProject.id);try{localStorage.setItem("cc_projects",JSON.stringify(completedProjects));}catch(_){}renderAchievements();renderProjectCards();renderStudentDashboard();}
+ $("#projectStatus").textContent=passed?(isNew?"Отлично! Все критерии выполнены. Начислено 50 XP.":"Все критерии по-прежнему выполнены ✓"):"Пока не всё готово. Исправь пункты без галочки и проверь снова.";
+ $("#projectStatus").classList.toggle("success",passed);$("#projectStatus").classList.toggle("failure",!passed);
+}
 function renderProjectCards(){const grid=$("#projectGrid");grid.replaceChildren();projectTemplates.forEach(project=>{const card=document.createElement("button");card.type="button";card.className="project-card"+(project.id===activeProject.id?" active":"");const title=document.createElement("strong");title.textContent=project.title;const meta=document.createElement("small");meta.textContent=project.level+(completedProjects.includes(project.id)?" · ✓ Готово":" · "+project.tasks.length+" задачи");card.append(title,meta);card.addEventListener("click",()=>selectProject(project.id));grid.append(card);});}
 function renderProjectPreview(){const policy="<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'\">";const doc="<!doctype html><html lang=\"ru\"><head><meta charset=\"utf-8\">"+policy+"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>body{padding:12px}</style></head><body>"+$("#projectCode").value+"</body></html>";$("#projectPreview").srcdoc=doc;}
-function selectProject(id){const project=projectTemplates.find(item=>item.id===id);if(!project)return;activeProject=project;$("#projectLevel").textContent="Практика · "+project.level;$("#projectTitle").textContent=project.title;$("#projectDescription").textContent=project.description;const list=$("#projectTasks");list.replaceChildren();project.tasks.forEach(task=>{const li=document.createElement("li");li.textContent=task;list.append(li);});$("#projectCode").value=restoreDraft("project:"+project.id,project.code);updateProjectStatus();renderProjectCards();renderProjectPreview();}
+function selectProject(id){const project=projectTemplates.find(item=>item.id===id);if(!project)return;activeProject=project;$("#projectChecks").replaceChildren();$("#projectStatus").classList.remove("success","failure");$("#projectLevel").textContent="Практика · "+project.level;$("#projectTitle").textContent=project.title;$("#projectDescription").textContent=project.description;const list=$("#projectTasks");list.replaceChildren();project.tasks.forEach(task=>{const li=document.createElement("li");li.textContent=task;list.append(li);});$("#projectCode").value=restoreDraft("project:"+project.id,project.code);updateProjectStatus();renderProjectCards();renderProjectPreview();}
 $("#projectCode").addEventListener("input",()=>saveDraft("project:"+activeProject.id,$("#projectCode").value));
 $("#previewProject").addEventListener("click",renderProjectPreview);
 $("#resetProject").addEventListener("click",()=>{$("#projectCode").value=activeProject.code;saveDraft("project:"+activeProject.id,activeProject.code);renderProjectPreview();});
-$("#completeProject").addEventListener("click",()=>{if(!completedProjects.includes(activeProject.id))completedProjects.push(activeProject.id);try{localStorage.setItem("cc_projects",JSON.stringify(completedProjects));}catch(_){}updateProjectStatus();renderProjectCards();renderAchievements();renderStudentDashboard();});
+$("#completeProject").addEventListener("click",validateProject);
 renderProjectCards();selectProject(activeProject.id);
 const connectionStatus=$("#connectionStatus");
 function updateConnectionStatus(){
