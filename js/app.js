@@ -69,7 +69,7 @@ $("#importProgressFile").addEventListener("change",event=>{
  reader.onload=()=>{
   try{
    const data=JSON.parse(String(reader.result||""));
-   if(!data||data.app!=="CodeCraft"||![1,2].includes(data.version)||(data.version===2&&data.schemaVersion!==STORAGE_SCHEMA_VERSION))throw new Error("Нужна поддерживаемая резервная копия CodeCraft версии 1 или 2.");
+   if(!data||data.app!=="CodeCraft"||![1,2].includes(data.version)||(data.version===2&&(!Number.isInteger(data.schemaVersion)||data.schemaVersion>STORAGE_SCHEMA_VERSION)))throw new Error("Нужна поддерживаемая резервная копия CodeCraft версии 1 или 2.");
    const importedLessons=sanitizeKnownIds(data.progress,validIds);
    const importedProjects=sanitizeKnownIds(data.projects,knownProjectIds);
    const importedChallenges=sanitizeKnownIds(data.challenges,getKnownChallengeIds(challengeTasks));
