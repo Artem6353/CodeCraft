@@ -219,24 +219,71 @@ $("#runCode").addEventListener("click", () => {
 });
 $("#resetEditor").addEventListener("click", () => { editor.value = starter; saveDraft("javascriptPlayground",starter); output.textContent = "Пример восстановлен."; });
 $("#clearOutput").addEventListener("click", () => { output.textContent = "Вывод очищен."; });
-let examQuestions=[],examIndex=0,examScore=0,examAnswered=false;
+let examQuestions=[],examIndex=0,examScore=0,examAnswered=false,examConfigKey="";
+const examHistoryKey="cc_exam_history_v1";
+function readExamHistory(){
+ try{
+  const value=JSON.parse(localStorage.getItem(examHistoryKey)||"{}");
+  if(!value||typeof value!=="object"||Array.isArray(value))return{};
+  const clean={};
+  Object.entries(value).slice(0,30).forEach(([key,item])=>{
+   if(!/^[a-zA-Zа-яА-Я0-9 +:-]{1,100}$/.test(key)||!item||typeof item!=="object")return;
+   const attempts=Number.isInteger(item.attempts)?Math.max(0,Math.min(100000,item.attempts)):0;
+   const best=Number.isInteger(item.best)?Math.max(0,Math.min(100,item.best)):0;
+   const last=Number.isInteger(item.last)?Math.max(0,Math.min(100,item.last)):0;
+   if(attempts)clean[key]={attempts,best,last};
+  });
+  return clean;
+ }catch(_){return{};}
+}
+function renderExamHistory(){
+ const history=readExamHistory(),container=$("#examHistory"),entries=Object.entries(history).sort((a,b)=>b[1].best-a[1].best);
+ container.replaceChildren();$("#examHistoryCount").textContent=String(entries.length);
+ if(!entries.length){const empty=document.createElement("p");empty.className="student-empty";empty.textContent="Пока нет завершённых экзаменов. Пройди первую попытку — здесь появится лучший результат.";container.append(empty);return;}
+ entries.forEach(([key,item])=>{
+  const card=document.createElement("div");card.className="exam-history-card";
+  const title=document.createElement("strong");title.textContent=key.replace("::"," · ");
+  const best=document.createElement("span");best.textContent="Лучший результат: "+item.best+"%";
+  const meta=document.createElement("small");meta.textContent="Попыток: "+item.attempts+" · Последний: "+item.last+"%";
+  card.append(title,best,meta);container.append(card);
+ });
+}
+function shuffleExamItems(items){
+ const result=items.slice();
+ for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]];}
+ return result;
+}
 function startExam(){
- const pool=lessons.filter(item=>Array.isArray(item.options)&&item.options.length>=2&&Number.isInteger(item.correct));
- examQuestions=pool.slice().sort(()=>Math.random()-.5).slice(0,Math.min(10,pool.length));
- examIndex=0;examScore=0;examAnswered=false;$("#examResult").hidden=true;renderExamQuestion();
+ const course=$("#examCourse").value,level=$("#examLevel").value;
+ const pool=lessons.filter(item=>Array.isArray(item.options)&&item.options.length>=2&&Number.isInteger(item.correct)&&item.correct>=0&&item.correct<item.options.length&&(course==="all"||item.course===course)&&(level==="all"||item.level===level));
+ examQuestions=shuffleExamItems(pool).slice(0,Math.min(10,pool.length));
+ examIndex=0;examScore=0;examAnswered=false;examConfigKey=(course==="all"?"Смешанный экзамен":course)+"::"+(level==="all"?"Все уровни":level);
+ $("#examResult").hidden=true;$("#examSettingsHint").textContent=pool.length+" доступных вопросов · в этой попытке: "+examQuestions.length;
+ if(!examQuestions.length){$("#quizQuestion").textContent="Для выбранных параметров пока нет вопросов.";$("#quizOptions").replaceChildren();$("#quizFeedback").textContent="Выбери другое направление или сложность.";$("#examProgress").textContent="Нет вопросов";$("#examScore").textContent="Баллы: 0";$("#examTrackFill").style.width="0%";$("#nextExamQuestion").disabled=true;return;}
+ renderExamQuestion();
 }
 function renderExamQuestion(){
  const question=examQuestions[examIndex];if(!question)return;
  $("#examProgress").textContent="Вопрос "+(examIndex+1)+" из "+examQuestions.length;
  $("#examScore").textContent="Баллы: "+examScore;
  $("#examTrackFill").style.width=(examIndex/examQuestions.length*100)+"%";
- $("#quizQuestion").textContent=question.question;
- $("#quizFeedback").textContent="Выбери один вариант ответа.";
- $("#nextExamQuestion").disabled=true;
- $("#nextExamQuestion").textContent=examIndex===examQuestions.length-1?"Показать результат":"Следующий вопрос";
+ $("#quizQuestion").textContent=question.question;$("#quizFeedback").textContent="Выбери один вариант ответа.";
+ $("#nextExamQuestion").disabled=true;$("#nextExamQuestion").textContent=examIndex===examQuestions.length-1?"Завершить экзамен":"Следующий вопрос";
  const options=$("#quizOptions");options.replaceChildren();
  question.options.forEach((option,index)=>{const button=document.createElement("button");button.type="button";button.dataset.answer=String(index);button.textContent=option;options.append(button);});
  examAnswered=false;
+}
+function finishExam(){
+ const percent=Math.round(examScore/examQuestions.length*100),history=readExamHistory(),previous=history[examConfigKey]||{attempts:0,best:0,last:0};
+ history[examConfigKey]={attempts:Math.min(100000,previous.attempts+1),best:Math.max(previous.best,percent),last:percent};
+ try{localStorage.setItem(examHistoryKey,JSON.stringify(history));}catch(_){}
+ $("#examTrackFill").style.width="100%";$("#examProgress").textContent="Экзамен завершён";
+ $("#quizQuestion").textContent="Результат: "+percent+"%";
+ $("#quizOptions").replaceChildren();
+ $("#quizFeedback").textContent="Правильных ответов: "+examScore+" из "+examQuestions.length+".";
+ const result=$("#examResult");result.hidden=false;
+ result.textContent=(percent>=90?"Превосходно! Отличное понимание материала.":percent>=70?"Хороший результат! Повтори темы, в которых ошибся.":percent>=50?"Неплохо. Продолжай практиковаться и попробуй ещё раз.":"Это только начало. Вернись к урокам и повтори основы.")+" Лучший результат для этого набора: "+history[examConfigKey].best+"%.";
+ $("#nextExamQuestion").disabled=true;$("#nextExamQuestion").textContent="Экзамен завершён";renderExamHistory();
 }
 $("#quizOptions").addEventListener("click",event=>{
  const button=event.target.closest("button[data-answer]");if(!button||examAnswered)return;
@@ -250,14 +297,12 @@ $("#quizOptions").addEventListener("click",event=>{
 $("#nextExamQuestion").addEventListener("click",()=>{
  if(!examAnswered)return;
  if(examIndex<examQuestions.length-1){examIndex++;renderExamQuestion();return;}
- $("#examTrackFill").style.width="100%";$("#examProgress").textContent="Экзамен завершён";
- $("#quizQuestion").textContent="Результат экзамена";
- $("#quizOptions").replaceChildren();$("#quizFeedback").textContent="Ты ответил правильно на "+examScore+" из "+examQuestions.length+" вопросов.";
- const result=$("#examResult");result.hidden=false;result.textContent=examScore>=9?"Превосходно! Отличное понимание материала.":examScore>=7?"Хороший результат! Повтори темы, в которых ошибся.":examScore>=5?"Неплохо. Продолжай практиковаться и попробуй ещё раз.":"Это только начало. Вернись к урокам и повтори основы.";
- $("#nextExamQuestion").disabled=true;
+ finishExam();
 });
 $("#retryQuiz").addEventListener("click",startExam);
-startExam();
+$("#examCourse").addEventListener("change",startExam);
+$("#examLevel").addEventListener("change",startExam);
+renderExamHistory();startExam();
 $("#menuBtn").addEventListener("click", () => { const isOpen = $("#nav").classList.toggle("open"); $("#menuBtn").setAttribute("aria-expanded", String(isOpen)); });
 $("#nav").addEventListener("click", event => { if (event.target.closest("a")) { $("#nav").classList.remove("open"); $("#menuBtn").setAttribute("aria-expanded", "false"); } });
 
