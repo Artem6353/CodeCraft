@@ -129,3 +129,23 @@ button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid va
 #webLabStatus{min-height:20px}
 @media(max-width:760px){.web-lab{grid-template-columns:1fr}#webLabPreview{height:420px}.web-editors,.web-preview-wrap{padding:11px}}
 @media(max-width:480px){.web-editor textarea{font-size:13px;min-height:145px}.web-editors,.web-preview-wrap{padding:9px}}
+
+/* Панель управления обучением и экзамен */
+.learning-tools{display:grid;grid-template-columns:minmax(180px,1fr) minmax(160px,.55fr) auto;gap:10px;align-items:end;margin:0 0 8px;padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
+.learning-tools label{display:grid;gap:5px;min-width:0}
+.learning-tools label span{font-size:11px;color:var(--muted);font-weight:700}
+.learning-tools input,.learning-tools select{width:100%;min-width:0;min-height:42px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#080f1c;color:var(--text);font:inherit;font-size:13px}
+.data-actions{display:flex;gap:7px;flex-wrap:wrap}
+.learning-tools-status{min-height:18px;margin:3px 0 9px;color:var(--mint);font-size:11px}
+.lesson-menu{max-height:560px;overflow:auto;overscroll-behavior:contain;padding-right:3px}
+.empty-state{padding:14px;color:var(--muted);font-size:12px}
+.exam-top{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:12px;font-weight:700}
+.exam-track{height:7px;margin:10px 0 20px;overflow:hidden;border-radius:20px;background:#293956}
+.exam-track span{display:block;width:0;height:100%;border-radius:inherit;background:var(--mint);transition:width .2s ease}
+#quizQuestion{min-height:52px}
+#quizOptions button:disabled{cursor:default;opacity:1}
+.exam-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.exam-result{margin-top:14px;padding:13px;border:1px solid var(--line);border-radius:10px;background:#142b2b;color:var(--mint);font-size:13px}
+@media(max-width:900px){.learning-tools{grid-template-columns:1fr 1fr}.data-actions{grid-column:1/-1}}
+@media(max-width:760px){.lesson-menu{max-height:380px;grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.learning-tools{grid-template-columns:1fr;padding:10px}.data-actions{grid-column:auto}.data-actions button{flex:1}.lesson-menu{max-height:340px;grid-template-columns:1fr}.exam-actions button{flex:1}}
