@@ -2,36 +2,77 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; img-src data:; style-src 'unsafe-inline';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; worker-src blob:; connect-src 'none'; img-src data:; style-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; form-action 'none';">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CodeCraft JavaScript sandbox</title>
 </head>
 <body>
 <script>
 "use strict";
-const safeString = value => {
-  if (typeof value === "string") return value;
-  if (typeof value === "undefined") return "undefined";
-  try { return JSON.stringify(value); } catch (_) { return String(value); }
-};
-window.addEventListener("message", event => {
-  if (event.source !== parent || !event.data || event.data.type !== "CODECRAFT_RUN") return;
-  const lines = [];
-  const output = (kind, args) => lines.push((kind === "log" ? "" : kind + ": ") + args.map(safeString).join(" "));
-  const sandboxConsole = {
-    log: (...args) => output("log", args),
-    info: (...args) => output("info", args),
-    warn: (...args) => output("warn", args),
-    error: (...args) => output("error", args)
-  };
-  try {
-    new Function("console", '"use strict";\n' + String(event.data.code || ""))(sandboxConsole);
-    parent.postMessage({ type: "CODECRAFT_RESULT", id: event.data.id, output: lines.join("\n") || "Код выполнен без вывода." }, "*");
-  } catch (error) {
-    parent.postMessage({ type: "CODECRAFT_RESULT", id: event.data.id, error: error && error.message ? error.message : "Неизвестная ошибка", output: lines.join("\n") }, "*");
+const MAX_CODE = 100000;
+const MAX_OUTPUT = 50000;
+const workerSource = "\n\"use strict\";\nconst sendResult = self.postMessage.bind(self);\nObject.defineProperty(self, \"postMessage\", { value: () => {}, writable: false, configurable: false });\nconst MAX_OUTPUT = 50000;\nlet output = \"\";\nlet truncated = false;\nfunction safeString(value) {\n  if (typeof value === \"string\") return value;\n  if (typeof value === \"undefined\") return \"undefined\";\n  try { const result = JSON.stringify(value); return typeof result === \"string\" ? result : String(value); }\n  catch (_) { try { return String(value); } catch (_) { return \"[не удалось преобразовать значение]\"; } }\n}\nfunction append(kind, args) {\n  if (truncated) return;\n  const line = (kind === \"log\" ? \"\" : kind + \": \") + args.map(safeString).join(\" \");\n  const remaining = MAX_OUTPUT - output.length;\n  if (line.length > remaining) {\n    output += line.slice(0, Math.max(0, remaining)) + \"\\n[Вывод ограничен: 50 000 символов]\";\n    truncated = true;\n  } else {\n    output += (output ? \"\\n\" : \"\") + line;\n    if (output.length >= MAX_OUTPUT) {\n      output = output.slice(0, MAX_OUTPUT) + \"\\n[Вывод ограничен: 50 000 символов]\";\n      truncated = true;\n    }\n  }\n}\nconst sandboxConsole = {\n  log: (...args) => append(\"log\", args),\n  info: (...args) => append(\"info\", args),\n  warn: (...args) => append(\"warn\", args),\n  error: (...args) => append(\"error\", args)\n};\nself.onmessage = event => {\n  if (!event.data || !Number.isSafeInteger(event.data.id) || typeof event.data.code !== \"string\") return;\n  const id = event.data.id;\n  try {\n    const execute = new Function(\"console\", '\"use strict\";\\n' + event.data.code);\n    execute(sandboxConsole);\n    sendResult({ type: \"CODECRAFT_WORKER_RESULT\", id, output: output || \"Код выполнен без вывода.\" });\n  } catch (error) {\n    let message = \"Неизвестная ошибка\";\n    try { message = error && error.message ? String(error.message).slice(0, 4000) : String(error).slice(0, 4000); } catch (_) {}\n    sendResult({ type: \"CODECRAFT_WORKER_RESULT\", id, output, error: message });\n  }\n};\n";
+let activeWorker = null;
+function send(payload) { parent.postMessage(payload, "*"); }
+function stopWorker() {
+  if (activeWorker) {
+    activeWorker.terminate();
+    activeWorker = null;
   }
+}
+function startWorker(id, code) {
+  stopWorker();
+  const blob = new Blob([workerSource], { type: "text/javascript" });
+  const url = URL.createObjectURL(blob);
+  try {
+    activeWorker = new Worker(url);
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    send({ type: "CODECRAFT_ERROR", id, message: "Браузер не разрешил создать изолированный Worker: " + String(error && error.message || error) });
+    return;
+  }
+  URL.revokeObjectURL(url);
+  const worker = activeWorker;
+  worker.onmessage = event => {
+    if (worker !== activeWorker || !event.data || event.data.type !== "CODECRAFT_WORKER_RESULT" || event.data.id !== id) return;
+    stopWorker();
+    send({
+      type: "CODECRAFT_RESULT",
+      id,
+      output: typeof event.data.output === "string" ? event.data.output.slice(0, MAX_OUTPUT + 100) : "",
+      error: typeof event.data.error === "string" ? event.data.error.slice(0, 4000) : ""
+    });
+  };
+  worker.onerror = event => {
+    if (worker !== activeWorker) return;
+    stopWorker();
+    send({ type: "CODECRAFT_RESULT", id, output: "", error: String(event.message || "Ошибка JavaScript Worker").slice(0, 4000) });
+  };
+  worker.onmessageerror = () => {
+    if (worker !== activeWorker) return;
+    stopWorker();
+    send({ type: "CODECRAFT_RESULT", id, output: "", error: "Не удалось прочитать ответ среды выполнения." });
+  };
+  try { worker.postMessage({ id, code }); }
+  catch (error) {
+    stopWorker();
+    send({ type: "CODECRAFT_RESULT", id, output: "", error: "Не удалось передать код в Worker: " + String(error && error.message || error) });
+  }
+}
+window.addEventListener("message", event => {
+  if (event.source !== parent || !event.data || typeof event.data !== "object") return;
+  if (event.data.type === "CODECRAFT_CANCEL") { stopWorker(); return; }
+  if (event.data.type !== "CODECRAFT_RUN") return;
+  const id = event.data.id;
+  if (!Number.isSafeInteger(id)) return;
+  const code = typeof event.data.code === "string" ? event.data.code : "";
+  if (code.length > MAX_CODE) {
+    send({ type: "CODECRAFT_RESULT", id, output: "", error: "Код слишком большой. Максимальный размер — 100 000 символов." });
+    return;
+  }
+  startWorker(id, code);
 });
-parent.postMessage({ type: "CODECRAFT_READY" }, "*");
+send({ type: "CODECRAFT_READY" });
 </script>
 </body>
 </html>
