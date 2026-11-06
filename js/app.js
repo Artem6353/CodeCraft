@@ -69,7 +69,7 @@ $("#importProgressFile").addEventListener("change",event=>{
  reader.onload=()=>{
   try{
    const data=JSON.parse(String(reader.result||""));
-   if(!data||data.app!=="CodeCraft"||![1,2].includes(data.version))throw new Error("Нужна резервная копия CodeCraft версии 1 или 2.");
+   if(!data||data.app!=="CodeCraft"||![1,2].includes(data.version)||(data.version===2&&data.schemaVersion!==STORAGE_SCHEMA_VERSION))throw new Error("Нужна поддерживаемая резервная копия CodeCraft версии 1 или 2.");
    const importedLessons=sanitizeKnownIds(data.progress,validIds);
    const importedProjects=sanitizeKnownIds(data.projects,knownProjectIds);
    const importedChallenges=sanitizeKnownIds(data.challenges,getKnownChallengeIds(challengeTasks));
@@ -317,7 +317,8 @@ function normalizeHistory(value){const clean={};if(!value||typeof value!=="objec
 function normalizeTopicStats(value){const clean={},allowed=/^(html-structure|html-document|css-foundation|css-layout|js-foundation|js-browser|py-foundation|py-data|other)$/;if(!value||typeof value!=="object"||Array.isArray(value))return clean;Object.entries(value).slice(0,20).forEach(([key,item])=>{if(!allowed.test(key)||!item||typeof item!=="object")return;const total=Number.isInteger(item.total)?Math.max(0,Math.min(100000,item.total)):0,correct=Number.isInteger(item.correct)?Math.max(0,Math.min(total,item.correct)):0;if(total)clean[key]={correct,total};});return clean;}
 function writeStorageBatch(entries){const previous=new Map();try{entries.forEach(([key])=>previous.set(key,localStorage.getItem(key)));entries.forEach(([key,value])=>localStorage.setItem(key,value));return true;}catch(error){for(const [key,value] of previous){try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);}catch(_){}}throw error;}}
 function migrateLearningStorage(){
- let version=Number(readStoredValue(STORAGE_SCHEMA_KEY,0));if(!Number.isInteger(version)||version<0||version>STORAGE_SCHEMA_VERSION)version=0;
+ let version=Number(readStoredValue(STORAGE_SCHEMA_KEY,0));if(!Number.isInteger(version)||version<0)version=0;
+ if(version>STORAGE_SCHEMA_VERSION)return false;
  if(version===STORAGE_SCHEMA_VERSION)return true;
  const entries=[];
  if(version<1){
