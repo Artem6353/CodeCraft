@@ -18,7 +18,7 @@ test("loads the learning dashboard and keeps the main sections reachable", async
 
 test("searches lessons and persists lesson completion, bookmark and note after reload", async ({ page }) => {
   await page.locator("#courseFilter").selectOption("HTML и CSS");
-  await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(16);
+  await expect(page.locator("#lessonMenu .lesson-choice")).toHaveCount(20);
   await page.locator("#courseFilter").selectOption("all");
   await page.locator("#lessonPanel .lesson-personal-tools button").click();
   await page.locator("#lessonPanel .lesson-note-input").fill("Проверка сохранения заметки из Playwright.");
