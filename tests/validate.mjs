@@ -186,6 +186,8 @@ assert.match(sandbox, /CODECRAFT_CANCEL/);
 assert.match(sandbox, /worker-src blob:/, "JavaScript sandbox must permit only its isolated Blob Worker");
 assert.match(sandbox, /connect-src 'none'/, "JavaScript sandbox must block network access");
 assert.match(sandbox, /activeWorker\.terminate\(\)/, "JavaScript sandbox must be able to terminate a running Worker");
+assert.match(sandbox, /URL\.revokeObjectURL\(activeWorkerUrl\)/, "Worker Blob URLs must be revoked when execution ends");
+assert.match(sandbox, /CODECRAFT_PING/, "JavaScript sandbox must support a race-safe readiness handshake");
 assert.match(sandbox, /MAX_CODE = 100000/);
 assert.match(sandbox, /MAX_OUTPUT = 50000/);
 assert.match(sandbox, /new Function/);
