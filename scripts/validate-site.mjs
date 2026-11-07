@@ -43,6 +43,12 @@ for (const match of html.matchAll(/\bhref\s*=\s*["']#([^"']+)["']/gi)) {
 }
 
 const appJs = readFileSync(resolve(root, "js/app.js"), "utf8");
+if (!appJs.includes('frame.setAttribute("sandbox","allow-scripts")')) {
+  errors.push("JavaScript playground must run inside a sandboxed iframe");
+}
+if (!appJs.includes("connect-src 'none'")) {
+  errors.push("JavaScript playground must block outbound network connections");
+}
 for (const match of appJs.matchAll(/\$\(\s*["']#([\w-]+)["']\s*\)/g)) {
   if (!idSet.has(match[1])) errors.push("JavaScript references missing element id: #" + match[1]);
 }
