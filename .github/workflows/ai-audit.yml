@@ -1,0 +1,38 @@
+name: CodeCraft cloud checks
+
+on:
+  push:
+    branches:
+      - ai/cloud-audit-2026-11-07
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codecraft-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate CodeCraft
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check js/lessons.js
+          node --check js/app.js
+          node --check scripts/validate-site.mjs
+
+      - name: Validate HTML references and lesson data
+        run: node scripts/validate-site.mjs
