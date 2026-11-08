@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import AxeBuilder from "@axe-core/playwright";
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/legacy.html");
   await expect(page.locator("#lessonPanel h3")).toBeVisible();
 });
 

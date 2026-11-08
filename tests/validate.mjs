@@ -3,7 +3,8 @@ import vm from "node:vm";
 import assert from "node:assert/strict";
 
 const read = path => fs.readFileSync(new URL("../" + path, import.meta.url), "utf8");
-const html = read("index.html");
+const html = read("legacy.html");
+const home = read("index.html");
 const css = read("css/style.css");
 const app = read("js/app.js");
 const lessonsSource = read("js/lessons.js");
@@ -17,6 +18,23 @@ const playwrightConfig = read("playwright.config.js");
 const e2eSpec = read("tests/e2e/platform.spec.js");
 const e2eServer = read("tests/e2e/server.mjs");
 new vm.Script(serviceWorker, { filename: "sw.js" });
+const multipageFiles = [
+  "courses/index.html", "courses/html-css/index.html", "courses/javascript/index.html",
+  "courses/python/index.html", "lesson.html", "practice.html", "projects.html",
+  "playground.html", "python.html", "exam.html", "dashboard.html", "404.html"
+];
+for (const file of multipageFiles) {
+  const page = read(file);
+  assert.ok(page.includes("/css/site.css"), "new page must use shared design system: " + file);
+  assert.ok(page.includes("/js/site.js"), "new page must use shared navigation: " + file);
+}
+assert.ok(home.includes('href="/courses/"'), "homepage must link to independent courses page");
+assert.ok(home.includes('href="/practice.html"'), "homepage must link to independent practice page");
+assert.ok(home.includes('href="/dashboard.html"'), "homepage must link to independent dashboard page");
+assert.match(home, /<main[^>]+id="main"/, "homepage needs a main landmark");
+assert.ok(read("legacy.html").includes('id="lessonPanel"'), "legacy platform must remain available for compatibility");
+assert.ok(read("netlify.toml").includes('publish = "."'), "Netlify publish directory must be repository root");
+assert.match(read("_headers"), /X-Content-Type-Options: nosniff/);
 
 const context = { window: {} };
 vm.runInNewContext(lessonsSource, context, { filename: "js/lessons.js" });

@@ -6,8 +6,9 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"../..");
 const port=Number(process.argv[2]||4173);
 const mime={".html":"text/html; charset=utf-8",".css":"text/css; charset=utf-8",".js":"text/javascript; charset=utf-8",".mjs":"text/javascript; charset=utf-8",".json":"application/json; charset=utf-8",".svg":"image/svg+xml",".webmanifest":"application/manifest+json; charset=utf-8"};
 http.createServer((request,response)=>{
- let pathname;try{pathname=decodeURIComponent(new URL(request.url,"http://localhost").pathname);}catch(_){response.writeHead(400).end("Bad request");return;}
- let relative=pathname==="/ "||pathname==="/"?"index.html":pathname.replace(/^\/+\/,"");
+ let pathname;
+ try{pathname=decodeURIComponent(new URL(request.url,"http://localhost").pathname);}catch(_){response.writeHead(400).end("Bad request");return;}
+ const relative=pathname==="/"?"index.html":pathname.replace(/^\/+/, "");
  let target=path.resolve(root,relative);
  if(target!==root&&!target.startsWith(root+path.sep)){response.writeHead(403).end("Forbidden");return;}
  fs.stat(target,(statError,stat)=>{
