@@ -28,6 +28,17 @@ jobs:
           node --check js/app.js
           node --check js/lessons.js
           node --check sw.js
+          node --check js/site.js
+          node --check js/course.js
+          node --check js/lesson.js
+          node --check js/dashboard.js
+          node --check js/playground.js
+          node --check js/python.js
+          node --check js/practice.js
+          node --check js/projects.js
+          node --check js/exam.js
+          node --check js/training-data.js
+          node --check tests/e2e/server.mjs
       - name: Run platform quality checks
         run: node tests/validate.mjs
 
