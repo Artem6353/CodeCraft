@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1018">
+<meta name="description" content="Практические задания по HTML, CSS, JavaScript и Python в CodeCraft.">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/site.css">
+<title>Практика · CodeCraft</title>
+</head>
+<body data-active="practice">
+<a class="skip-link" href="#main">Перейти к содержимому</a>
+<header class="site-header"><div class="nav-wrap">
+<a class="brand" href="/" aria-label="CodeCraft — главная"><span class="brand-mark">&lt;/&gt;</span><span>CodeCraft</span></a>
+<button class="menu-btn" id="menuBtn" type="button" aria-controls="mainNav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
+<nav class="main-nav" id="mainNav" aria-label="Основная навигация">
+<a href="/">Главная</a><a href="/courses/">Курсы</a><a href="/practice.html">Практика</a><a href="/projects.html">Проекты</a><a href="/playground.html">JS-лаборатория</a><a href="/python.html">Python</a><a href="/dashboard.html">Мой прогресс</a>
+<a class="nav-cta" href="/exam.html">Проверить знания <span>↗</span></a>
+</nav></div></header>
+
+<main id="main" class="container page-main">
+ <div class="page-hero"><div class="eyebrow">ЛАБОРАТОРИЯ · 20 ЗАДАНИЙ</div><h1>Потренируй <span>навык.</span></h1><p>Небольшие задачи на создание кода и исправление ошибок. Проверяй критерии, разбирай подсказки и забирай XP за первое успешное решение.</p></div>
+ <div class="practice-layout">
+  <aside class="practice-sidebar"><div class="panel-label">СПИСОК ЗАДАНИЙ</div><div id="challengeList" class="challenge-list"><p class="loading-note">Загружаю задания…</p></div><div class="sidebar-tip"><b>Подсказка</b><p>Проверка анализирует структуру кода и не исполняет его. Для запуска JavaScript и Python используй отдельные лаборатории.</p></div></aside>
+  <section class="work-card">
+   <div class="work-card-head"><div><span class="eyebrow" id="challengeMeta">ПРАКТИКА</span><h2 id="challengeTitle">Выбери задание</h2></div><span class="pill" id="challengeLanguage">HTML</span></div>
+   <p id="challengeDescription">Выбери задачу слева, чтобы увидеть описание и начать работу.</p>
+   <div class="task-hint" id="challengeHint">Подсказка появится после выбора задания.</div>
+   <label class="field-label" for="challengeCode">ТВОЙ КОД</label><textarea id="challengeCode" class="code-editor" spellcheck="false" autocapitalize="off" aria-label="Твой код" placeholder="Напиши решение здесь…"></textarea>
+   <div class="editor-toolbar"><span>Автосохранение черновика</span><div><button class="button button-small button-quiet" id="resetChallenge" type="button">Сбросить</button><button class="button button-small button-primary" id="checkChallenge" type="button">Проверить ↗</button></div></div>
+   <div id="challengeResult" class="result-box" aria-live="polite">Результаты проверки появятся здесь.</div><div id="challengeChecks" class="check-list"></div>
+  </section>
+ </div>
+</main>
+<footer class="site-footer"><div class="container footer-inner"><a class="brand" href="/"><span class="brand-mark">&lt;/&gt;</span><span>CodeCraft</span></a><p>Создавай навыки. Собирай идеи. Двигайся своим темпом.</p><div class="footer-links"><a href="/courses/">Курсы</a><a href="/practice.html">Практика</a><a href="/dashboard.html">Прогресс</a></div><small>© <span data-year>2026</span> CodeCraft · Сделано для любознательных</small></div></footer>
+<script src="/js/site.js" defer></script><script src="/js/training-data.js" defer></script><script src="/js/practice.js" defer></script>
+</body></html>

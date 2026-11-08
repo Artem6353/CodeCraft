@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1018">
+<meta name="description" content="Шесть мини-проектов по HTML и CSS с критериями, прогрессом и безопасным предпросмотром.">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/site.css">
+<title>Мастерская проектов · CodeCraft</title>
+</head>
+<body data-active="projects">
+<a class="skip-link" href="#main">Перейти к содержимому</a>
+<header class="site-header"><div class="nav-wrap">
+<a class="brand" href="/" aria-label="CodeCraft — главная"><span class="brand-mark">&lt;/&gt;</span><span>CodeCraft</span></a>
+<button class="menu-btn" id="menuBtn" type="button" aria-controls="mainNav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
+<nav class="main-nav" id="mainNav" aria-label="Основная навигация">
+<a href="/">Главная</a><a href="/courses/">Курсы</a><a href="/practice.html">Практика</a><a href="/projects.html">Проекты</a><a href="/playground.html">JS-лаборатория</a><a href="/python.html">Python</a><a href="/dashboard.html">Мой прогресс</a>
+<a class="nav-cta" href="/exam.html">Проверить знания <span>↗</span></a>
+</nav></div></header>
+
+<main id="main" class="container page-main">
+ <div class="page-hero"><div class="eyebrow">МАСТЕРСКАЯ · 06 ПРОЕКТОВ</div><h1>От упражнения<br>к <span>своей работе.</span></h1><p>Собирай небольшие проекты по этапам, проверяй критерии качества и сохраняй свои результаты.</p></div>
+ <div class="project-layout"><aside class="project-sidebar"><div class="panel-label">ТВОИ ПРОЕКТЫ</div><div id="projectList" class="project-list"><p class="loading-note">Загружаю проекты…</p></div></aside>
+ <section class="work-card"><div class="work-card-head"><div><span class="eyebrow" id="projectLevel">ПРОЕКТ</span><h2 id="projectTitle">Выбери проект</h2></div><span class="pill">+50 XP</span></div><p id="projectDescription">Выбери карточку проекта, чтобы начать.</p><div class="project-steps" id="projectTasks"></div><div class="field-row"><label class="field-label" for="projectCode">HTML + CSS</label><span class="field-hint">Проверка не запускает пользовательский код</span></div><textarea id="projectCode" class="code-editor project-editor" spellcheck="false" aria-label="Код проекта"></textarea><div class="editor-toolbar"><span id="projectPhaseStatus">Этапы проекта</span><div><button class="button button-small button-quiet" id="resetProject" type="button">Сбросить</button><button class="button button-small button-quiet" id="previewProject" type="button">Предпросмотр</button><button class="button button-small button-primary" id="completeProject" type="button">Проверить ↗</button></div></div><div id="projectStatus" class="result-box" aria-live="polite">Выполни критерии и проверь проект.</div><div id="projectChecks" class="check-list"></div><div class="preview-wrap"><div class="preview-head">ПРЕДПРОСМОТР</div><iframe id="projectPreview" title="Предпросмотр проекта" sandbox="" loading="lazy"></iframe></div></section></div>
+</main>
+<footer class="site-footer"><div class="container footer-inner"><a class="brand" href="/"><span class="brand-mark">&lt;/&gt;</span><span>CodeCraft</span></a><p>Создавай навыки. Собирай идеи. Двигайся своим темпом.</p><div class="footer-links"><a href="/courses/">Курсы</a><a href="/practice.html">Практика</a><a href="/dashboard.html">Прогресс</a></div><small>© <span data-year>2026</span> CodeCraft · Сделано для любознательных</small></div></footer>
+<script src="/js/site.js" defer></script><script src="/js/training-data.js" defer></script><script src="/js/projects.js" defer></script>
+</body></html>

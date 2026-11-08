@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1018">
+<meta name="description" content="Учебный Python-тренажёр CodeCraft на Skulpt с изолированным iframe и ограничением времени.">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/site.css">
+<title>Python-тренажёр · CodeCraft</title>
+</head>
+<body data-active="python">
+<a class="skip-link" href="#main">Перейти к содержимому</a>
+<header class="site-header"><div class="nav-wrap">
+<a class="brand" href="/" aria-label="CodeCraft — главная"><span class="brand-mark">&lt;/&gt;</span><span>CodeCraft</span></a>
+<button class="menu-btn" id="menuBtn" type="button" aria-controls="mainNav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
+<nav class="main-nav" id="mainNav" aria-label="Основная навигация">
+<a href="/">Главная</a><a href="/courses/">Курсы</a><a href="/practice.html">Практика</a><a href="/projects.html">Проекты</a><a href="/playground.html">JS-лаборатория</a><a href="/python.html">Python</a><a href="/dashboard.html">Мой прогресс</a>
+<a class="nav-cta" href="/exam.html">Проверить знания <span>↗</span></a>
+</nav></div></header>
+
+<main id="main" class="container page-main">
+ <div class="page-hero page-hero-compact"><div class="eyebrow">ЛАБОРАТОРИЯ · PYTHON 3</div><h1>Пусть идеи <span>работают.</span></h1><p>Запускай учебный Python-код прямо в браузере. Skulpt загружается по запросу, поэтому первый запуск требует интернета.</p></div>
+ <section class="lab-card"><div class="lab-head"><div><span class="eyebrow">РЕДАКТОР КОДА</span><h2>main.py</h2></div><span class="status-pill" id="pythonStatus"><i></i> Загружаю интерпретатор…</span></div><div class="example-row"><label for="pythonExample" class="field-label">ПРИМЕР</label><select id="pythonExample" class="select-control"><option value="hello">Приветствие</option><option value="loops">Цикл</option><option value="lists">Список</option><option value="functions">Функция</option></select></div><textarea id="pythonCode" class="code-editor lab-editor" spellcheck="false" aria-label="Редактор Python">name = "CodeCraft"
+print("Привет,", name)
+print("Добро пожаловать в Python!")</textarea><div class="editor-toolbar"><span>Ctrl + Enter — запуск</span><div><button class="button button-small button-quiet" id="resetPython" type="button">Сбросить</button><button class="button button-small button-quiet" id="retryPython" type="button">Перезапустить среду</button><button class="button button-small button-primary" id="runPython" type="button">▶ Запустить</button></div></div><div class="output-head"><b>ВЫВОД PYTHON</b><button class="text-link" id="clearPython" type="button">Очистить</button></div><pre id="pythonOutput" class="output-box" aria-live="polite">Результат появится здесь…</pre></section>
+ <iframe id="pythonSandbox" title="Изолированная среда Python" src="/python-sandbox.html" sandbox="allow-scripts" aria-hidden="true" tabindex="-1" class="sandbox-frame"></iframe>
+ <div class="notice-card"><span class="notice-icon">i</span><div><b>Ограничения учебного интерпретатора</b><p>Skulpt реализует учебное подмножество Python, а не полный CPython. Сторонние библиотеки и некоторые функции стандартной среды недоступны; для загрузки ядра нужен интернет.</p></div></div>
+</main>
+<footer class="site-footer"><div class="container footer-inner"><a class="brand" href="/"><span class="brand-mark">&lt;/&gt;</span><span>CodeCraft</span></a><p>Создавай навыки. Собирай идеи. Двигайся своим темпом.</p><div class="footer-links"><a href="/courses/">Курсы</a><a href="/practice.html">Практика</a><a href="/dashboard.html">Прогресс</a></div><small>© <span data-year>2026</span> CodeCraft · Сделано для любознательных</small></div></footer>
+<script src="/js/site.js" defer></script><script src="/js/python.js" defer></script>
+</body></html>
