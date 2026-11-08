@@ -10,6 +10,7 @@ const app = read("js/app.js");
 const lessonsSource = read("js/lessons.js");
 const sandbox = read("sandbox.html");
 const pythonSandbox = read("python-sandbox.html");
+const trainingDataSource = read("js/training-data.js");
 const serviceWorker = read("sw.js");
 const manifest = JSON.parse(read("manifest.webmanifest"));
 const icon = read("assets/icon.svg");
@@ -36,6 +37,18 @@ assert.ok(read("legacy.html").includes('id="lessonPanel"'), "legacy platform mus
 assert.ok(read("netlify.toml").includes('publish = "."'), "Netlify publish directory must be repository root");
 assert.match(read("_headers"), /X-Content-Type-Options: nosniff/);
 
+const scriptFiles = ["js/site.js","js/course.js","js/lesson.js","js/dashboard.js","js/playground.js","js/python.js","js/practice.js","js/projects.js","js/exam.js","js/training-data.js"];
+for (const file of scriptFiles) new vm.Script(read(file), { filename: file });
+const trainingContext = { window: {} };
+vm.runInNewContext(trainingDataSource, trainingContext, { filename: "js/training-data.js" });
+assert.equal(trainingContext.window.CODECRAFT_CHALLENGES.length, 20, "expected 20 practical challenges");
+assert.equal(trainingContext.window.CODECRAFT_PROJECTS.length, 6, "expected six project templates");
+for (const task of trainingContext.window.CODECRAFT_CHALLENGES) {
+  assert.ok(task.id && task.title && task.language && Array.isArray(task.checks) && task.checks.length > 0, "challenge data is incomplete: " + task.id);
+}
+for (const project of trainingContext.window.CODECRAFT_PROJECTS) {
+  assert.ok(project.id && project.title && Array.isArray(project.tasks) && Array.isArray(project.checks), "project data is incomplete: " + project.id);
+}
 const context = { window: {} };
 vm.runInNewContext(lessonsSource, context, { filename: "js/lessons.js" });
 const lessons = context.window.CODECRAFT_LESSONS;
