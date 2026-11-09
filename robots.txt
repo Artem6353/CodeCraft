@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /legacy.html
+Disallow: /dashboard.html
+Sitemap: https://vocal-rugelach-3371b8.netlify.app/sitemap.xml
