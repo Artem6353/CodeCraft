@@ -111,3 +111,13 @@ test("mobile menu opens, navigates and returns focus after Escape", async ({ pag
   await page.locator("#mainNav a[href='/courses/']").click();
   await expect(page).toHaveURL(/\/courses\/$/);
 });
+test("SEO files and public pages expose canonical metadata", async ({ page, request }) => {
+  const robots = await request.get("/robots.txt");
+  const sitemap = await request.get("/sitemap.xml");
+  expect(robots.ok()).toBeTruthy();
+  expect(sitemap.ok()).toBeTruthy();
+  await expect(sitemap.text()).resolves.toContain("/courses/html-css/");
+  await page.goto("/courses/html-css/");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /courses\/html-css\/$/);
+  await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute("content", "CodeCraft");
+});
