@@ -1,0 +1,358 @@
+import fs from "node:fs";
+import vm from "node:vm";
+import assert from "node:assert/strict";
+
+const read = path => fs.readFileSync(new URL("../" + path, import.meta.url), "utf8");
+const html = read("legacy.html");
+const home = read("index.html");
+const css = read("css/style.css");
+const app = read("js/app.js");
+const lessonsSource = read("js/lessons.js");
+const sandbox = read("sandbox.html");
+const pythonSandbox = read("python-sandbox.html");
+const trainingDataSource = read("js/training-data.js");
+const serviceWorker = read("sw.js");
+const manifest = JSON.parse(read("manifest.webmanifest"));
+const icon = read("assets/icon.svg");
+const packageData = JSON.parse(read("package.json"));
+const playwrightConfig = read("playwright.config.js");
+const e2eSpec = read("tests/e2e/platform.spec.js");
+const e2eServer = read("tests/e2e/server.mjs");
+new vm.Script(serviceWorker, { filename: "sw.js" });
+const multipageFiles = [
+  "courses/index.html", "courses/html-css/index.html", "courses/javascript/index.html",
+  "courses/python/index.html", "lesson.html", "practice.html", "projects.html",
+  "playground.html", "python.html", "exam.html", "dashboard.html", "404.html"
+];
+for (const file of multipageFiles) {
+  const page = read(file);
+  assert.ok(page.includes("/css/site.css"), "new page must use shared design system: " + file);
+  assert.ok(page.includes("/js/site.js"), "new page must use shared navigation: " + file);
+}
+assert.ok(home.includes('href="/courses/"'), "homepage must link to independent courses page");
+assert.ok(home.includes('href="/practice.html"'), "homepage must link to independent practice page");
+assert.ok(home.includes('href="/dashboard.html"'), "homepage must link to independent dashboard page");
+assert.match(home, /<main[^>]+id="main"/, "homepage needs a main landmark");
+assert.match(home, /property="og:site_name"/, "homepage needs Open Graph metadata");
+assert.ok(read("robots.txt").includes("Sitemap: https://vocal-rugelach-3371b8.netlify.app/sitemap.xml"));
+assert.match(read("sitemap.xml"), /<urlset/);
+assert.equal((read("sitemap.xml").match(/<url>/g) || []).length, 11, "expected 11 public sitemap routes");
+assert.ok(read("legacy.html").includes('id="lessonPanel"'), "legacy platform must remain available for compatibility");
+assert.ok(read("netlify.toml").includes('publish = "."'), "Netlify publish directory must be repository root");
+assert.match(read("_headers"), /X-Content-Type-Options: nosniff/);
+
+const scriptFiles = ["js/site.js","js/course.js","js/lesson.js","js/dashboard.js","js/playground.js","js/python.js","js/practice.js","js/projects.js","js/exam.js","js/training-data.js"];
+for (const file of scriptFiles) new vm.Script(read(file), { filename: file });
+const trainingContext = { window: {} };
+vm.runInNewContext(trainingDataSource, trainingContext, { filename: "js/training-data.js" });
+assert.equal(trainingContext.window.CODECRAFT_CHALLENGES.length, 20, "expected 20 practical challenges");
+assert.equal(trainingContext.window.CODECRAFT_PROJECTS.length, 6, "expected six project templates");
+for (const task of trainingContext.window.CODECRAFT_CHALLENGES) {
+  assert.ok(task.id && task.title && task.language && Array.isArray(task.checks) && task.checks.length > 0, "challenge data is incomplete: " + task.id);
+}
+for (const project of trainingContext.window.CODECRAFT_PROJECTS) {
+  assert.ok(project.id && project.title && Array.isArray(project.tasks) && Array.isArray(project.checks), "project data is incomplete: " + project.id);
+}
+const context = { window: {} };
+vm.runInNewContext(lessonsSource, context, { filename: "js/lessons.js" });
+const lessons = context.window.CODECRAFT_LESSONS;
+assert.ok(Array.isArray(lessons), "lesson catalog must be an array");
+assert.equal(lessons.length, 44, "expected 44 lessons");
+assert.equal(lessons.filter(item => item.course === "HTML и CSS").length, 20, "expected 20 HTML/CSS lessons");
+assert.equal(lessons.filter(item => item.course === "JavaScript").length, 12, "expected 12 JavaScript lessons");
+assert.equal(lessons.filter(item => item.course === "Python").length, 12, "expected 12 Python lessons");
+const lessonIds = lessons.map(item => item.id);
+assert.equal(new Set(lessonIds).size, lessonIds.length, "lesson IDs must be unique");
+const allowedExamTopics = new Set(["html-structure","html-document","css-foundation","css-layout","js-foundation","js-browser","py-foundation","py-data"]);
+const examTopicCounts = new Map();
+for (const lesson of lessons) {
+  assert.ok(lesson.id && lesson.title && lesson.course && lesson.text && lesson.code, "lesson content is incomplete");
+  assert.ok(Array.isArray(lesson.options) && lesson.options.length >= 2, "lesson needs answer options");
+  assert.ok(Number.isInteger(lesson.correct) && lesson.correct >= 0 && lesson.correct < lesson.options.length, "lesson answer index is invalid");
+  assert.ok(lesson.question && lesson.explanation, "lesson question or explanation is missing");
+  assert.ok(allowedExamTopics.has(lesson.topicKey), "lesson has no valid explicit exam topic: " + lesson.id);
+  examTopicCounts.set(lesson.topicKey, (examTopicCounts.get(lesson.topicKey) || 0) + 1);
+}
+assert.deepEqual([...examTopicCounts.keys()].sort(), [...allowedExamTopics].sort(), "all exam topics must be represented");
+for (const [topic, count] of examTopicCounts) assert.ok(count >= 4, "exam topic needs at least four questions: " + topic);
+for (const [course, count] of [["HTML и CSS", 20], ["JavaScript", 12], ["Python", 12]]) {
+  assert.equal(lessons.filter(item => item.course === course).length, count, "unexpected lesson count: " + course);
+}
+
+const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
+const dynamicIds = [...app.matchAll(/\.id\s*=\s*["']([^"']+)["']/g)].map(match => match[1]);
+const allIds = [...ids, ...dynamicIds];
+assert.equal(new Set(allIds).size, allIds.length, "static and JavaScript-generated IDs must be unique");
+const idSet = new Set(allIds);
+for (const match of app.matchAll(/\$\("#([^"]+)"\)/g)) {
+  assert.ok(idSet.has(match[1]), "app.js refers to missing HTML id #" + match[1]);
+}
+
+for (const section of ["paths", "learn", "playground", "web-lab", "challenges", "projects", "quiz"]) {
+  assert.ok(html.includes('id="' + section + '"'), "missing page section " + section);
+}
+assert.match(html, /id="jsSandbox"[^>]*sandbox="allow-scripts"/);
+assert.match(html, /id="webLabPreview"[^>]*sandbox="allow-scripts"/);
+assert.match(html, /id="projectPreview"[^>]*sandbox=""/);
+assert.match(html, /id="pythonSandbox"[^>]*sandbox="allow-scripts"/);
+assert.ok(html.includes('id="python-lab"'), "Python training section is missing");
+assert.ok(html.includes('id="student-dashboard"'), "student dashboard section is missing");
+assert.ok(html.includes('id="lessonLevelFilter"'), "lesson level filter is missing");
+assert.match(app, /\$\("#lessonLevelFilter"\)\.addEventListener/);
+assert.ok(html.includes('id="projectChecks"'), "project criteria output is missing");
+assert.ok(html.includes('id="bookmarkList"') && html.includes('id="notesList"'), "saved learning materials UI is missing");
+assert.match(pythonSandbox, /skulpt@1\.2\.0\/dist\/skulpt\.min\.js/);
+assert.match(pythonSandbox, /skulpt-stdlib\.js/);
+assert.match(pythonSandbox, /execLimit: 3000/);
+assert.match(pythonSandbox, /CODECRAFT_PYTHON_RUN/);
+assert.match(css, /\.python-workbench/);
+assert.ok(manifest.name && manifest.short_name && manifest.start_url === "./", "web app manifest is invalid");
+assert.ok(manifest.icons.some(item => item.src === "assets/icon.svg"), "manifest icon is missing");
+assert.match(serviceWorker, /addAll\(CORE_FILES\)/);
+assert.match(serviceWorker, /clients\.claim/);
+assert.match(app, /navigator\.serviceWorker\.register/);
+assert.match(icon, /<svg/);
+assert.match(app, /connect-src[^;]*none/, "web preview must block network requests");
+
+const challengeMatch = app.match(/const challengeTasks = (\[[\s\S]*?\n\]);/);
+assert.ok(challengeMatch, "challenge task registry was not found");
+const challengeContext = {};
+const challenges = vm.runInNewContext("(" + challengeMatch[1] + ")", challengeContext);
+assert.equal(challenges.length, 20, "expected 20 practical tasks");
+assert.equal(new Set(challenges.map(item => item.id)).size, challenges.length, "challenge IDs must be unique");
+
+assert.match(app, /function parseHTMLForChecks/);
+assert.match(app, /function parseCSSForChecks/);
+assert.match(app, /function isJavaScriptSyntaxValid/);
+assert.match(app, /function parseProjectStructuralChecks/);
+assert.match(app, /const EXAM_TOPICS=Object\.freeze/);
+assert.match(app, /function isKnownExamTopic/);
+assert.match(app, /function formatQuestionCount/);
+assert.match(app, /startExam\(examMissed\.slice\(\),examConfigKey\)/);
+
+const examples = {
+  "html-heading": "<h1>Hello</h1><p>Welcome</p>",
+  "html-link": '<a href="https://example.com">Example</a>',
+  "css-flex": ".cards { display: flex; gap: 12px; }",
+  "js-function": "function double(number) { return number * 2; }\nconsole.log(double(5));",
+  "js-condition": 'const score = 75; if (score >= 60) { console.log("Зачёт"); } else { console.log("Попробуй ещё"); }',
+  "html-semantic": "<header>Header</header><main><h1>Title</h1></main><footer>Footer</footer>",
+  "css-grid": ".gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }",
+  "js-array": 'const fruits = ["apple", "pear", "plum"]; fruits.push("orange");',
+  "py-loop": "for number in range(5):\n    print(number)",
+  "py-dict": 'profile = {"name": "Аня", "level": 1}\nprint(profile["name"])',
+
+  "html-fix-image": '<img src="avatar.jpg" alt="Портрет автора">',
+  "html-fix-form": '<label for="email">Электронная почта</label><input id="email" type="email">',
+  "css-fix-box": "* { box-sizing: border-box; } .card { width: 100%; padding: 24px; border: 2px solid; }",
+  "css-fix-mobile": ".cards { display: grid; grid-template-columns: repeat(2, 1fr); } @media (max-width: 600px) { .cards { grid-template-columns: 1fr; } }",
+  "css-fix-focus": "button:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }",
+  "js-fix-equality": 'const status = "ready"; if (status === "ready") { console.log("Можно продолжать"); }',
+  "js-fix-event": 'const button = document.querySelector("#save"); button.addEventListener("click", () => { console.log("Сохранено"); });',
+  "js-fix-last-item": "function lastItem(items) { return items[items.length - 1]; }",
+  "py-fix-range": "for number in range(1, 6):\n    print(number)",
+  "py-fix-dict": 'profile = {"name": "Аня"}\nprint(profile.get("city", "Не указан"))',
+};
+for (const task of challenges) {
+  assert.ok(Array.isArray(task.checks) && task.checks.length > 0, "challenge checks missing: " + task.id);
+  const sample = examples[task.id];
+  assert.ok(sample, "sample solution missing: " + task.id);
+  for (const [label, check] of task.checks) {
+    assert.equal(check(sample), true, "sample failed " + task.id + " / " + label);
+  }
+}
+
+const getKnownChallengeIdsSource = app.match(/function getKnownChallengeIds\(tasks\)\{[^}]+\}/)?.[0];
+const sanitizeKnownIdsSource = app.match(/function sanitizeKnownIds\(value,allowed\)\{[^}]+\}/)?.[0];
+const calculateLearningXPSource = app.match(/function calculateLearningXP\(lessonCount,projectCount,challengeCount\)\{[^}]+\}/)?.[0];
+assert.ok(getKnownChallengeIdsSource && sanitizeKnownIdsSource && calculateLearningXPSource, "shared progress helpers are missing");
+const getKnownChallengeIds = vm.runInNewContext("(" + getKnownChallengeIdsSource + ")");
+const sanitizeKnownIds = vm.runInNewContext("(" + sanitizeKnownIdsSource + ")");
+const calculateLearningXP = vm.runInNewContext("(" + calculateLearningXPSource + ")");
+const knownChallengeIds = getKnownChallengeIds(challenges);
+assert.equal(knownChallengeIds.size, 20, "backup allowlist must include all 20 current tasks");
+const allChallengeIds = Array.from(challenges, task => task.id);
+const restoredChallenges = sanitizeKnownIds(JSON.parse(JSON.stringify(allChallengeIds)), knownChallengeIds);
+assert.deepEqual(Array.from(restoredChallenges), allChallengeIds, "all current challenge completions must survive backup round-trip");
+assert.deepEqual(Array.from(sanitizeKnownIds(["html-heading", "html-heading", "unknown-task", 42], knownChallengeIds)), ["html-heading"], "backup import must deduplicate and reject unknown challenge IDs");
+const legacyChallengeIds = ["html-heading", "html-link", "css-flex", "js-function", "js-condition", "html-semantic", "css-grid", "js-array", "py-loop", "py-dict"];
+assert.deepEqual(Array.from(sanitizeKnownIds(legacyChallengeIds, knownChallengeIds)), legacyChallengeIds, "version 1 backups with the original 10 tasks must remain compatible");
+assert.equal(calculateLearningXP(32, 3, 20), 1390, "XP must use 20 per lesson, 50 per project and 30 per challenge");
+assert.equal(calculateLearningXP(32, 3, 10), 1090, "legacy challenge progress must retain its earned XP");
+assert.equal(app.split("calculateLearningXP(done.length,completedProjects.length,completedChallenges.length)").length - 1, 2, "achievement and student dashboard must use the same XP calculation");
+assert.match(app, /challenges:safeStoredArray\("cc_challenges",getKnownChallengeIds\(challengeTasks\)\)/, "backup export must use the current challenge registry");
+assert.match(app, /sanitizeKnownIds\(data.challenges,getKnownChallengeIds\(challengeTasks\)\)/, "backup import must use the current challenge registry");
+assert.match(css, /@media\(max-width:520px\)/);
+assert.match(css, /safe-area-inset-top/);
+assert.match(css, /100dvh/);
+assert.match(css, /orientation:landscape/);
+assert.match(css, /:focus-visible/);
+assert.match(css, /@media\(max-width:900px\)[\s\S]*?\.topbar nav\{display:none\}/, "tablet navigation must collapse before the header overflows");
+assert.match(css, /\.web-lab/);
+assert.match(html, /data-lab-panel="html"/);
+assert.match(html, /data-lab-panel="preview"/);
+assert.match(html, /id="editorFontUp"/);
+assert.match(app, /function selectLabPanel/);
+assert.match(app, /editor\.setRangeText\("  "/);
+assert.match(app, /event\.key==="Enter"/);
+assert.match(css, /\.workspace-tabs/);
+assert.match(css, /\.web-editor\.mobile-active/);
+assert.doesNotMatch(css, /:has\(/);
+
+assert.match(app, /function exportLearningData/);
+assert.match(app, /function renderStudentDashboard/);
+assert.match(app, /function validateProject/);
+assert.match(app, /function renderProjectTasks/);
+assert.match(app, /cc_project_steps_v1/);
+assert.match(app, /projectSteps:normalizeProjectSteps\(projectSteps\)/);
+const projectStart = app.indexOf("const projectTemplates = [");
+const projectEnd = app.indexOf("let activeProject", projectStart);
+assert.ok(projectStart >= 0 && projectEnd > projectStart, "project templates are missing");
+const projectSource = app.slice(projectStart, projectEnd).replace("const projectTemplates = ", "");
+const projectTemplates = vm.runInNewContext(projectSource);
+assert.equal(projectTemplates.length, 6, "expected six guided projects");
+for (const project of projectTemplates) {
+  assert.ok(Array.isArray(project.checks) && project.checks.length >= 4, "project checks missing: " + project.id);
+  for (const [label, check] of project.checks) {
+    assert.equal(check(project.code), true, "starter project fails " + project.id + " / " + label);
+  }
+}
+assert.match(app, /activeProject\.checks\.map/);
+assert.match(app, /Начислено 50 XP/);
+assert.match(app, /cc_bookmarks/);
+assert.match(app, /cc_notes_v1/);
+assert.match(app, /lesson-personal-tools/);
+assert.match(app, /bookmarks:safeStoredArray/);
+assert.match(app, /notes:normalizeNotes\(readStoredValue\("cc_notes_v1",\{\}\)\)/);
+assert.match(app, /function startExam/);
+assert.match(html, /id="examCourse"/);
+assert.match(html, /id="examLevel"/);
+assert.match(html, /id="examHistory"/);
+assert.match(app, /function shuffleExamItems/);
+assert.match(app, /function finishExam/);
+assert.match(app, /examMissed\.push\(question\)/);
+assert.match(app, /exam-review-item/);
+assert.match(app, /Повторить только ошибки/);
+assert.match(app, /startExam\(examMissed\.slice\(\),examConfigKey\)/);
+assert.match(css, /\.exam-review-item/);
+assert.match(app, /cc_exam_history_v1/);
+assert.match(app, /exams:readExamHistory\(\)/);
+assert.match(app, /data\.exams/);
+assert.match(app, /function renderExamHistory/);
+assert.match(css, /\.exam-settings/);
+assert.match(css, /\.exam-history-card/);
+for (const course of ["HTML и CSS", "JavaScript", "Python"]) {
+  const pool = lessons.filter(item => item.course === course && Array.isArray(item.options) && item.options.length >= 2 && Number.isInteger(item.correct));
+  assert.ok(pool.length >= 5, "exam track must contain at least five questions: " + course);
+}
+for (const level of ["Начальный", "Начальный+"]) {
+  assert.ok(lessons.some(item => item.level === level), "exam difficulty is missing: " + level);
+assert.equal(lessons.filter(item => item.level === "Средний").length, 12, "expected 12 intermediate lessons");
+}
+assert.match(app, /function saveDraft/);
+assert.match(app, /CODECRAFT_PYTHON_PING/);
+assert.match(app, /file\.size>2\*1024\*1024/);
+assert.match(app, /drafts:normalizeDrafts\(readStoredValue\("cc_drafts_v1",\{\}\)\)/);
+assert.match(sandbox, /CODECRAFT_RUN/);
+assert.match(sandbox, /CODECRAFT_CANCEL/);
+assert.match(sandbox, /worker-src blob:/, "JavaScript sandbox must permit only its isolated Blob Worker");
+assert.match(sandbox, /connect-src 'none'/, "JavaScript sandbox must block network access");
+assert.match(sandbox, /activeWorker\.terminate\(\)/, "JavaScript sandbox must be able to terminate a running Worker");
+assert.match(sandbox, /URL\.revokeObjectURL\(activeWorkerUrl\)/, "Worker Blob URLs must be revoked when execution ends");
+assert.match(sandbox, /CODECRAFT_PING/, "JavaScript sandbox must support a race-safe readiness handshake");
+assert.match(sandbox, /MAX_CODE = 100000/);
+assert.match(sandbox, /MAX_OUTPUT = 50000/);
+assert.match(sandbox, /new Function/);
+const workerSourceStart = sandbox.indexOf("const workerSource = ");
+const workerSourceEnd = sandbox.indexOf(";\nlet activeWorker", workerSourceStart);
+assert.ok(workerSourceStart >= 0 && workerSourceEnd > workerSourceStart, "isolated Worker source must be embedded as a string");
+const workerSource = JSON.parse(sandbox.slice(workerSourceStart + "const workerSource = ".length, workerSourceEnd));
+new vm.Script(workerSource, { filename: "sandbox-worker.js" });
+assert.match(workerSource, /new Function/);
+assert.match(workerSource, /CODECRAFT_WORKER_RESULT/);
+assert.match(app, /MAX_JS_CODE = 100000/);
+assert.match(app, /MAX_JS_OUTPUT = 50100/);
+assert.match(app, /finishJavaScriptRun/);
+assert.match(app, /stopCode/);
+assert.match(html, /id="stopCode"[^>]*disabled/);
+assert.match(pythonSandbox, /MAX_CODE = 100000/);
+assert.match(pythonSandbox, /MAX_OUTPUT = 50000/);
+assert.match(pythonSandbox, /Вывод ограничен: 50 000 символов/);
+assert.match(app, /MAX_PYTHON_CODE=100000/);
+assert.match(app, /MAX_PYTHON_OUTPUT=50100/);
+assert.match(app, /retryPython/);
+assert.match(html, /id="retryPython"/);
+assert.match(pythonSandbox, /Перезапустить среду/);
+assert.match(pythonSandbox, /execLimit: 3000/);
+
+assert.equal(packageData.devDependencies["@playwright/test"], "1.56.1", "Playwright version must be pinned");
+assert.equal(packageData.devDependencies["@axe-core/playwright"], "4.14.0", "axe-core integration must be pinned");
+assert.equal(packageData.scripts["test:e2e"], "playwright test", "browser test script is missing");
+assert.match(playwrightConfig, /testDir: "\.\/tests\/e2e"/);
+assert.match(playwrightConfig, /webServer:/);
+assert.match(playwrightConfig, /retain-on-failure/);
+assert.match(e2eServer, /127\.0\.0\.1/);
+assert.match(e2eServer, /startsWith\(root \+ path\.sep\)/, "test server must prevent path traversal");
+for (const scenario of [
+  "loads the learning dashboard",
+  "persists lesson completion",
+  "validates a practical task",
+  "runs the web lab preview",
+  "times out an infinite loop",
+  "manually stops JavaScript execution",
+  "runs Python in Skulpt",
+  "finishes an exam",
+  "builds course analytics and recommends a next step from learning data",
+  "exports and imports",
+  "phone and desktop viewport"
+]) assert.ok(e2eSpec.includes(scenario), "missing browser scenario: " + scenario);
+
+console.log("CodeCraft quality checks passed:");
+console.log("- 44 lessons, 3 tracks, valid answer data");
+console.log("- unique HTML IDs and complete app selectors");
+console.log("- 20 practical tasks (10 creation + 10 debugging) with passing sample checks");
+console.log("- isolated sandboxes, responsive styles, track/difficulty exams, score history, backups and drafts");
+console.log("- personalized A11 learning route, course progress and practice/project milestones");
+
+assert.match(app, /function topicForQuestion/);
+assert.match(app, /function readExamTopicStats/);
+assert.match(app, /function recordExamAnswer/);
+assert.match(app, /recordExamAnswer\(question,chosen===question\.correct\)/);
+assert.match(app, /function renderExamTopicStats/);
+assert.match(app, /dataset\.topic=row\.key/);
+assert.match(app, /topicStats:readExamTopicStats\(\)/);
+assert.match(app, /data\.topicStats/);
+assert.match(html, /id="examTopicStats"/);
+assert.match(css, /\.topic-stat-card/);
+assert.match(app, /const STORAGE_SCHEMA_VERSION=2/);
+assert.match(app, /function migrateLearningStorage/);
+assert.match(app, /version>STORAGE_SCHEMA_VERSION\)return false/);
+assert.match(app, /data\.version===2&&\(!Number\.isInteger\(data\.schemaVersion\)\|\|data\.schemaVersion>STORAGE_SCHEMA_VERSION\)/);
+assert.match(app, /function writeStorageBatch/);
+assert.match(app, /function normalizeDrafts/);
+assert.match(app, /function mergeHistory/);
+assert.match(app, /\[1,2\]\.includes\(data\.version\)/);
+assert.match(app, /version:2,schemaVersion:STORAGE_SCHEMA_VERSION/);
+assert.match(serviceWorker, /codecraft-shell-v3/);
+assert.match(serviceWorker, /codecraft-runtime-v3/);
+assert.match(serviceWorker, /keys\.length\s*>\s*80/);
+assert.match(serviceWorker, /request\.mode\s*===\s*"navigate"/);
+assert.match(serviceWorker, /CODECRAFT_SKIP_WAITING/);
+assert.equal(manifest.id, "./");
+assert.equal(manifest.start_url, "./");
+assert.equal(manifest.scope, "./");
+assert.ok(manifest.icons.some(item => item.src === "assets/icon.svg"));
+assert.equal(manifest.prefer_related_applications, false);
+assert.match(e2eSpec, /migrates legacy local learning data/);
+assert.match(e2eSpec, /storage quota error/);
+assert.match(e2eSpec, /goes offline/);
+
+assert.ok(app.includes("function buildCourseProgress"), "A11 course progress calculation is missing");
+assert.ok(app.includes("function getNextLearningRecommendation"), "A11 recommendation engine is missing");
+assert.ok(app.includes("action.dataset.action=recommendation.action"), "A11 recommendation action binding is missing");
+assert.ok(app.includes("renderExamTopicStats();renderStudentDashboard();"), "A11 dashboard must refresh after exam answers");
+assert.ok(html.includes('id="courseProgressList"'), "A11 course progress container is missing");
+assert.ok(html.includes('id="practiceProgressList"'), "A11 practice progress container is missing");
+assert.ok(html.includes('id="nextStepAction"'), "A11 next step action is missing");
+assert.ok(css.includes(".student-guidance"), "A11 responsive dashboard styles are missing");
+assert.ok(css.includes(".course-progress-track"), "A11 progress bar styles are missing");

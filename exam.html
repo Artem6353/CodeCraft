@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1018">
+<meta name="description" content="Экзамен CodeCraft: вопросы по HTML, CSS, JavaScript и Python, разбор ошибок и повторение.">
+<link rel="canonical" href="https://vocal-rugelach-3371b8.netlify.app/exam.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CodeCraft">
+<meta property="og:title" content="Экзамен · CodeCraft">
+<meta property="og:description" content="Экзамен CodeCraft: вопросы по HTML, CSS, JavaScript и Python, разбор ошибок и повторение.">
+<meta property="og:url" content="https://vocal-rugelach-3371b8.netlify.app/exam.html">
+<meta name="twitter:card" content="summary">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/site.css">
+<title>Экзамен · CodeCraft</title>
+</head>
+<body data-active="exam">
+<a class="skip-link" href="#main">Перейти к содержимому</a>
+<header class="site-header"><div class="nav-wrap">
+<a class="brand" href="/" aria-label="CodeCraft — главная"><span class="brand-mark">&lt;/&gt;</span><span>CodeCraft</span></a>
+<button class="menu-btn" id="menuBtn" type="button" aria-controls="mainNav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
+<nav class="main-nav" id="mainNav" aria-label="Основная навигация">
+<a href="/">Главная</a><a href="/courses/">Курсы</a><a href="/practice.html">Практика</a><a href="/projects.html">Проекты</a><a href="/playground.html">JS-лаборатория</a><a href="/python.html">Python</a><a href="/dashboard.html">Мой прогресс</a>
+<a class="nav-cta" href="/exam.html">Проверить знания <span>↗</span></a>
+</nav></div></header>
+
+<main id="main" class="container page-main">
+ <div class="page-hero page-hero-compact"><div class="eyebrow">ПРОВЕРКА ЗНАНИЙ · 10 ВОПРОСОВ</div><h1>Проверь, что <span>запомнилось.</span></h1><p>Смешанный экзамен по HTML, CSS, JavaScript и Python. После результата можно разобрать ошибки и повторить только их.</p></div>
+ <section class="exam-card" id="examRoot"><div class="exam-top"><span class="pill" id="examCounter">Вопрос 1 из 10</span><div class="exam-progress"><i id="examProgress"></i></div></div><div id="examQuestion"><p class="loading-note">Подготавливаю вопросы…</p></div><div id="examOptions" class="exam-options"></div><div class="exam-actions"><span id="examFeedback" aria-live="polite">Выбери правильный ответ.</span><button class="button button-primary" id="examNext" type="button" disabled>Следующий вопрос →</button></div></section>
+ <section class="exam-result" id="examResult" hidden></section>
+ <div class="notice-card"><span class="notice-icon">✳</span><div><b>Результат — не оценка тебя</b><p>Ошибка показывает, какую тему стоит повторить. История попыток хранится на этом устройстве.</p></div></div>
+</main>
+<footer class="site-footer"><div class="container footer-inner"><a class="brand" href="/"><span class="brand-mark">&lt;/&gt;</span><span>CodeCraft</span></a><p>Создавай навыки. Собирай идеи. Двигайся своим темпом.</p><div class="footer-links"><a href="/courses/">Курсы</a><a href="/practice.html">Практика</a><a href="/dashboard.html">Прогресс</a></div><small>© <span data-year>2026</span> CodeCraft · Сделано для любознательных</small></div></footer>
+<script src="/js/site.js" defer></script><script src="/js/lessons.js" defer></script><script src="/js/exam.js" defer></script>
+</body></html>

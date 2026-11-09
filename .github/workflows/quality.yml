@@ -1,0 +1,69 @@
+name: CodeCraft quality checks
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check JavaScript syntax
+        run: |
+          node --check js/app.js
+          node --check js/lessons.js
+          node --check sw.js
+          node --check js/site.js
+          node --check js/course.js
+          node --check js/lesson.js
+          node --check js/dashboard.js
+          node --check js/playground.js
+          node --check js/python.js
+          node --check js/practice.js
+          node --check js/projects.js
+          node --check js/exam.js
+          node --check js/training-data.js
+          node --check tests/e2e/server.mjs
+      - name: Run platform quality checks
+        run: node tests/validate.mjs
+
+  browser-e2e:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install project test dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Run real browser scenarios
+        run: npm run test:e2e
+      - name: Upload browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codecraft-playwright-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7

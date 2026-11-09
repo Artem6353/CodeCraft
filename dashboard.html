@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1018">
+<meta name="description" content="Личный кабинет CodeCraft: XP, прогресс курсов, закладки, заметки и резервное копирование.">
+<link rel="canonical" href="https://vocal-rugelach-3371b8.netlify.app/dashboard.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CodeCraft">
+<meta property="og:title" content="Мой прогресс · CodeCraft">
+<meta property="og:description" content="Личный кабинет CodeCraft: XP, прогресс курсов, закладки, заметки и резервное копирование.">
+<meta property="og:url" content="https://vocal-rugelach-3371b8.netlify.app/dashboard.html">
+<meta name="twitter:card" content="summary">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/site.css">
+<title>Мой прогресс · CodeCraft</title>
+</head>
+<body data-active="dashboard">
+<a class="skip-link" href="#main">Перейти к содержимому</a>
+<header class="site-header"><div class="nav-wrap">
+<a class="brand" href="/" aria-label="CodeCraft — главная"><span class="brand-mark">&lt;/&gt;</span><span>CodeCraft</span></a>
+<button class="menu-btn" id="menuBtn" type="button" aria-controls="mainNav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
+<nav class="main-nav" id="mainNav" aria-label="Основная навигация">
+<a href="/">Главная</a><a href="/courses/">Курсы</a><a href="/practice.html">Практика</a><a href="/projects.html">Проекты</a><a href="/playground.html">JS-лаборатория</a><a href="/python.html">Python</a><a href="/dashboard.html">Мой прогресс</a>
+<a class="nav-cta" href="/exam.html">Проверить знания <span>↗</span></a>
+</nav></div></header>
+
+<main id="main" class="container page-main">
+ <div class="page-hero page-hero-compact"><div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h1>Твой путь. <span>Твой темп.</span></h1><p>Все отметки, достижения, заметки и результаты собраны здесь. Данные хранятся локально в браузере.</p></div>
+ <section class="stat-grid" id="dashboardStats"><div class="stat-card"><small>ОПЫТ</small><b>0 XP</b></div></section>
+ <section class="dashboard-section"><div class="section-heading"><div><div class="eyebrow">01 / ПРОГРЕСС</div><h2>Три направления</h2></div><a href="/courses/" class="text-link">Продолжить учиться →</a></div><div class="dashboard-courses" id="dashboardCourses"></div></section>
+ <section class="dashboard-section dashboard-columns"><div class="panel-card"><div class="panel-heading"><h2>Избранные уроки</h2><span id="bookmarkCount">0</span></div><div id="bookmarkList" class="saved-list"></div></div><div class="panel-card"><div class="panel-heading"><h2>Мои заметки</h2><span id="noteCount">0</span></div><div id="noteList" class="saved-list"></div></div></section>
+ <section class="dashboard-section panel-card"><div class="panel-heading"><div><div class="eyebrow">02 / РЕЗЕРВНАЯ КОПИЯ</div><h2>Сохрани свой прогресс</h2></div><span class="pill">JSON · v2</span></div><p class="muted-copy">Экспортируй прогресс, проекты, задания, заметки и историю экзаменов. На другом устройстве импортируй файл, чтобы объединить данные.</p><div class="backup-actions"><button class="button button-primary" id="exportProgress" type="button">Скачать резервную копию ↧</button><label class="button button-quiet file-button" for="importProgressFile">Импортировать копию<input id="importProgressFile" type="file" accept="application/json,.json"></label></div><p id="backupStatus" class="status-text" aria-live="polite"></p></section>
+</main>
+<footer class="site-footer"><div class="container footer-inner"><a class="brand" href="/"><span class="brand-mark">&lt;/&gt;</span><span>CodeCraft</span></a><p>Создавай навыки. Собирай идеи. Двигайся своим темпом.</p><div class="footer-links"><a href="/courses/">Курсы</a><a href="/practice.html">Практика</a><a href="/dashboard.html">Прогресс</a></div><small>© <span data-year>2026</span> CodeCraft · Сделано для любознательных</small></div></footer>
+<script src="/js/site.js" defer></script><script src="/js/lessons.js" defer></script><script src="/js/dashboard.js" defer></script>
+</body></html>

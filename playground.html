@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1018">
+<meta name="description" content="Изолированная JavaScript-песочница CodeCraft с ограничением времени, ручной остановкой и консолью.">
+<link rel="canonical" href="https://vocal-rugelach-3371b8.netlify.app/playground.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CodeCraft">
+<meta property="og:title" content="JavaScript-песочница · CodeCraft">
+<meta property="og:description" content="Изолированная JavaScript-песочница CodeCraft с ограничением времени, ручной остановкой и консолью.">
+<meta property="og:url" content="https://vocal-rugelach-3371b8.netlify.app/playground.html">
+<meta name="twitter:card" content="summary">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/site.css">
+<title>JavaScript-песочница · CodeCraft</title>
+</head>
+<body data-active="playground">
+<a class="skip-link" href="#main">Перейти к содержимому</a>
+<header class="site-header"><div class="nav-wrap">
+<a class="brand" href="/" aria-label="CodeCraft — главная"><span class="brand-mark">&lt;/&gt;</span><span>CodeCraft</span></a>
+<button class="menu-btn" id="menuBtn" type="button" aria-controls="mainNav" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
+<nav class="main-nav" id="mainNav" aria-label="Основная навигация">
+<a href="/">Главная</a><a href="/courses/">Курсы</a><a href="/practice.html">Практика</a><a href="/projects.html">Проекты</a><a href="/playground.html">JS-лаборатория</a><a href="/python.html">Python</a><a href="/dashboard.html">Мой прогресс</a>
+<a class="nav-cta" href="/exam.html">Проверить знания <span>↗</span></a>
+</nav></div></header>
+
+<main id="main" class="container page-main">
+ <div class="page-hero page-hero-compact"><div class="eyebrow">ЛАБОРАТОРИЯ · JAVASCRIPT</div><h1>Запускай. <span>Исследуй.</span></h1><p>Пиши JavaScript и сразу смотри результат. Код выполняется в отдельном изолированном окне и Worker, а не в самой странице.</p></div>
+ <section class="lab-card"><div class="lab-head"><div><span class="eyebrow">РЕДАКТОР КОДА</span><h2>script.js</h2></div><span class="status-pill" id="jsStatus"><i></i> Подготовка среды…</span></div><textarea id="jsCode" class="code-editor lab-editor" spellcheck="false" autocapitalize="off" aria-label="Редактор JavaScript">const language = "JavaScript";
+const completed = 2;
+
+console.log("Привет из CodeCraft!");
+console.log("Я изучаю " + language);
+console.log("Уже завершено уроков: " + completed);</textarea><div class="editor-toolbar"><span>Ctrl + Enter — запуск · Esc — остановка</span><div><button class="button button-small button-quiet" id="resetJs" type="button">Сбросить</button><button class="button button-small button-quiet" id="stopJs" type="button" disabled>Остановить</button><button class="button button-small button-primary" id="runJs" type="button">▶ Запустить</button></div></div><div class="output-head"><b>КОНСОЛЬ</b><button class="text-link" id="clearJs" type="button">Очистить</button></div><pre id="jsOutput" class="output-box" aria-live="polite">Вывод программы появится здесь…</pre></section>
+ <iframe id="jsSandbox" title="Изолированная среда выполнения JavaScript" src="/sandbox.html" sandbox="allow-scripts" aria-hidden="true" tabindex="-1" class="sandbox-frame"></iframe>
+ <div class="notice-card"><span class="notice-icon">⛨</span><div><b>Безопасность важнее эксперимента</b><p>Среда изолирована от DOM и localStorage страницы, блокирует сетевые запросы и останавливает зависший код. Не отправляй в редактор секреты и пароли.</p></div></div>
+</main>
+<footer class="site-footer"><div class="container footer-inner"><a class="brand" href="/"><span class="brand-mark">&lt;/&gt;</span><span>CodeCraft</span></a><p>Создавай навыки. Собирай идеи. Двигайся своим темпом.</p><div class="footer-links"><a href="/courses/">Курсы</a><a href="/practice.html">Практика</a><a href="/dashboard.html">Прогресс</a></div><small>© <span data-year>2026</span> CodeCraft · Сделано для любознательных</small></div></footer>
+<script src="/js/site.js" defer></script><script src="/js/playground.js" defer></script>
+</body></html>
